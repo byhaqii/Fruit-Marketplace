@@ -1,0 +1,3 @@
+class IuranModel {
+  // ...basic iuran model fields...
+}

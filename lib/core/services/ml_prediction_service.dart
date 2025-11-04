@@ -1,0 +1,3 @@
+class MlPredictionService {
+  // ...ML model inference helpers...
+}
