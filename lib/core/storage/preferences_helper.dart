@@ -1,0 +1,3 @@
+class PreferencesHelper {
+  // ...SharedPreferences wrapper...
+}

@@ -1,0 +1,3 @@
+class TransaksiModel {
+  // ...basic transaksi model fields...
+}
