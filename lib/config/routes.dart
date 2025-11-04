@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../modules/dashboard/dashboard_page.dart';
-import '../modules/auth/pages/login_page.dart';
+import '../Pages/dashboard/dashboard_page.dart';
+import '../Pages/auth/pages/login_page.dart';
 
 class Routes {
   static const String initial = '/';

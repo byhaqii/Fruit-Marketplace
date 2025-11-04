@@ -1,5 +1,7 @@
+// lib/core/network/api_client.dart
 import 'dart:convert';
-import 'package:dio/dio.dart';
+import 'package:dio/dio.dart'; // Import Dio
+
 import '../../config/env.dart';
 
 class ApiClient {
@@ -11,8 +13,9 @@ class ApiClient {
           Dio(
             BaseOptions(
               baseUrl: Env.apiBaseUrl,
-              connectTimeout: 30000,
-              receiveTimeout: 30000,
+              // PERBAIKAN 1: Gunakan Duration()
+              connectTimeout: const Duration(milliseconds: 30000), 
+              receiveTimeout: const Duration(milliseconds: 30000), 
             ),
           ) {
     // ...existing code...
@@ -30,7 +33,8 @@ class ApiClient {
         options: options,
       );
       return _decodeResponse(response);
-    } on DioError catch (e) {
+    // Ubah DioError menjadi DioException
+    } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
@@ -49,7 +53,8 @@ class ApiClient {
         options: options,
       );
       return _decodeResponse(response);
-    } on DioError catch (e) {
+    // Ubah DioError menjadi DioException
+    } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
@@ -67,11 +72,14 @@ class ApiClient {
     return data;
   }
 
-  Exception _handleDioError(DioError e) {
-    if (e.type == DioErrorType.connectTimeout ||
-        e.type == DioErrorType.receiveTimeout) {
+  // Ubah DioError menjadi DioException
+  Exception _handleDioError(DioException e) {
+    // PERBAIKAN 2: Gunakan DioExceptionType dan perbarui nama konstanta
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
       return Exception('Request timed out');
     }
+    
     if (e.response != null) {
       final status = e.response?.statusCode;
       final respData = e.response?.data;
@@ -79,6 +87,7 @@ class ApiClient {
         'Request failed ($status): ${respData is String ? respData : jsonEncode(respData)}',
       );
     }
-    return Exception(e.message);
+    // Menggunakan e.message (non-nullable di DioException)
+    return Exception(e.message); 
   }
 }

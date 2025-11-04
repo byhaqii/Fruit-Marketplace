@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
-import 'app.dart';
+<?php
+namespace App\Http\Controllers;
 
-void main() {
-  runApp(const App());
+class NotificationController
+{
+    public function index() { /* Menampilkan daftar notifikasi */ }
 }

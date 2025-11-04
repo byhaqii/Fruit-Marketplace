@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
-import 'app.dart';
+<?php
+namespace App\Http\Controllers;
 
-void main() {
-  runApp(const App());
+class DashboardController
+{
+    public function index() { /* Menampilkan data dashboard */ }
 }
