@@ -1,3 +1,0 @@
-class MarketplaceController {
-  // ...marketplace logic...
-}

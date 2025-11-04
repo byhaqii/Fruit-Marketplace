@@ -1,3 +1,0 @@
-class WargaController {
-  // ...warga business logic...
-}

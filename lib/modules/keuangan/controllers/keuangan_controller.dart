@@ -1,3 +1,0 @@
-class KeuanganController {
-  // ...keuangan logic...
-}
