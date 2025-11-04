@@ -7,6 +7,5 @@ class Routes {
   static final Map<String, WidgetBuilder> routes = {
     initial: (context) => const DashboardPage(),
     '/login': (context) => const LoginPage(),
-    // register more routes here
   };
 }
