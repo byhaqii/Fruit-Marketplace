@@ -11,7 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        Schema::create('iuran', function (Blueprint $table) {
+            $table->id();
+            $table->string('nama_iuran');
+            $table->text('deskripsi')->nullable();
+            $table->decimal('jumlah', 15, 2);
+            $table->enum('periode', ['Bulanan', 'Tahunan', 'Satu Kali'])->default('Bulanan');
+            $table->boolean('is_aktif')->default(true);
+            $table->timestamps();
+        });
     }
 
     /**
@@ -19,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('iuran');
     }
 };

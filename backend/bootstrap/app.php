@@ -115,4 +115,8 @@ $app->router->group([
     require __DIR__.'/../routes/web.php';
 });
 
+$app->routeMiddleware([
+    'auth' => App\Http\Middleware\Authenticate::class,
+]);
+
 return $app;

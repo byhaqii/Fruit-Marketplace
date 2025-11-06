@@ -1,6 +1,10 @@
+// lib/core/network/api_client.dart
+
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../config/env.dart';
+// Import untuk mengakses token di PreferencesHelper
+import '../storage/preferences_helper.dart'; 
 
 class ApiClient {
   final Dio dio;
@@ -11,11 +15,31 @@ class ApiClient {
           Dio(
             BaseOptions(
               baseUrl: Env.apiBaseUrl,
-              connectTimeout: 30000,
-              receiveTimeout: 30000,
+              // Perbaikan Dio v5: Gunakan Duration
+              connectTimeout: const Duration(milliseconds: 30000), 
+              receiveTimeout: const Duration(milliseconds: 30000),
             ),
           ) {
-    // ...existing code...
+    // Anda bisa menambahkan Interceptor di sini jika diperlukan
+  }
+  
+  // Fungsi yang dibutuhkan oleh AuthProvider untuk mengirim token
+  Future<Options> optionsWithAuth() async {
+    final token = await PreferencesHelper.getAuthToken();
+    return Options(
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
+
+  // Helper untuk menentukan apakah route perlu token
+  Options? _getFinalOptions(String path, Options? options) {
+    // Jika path BUKAN untuk auth (login, register), kirim token
+    if (!path.contains('/auth/')) {
+        return optionsWithAuth() as Options?; // Menunggu Future<Options>
+    }
+    return options;
   }
 
   Future<dynamic> get(
@@ -27,10 +51,10 @@ class ApiClient {
       final response = await dio.get(
         path,
         queryParameters: queryParameters,
-        options: options,
+        options: _getFinalOptions(path, options),
       );
       return _decodeResponse(response);
-    } on DioError catch (e) {
+    } on DioException catch (e) { // DioError diganti DioException
       throw _handleDioError(e);
     }
   }
@@ -46,10 +70,10 @@ class ApiClient {
         path,
         data: data,
         queryParameters: queryParameters,
-        options: options,
+        options: _getFinalOptions(path, options),
       );
       return _decodeResponse(response);
-    } on DioError catch (e) {
+    } on DioException catch (e) { // DioError diganti DioException
       throw _handleDioError(e);
     }
   }
@@ -67,9 +91,10 @@ class ApiClient {
     return data;
   }
 
-  Exception _handleDioError(DioError e) {
-    if (e.type == DioErrorType.connectTimeout ||
-        e.type == DioErrorType.receiveTimeout) {
+  Exception _handleDioError(DioException e) { // DioError diganti DioException
+    // Perbaikan Dio v5: Gunakan enum DioExceptionType yang baru
+    if (e.type == DioExceptionType.connectionTimeout || 
+        e.type == DioExceptionType.receiveTimeout) {
       return Exception('Request timed out');
     }
     if (e.response != null) {

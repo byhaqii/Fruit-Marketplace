@@ -6,13 +6,26 @@
 |--------------------------------------------------------------------------
 | Application Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register all of the routes for an application.
-| It is a breeze. Simply tell Lumen the URIs it should respond to
-| and give it the Closure to call when that URI is requested.
-|
 */
 
 $router->get('/', function () use ($router) {
     return $router->app->version();
+});
+
+$router->group(['namespace' => 'App\Http\Controllers'], function ($router) {
+    
+    // Auth Routes
+    $router->post('/auth/login', 'AuthController@login');
+
+    // Protected Routes (Perlu token untuk akses)
+    $router->group(['middleware' => 'auth'], function () use ($router) {
+        $router->post('/auth/logout', 'AuthController@logout');
+        
+        // Contoh endpoint untuk mendapatkan profil pengguna yang sedang login
+        $router->get('/user/profile', function (\Illuminate\Http\Request $request) {
+            return response()->json($request->user());
+        });
+        
+        // Route untuk modul-modul lain akan ditambahkan di sini
+    });
 });

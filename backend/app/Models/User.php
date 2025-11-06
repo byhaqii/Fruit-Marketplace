@@ -13,13 +13,15 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 {
     use Authenticatable, Authorizable, HasFactory;
 
+    protected $table = 'users';
+
     /**
      * The attributes that are mass assignable.
      *
      * @var string[]
      */
     protected $fillable = [
-        'name', 'email',
+        'name', 'email', 'password', 'role', 'api_token'
     ];
 
     /**
@@ -28,6 +30,12 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
      * @var string[]
      */
     protected $hidden = [
-        'password',
+        'password', 'api_token',
     ];
+    
+    // Relasi ke Warga
+    public function warga()
+    {
+        return $this->hasOne(Warga::class);
+    }
 }
