@@ -1,5 +1,4 @@
 // lib/modules/auth/auth_check.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -15,32 +14,36 @@ class AuthCheck extends StatefulWidget {
 }
 
 class _AuthCheckState extends State<AuthCheck> {
-  // Panggil status check saat widget dibuat
+  // Gunakan FutureBuilder untuk menunggu status otentikasi
+  late Future<void> _initAuth;
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => 
-        Provider.of<AuthProvider>(context, listen: false).checkAuthStatus());
+    // Panggil status check saat widget pertama kali dibuat
+    _initAuth = Provider.of<AuthProvider>(context, listen: false).checkAuthStatus();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, auth, child) {
-        // Tampilkan Loading Indicator selama proses pengecekan status awal
-        if (!auth.isLoggedIn && auth.userRole == null) {
-          // Jika belum ada token dan role (status awal/logout), tampilkan Login Page
-          return const LoginPage();
-        } else if (auth.isLoggedIn) {
-          // Jika sudah ada token dan role, langsung ke Dashboard
-          return const DashboardPage();
+    return FutureBuilder(
+      future: _initAuth,
+      builder: (context, snapshot) {
+        // Tampilkan Loading jika masih menunggu Future
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: LoadingIndicator()));
         }
-        
-        // Pilihan fallback saat loading data inisialisasi
-        return const Scaffold(
-          body: Center(
-            child: LoadingIndicator(),
-          ),
+
+        // Setelah selesai, gunakan Consumer untuk mendengarkan perubahan status login
+        return Consumer<AuthProvider>(
+          builder: (context, auth, child) {
+            if (auth.isLoggedIn) {
+              return const DashboardPage();
+            } else {
+              // Jika tidak login, tampilkan Login Page
+              return const LoginPage();
+            }
+          },
         );
       },
     );

@@ -5,8 +5,6 @@ import 'app.dart';
 import 'providers/auth_provider.dart';
 
 void main() {
-  // PENTING: Panggil WidgetsFlutterBinding.ensureInitialized()
-  // jika Anda akan menggunakan SharedPreferences/Plugin sebelum runApp
   WidgetsFlutterBinding.ensureInitialized();
   
   runApp(
@@ -15,17 +13,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         // Tambahkan provider lain di sini (Keuangan, Warga, dll.)
       ],
-      child: const AppInitializer(),
+      child: const App(), // App akan me-render AuthCheck di dalamnya
     ),
   );
-}
-
-// Widget pembungkus untuk memastikan Provider sudah terinstal
-class AppInitializer extends StatelessWidget {
-  const AppInitializer({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const App();
-  }
 }

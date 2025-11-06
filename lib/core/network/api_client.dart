@@ -1,9 +1,7 @@
 // lib/core/network/api_client.dart
-
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../config/env.dart';
-// Import untuk mengakses token di PreferencesHelper
 import '../storage/preferences_helper.dart'; 
 
 class ApiClient {
@@ -15,15 +13,13 @@ class ApiClient {
           Dio(
             BaseOptions(
               baseUrl: Env.apiBaseUrl,
-              // Perbaikan Dio v5: Gunakan Duration
               connectTimeout: const Duration(milliseconds: 30000), 
               receiveTimeout: const Duration(milliseconds: 30000),
             ),
           ) {
-    // Anda bisa menambahkan Interceptor di sini jika diperlukan
+    // Menambahkan Interceptor opsional untuk logging
   }
   
-  // Fungsi yang dibutuhkan oleh AuthProvider untuk mengirim token
   Future<Options> optionsWithAuth() async {
     final token = await PreferencesHelper.getAuthToken();
     return Options(
@@ -34,12 +30,13 @@ class ApiClient {
   }
 
   // Helper untuk menentukan apakah route perlu token
-  Options? _getFinalOptions(String path, Options? options) {
+  Future<Options?> _getFinalOptions(String path, Options? options) async {
+    if (options != null) return options;
     // Jika path BUKAN untuk auth (login, register), kirim token
     if (!path.contains('/auth/')) {
-        return optionsWithAuth() as Options?; // Menunggu Future<Options>
+        return await optionsWithAuth();
     }
-    return options;
+    return null;
   }
 
   Future<dynamic> get(
@@ -51,10 +48,10 @@ class ApiClient {
       final response = await dio.get(
         path,
         queryParameters: queryParameters,
-        options: _getFinalOptions(path, options),
+        options: await _getFinalOptions(path, options),
       );
       return _decodeResponse(response);
-    } on DioException catch (e) { // DioError diganti DioException
+    } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
@@ -70,10 +67,10 @@ class ApiClient {
         path,
         data: data,
         queryParameters: queryParameters,
-        options: _getFinalOptions(path, options),
+        options: await _getFinalOptions(path, options),
       );
       return _decodeResponse(response);
-    } on DioException catch (e) { // DioError diganti DioException
+    } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
@@ -91,8 +88,7 @@ class ApiClient {
     return data;
   }
 
-  Exception _handleDioError(DioException e) { // DioError diganti DioException
-    // Perbaikan Dio v5: Gunakan enum DioExceptionType yang baru
+  Exception _handleDioError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout || 
         e.type == DioExceptionType.receiveTimeout) {
       return Exception('Request timed out');

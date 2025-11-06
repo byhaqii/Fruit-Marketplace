@@ -28,14 +28,11 @@ class _LoginFormState extends State<LoginForm> {
           _passwordController.text,
         );
         
-        // Navigasi ke Dashboard setelah berhasil
-        // Karena login, kita ingin mengganti stack rute agar user tidak bisa 'back' ke halaman login.
-        Navigator.pushReplacementNamed(context, '/');
+        Navigator.pushReplacementNamed(context, '/'); 
 
       } catch (e) {
-        // Tampilkan error
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
     }
@@ -50,41 +47,54 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            CustomTextField(
-              hint: 'Email',
-              controller: _emailController,
-              validator: Validator.notEmpty,
-              keyboardType: TextInputType.emailAddress,
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Input Email dengan Icon
+          CustomTextField(
+            hint: 'Email',
+            controller: _emailController,
+            validator: Validator.isEmail,
+            keyboardType: TextInputType.emailAddress,
+            prefixIcon: const Icon(Icons.email, color: Colors.grey), // Tambahkan icon
+          ),
+          const SizedBox(height: 16),
+
+          // Input Password dengan Icon
+          CustomTextField(
+            hint: 'Password',
+            controller: _passwordController,
+            validator: Validator.notEmpty,
+            obscureText: true,
+            prefixIcon: const Icon(Icons.lock, color: Colors.grey), // Tambahkan icon
+          ),
+          
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                // TODO: Implementasi Forgot Password
+              }, 
+              child: Text('Forgot Password?', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
             ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              hint: 'Password',
-              controller: _passwordController,
-              validator: Validator.notEmpty,
-              obscureText: true,
-            ),
-            const SizedBox(height: 24),
-            Consumer<AuthProvider>(
-              builder: (context, auth, child) {
-                if (auth.loading) {
-                  return const LoadingIndicator();
-                }
-                return CustomButton(
-                  label: 'Login',
-                  onPressed: _submitLogin,
-                );
-              },
-            ),
-          ],
-        ),
+          ),
+
+          const SizedBox(height: 24),
+          Consumer<AuthProvider>(
+            builder: (context, auth, child) {
+              if (auth.loading) {
+                return const Center(child: LoadingIndicator());
+              }
+              return CustomButton(
+                label: 'Login',
+                onPressed: _submitLogin,
+              );
+            },
+          ),
+        ],
       ),
     );
   }
