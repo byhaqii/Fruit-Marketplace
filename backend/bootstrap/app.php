@@ -2,8 +2,12 @@
 
 require_once __DIR__.'/../vendor/autoload.php';
 
-// HAPUS BARIS 'use Fruitcake\Cors\CorsMiddleware;'
+// --- IMPORTS YANG DIBUTUHKAN ---
+// Menggunakan FQCN untuk middleware CORS kustom
+use App\Http\Middleware\CorsMiddleware; 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+// --- END IMPORTS ---
+
 
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
     dirname(__DIR__)
@@ -15,12 +19,16 @@ date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
 |--------------------------------------------------------------------------
 | Create The Application
 |--------------------------------------------------------------------------
+|
+| Instansiasi harus terjadi sebelum semua method app->dipanggil
+|
 */
 
 $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
+// Panggil withEloquent di sini
 $app->withEloquent(); 
 
 /*
@@ -52,12 +60,12 @@ $app->configure('database');
 | Register Middleware
 |--------------------------------------------------------------------------
 |
-| Menggunakan FQCN: \NamaVendor\NamaPaket\NamaClass::class
+| Middleware Global untuk semua request (termasuk CORS kustom)
 |
 */
 
 $app->middleware([
-    \Fruitcake\Cors\CorsMiddleware::class // <--- INI ADALAH IMPLEMENTASI FQCN YANG BENAR
+    CorsMiddleware::class 
 ]);
 
 /*
@@ -92,4 +100,4 @@ $app->router->group([
 });
 
 
-return $app;
+return $app; // PENTING: Application instance harus di-return di akhir file
