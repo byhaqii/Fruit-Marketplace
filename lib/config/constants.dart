@@ -1,4 +1,7 @@
+// lib/config/constants.dart
 class AppConstants {
-  static const String appName = 'PBL Semester5';
-  // add other constants here
+  // Ganti nama aplikasi
+  static const String appName = 'Fruitify RT/RW'; 
+  // tambahkan nama Marketplace
+  static const String marketplaceName = 'Fruit Market';
 }
