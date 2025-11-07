@@ -15,6 +15,7 @@ $router->get('/', function () use ($router) {
 $router->group(['namespace' => 'App\Http\Controllers'], function ($router) {
     
     // Auth Routes
+    // Pastikan baris ini ada dan tidak dikomentari
     $router->post('/auth/login', 'AuthController@login');
 
     // Protected Routes (Perlu token untuk akses)

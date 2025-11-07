@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'app.dart';
 import 'providers/auth_provider.dart';
 
-void main() {
+void  main() {
   WidgetsFlutterBinding.ensureInitialized();
   
   runApp(

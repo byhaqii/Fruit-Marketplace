@@ -3,7 +3,6 @@
 require_once __DIR__.'/../vendor/autoload.php';
 
 // --- IMPORTS YANG DIBUTUHKAN ---
-// Menggunakan FQCN untuk middleware CORS kustom
 use App\Http\Middleware\CorsMiddleware; 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 // --- END IMPORTS ---
@@ -19,17 +18,20 @@ date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
 |--------------------------------------------------------------------------
 | Create The Application
 |--------------------------------------------------------------------------
-|
-| Instansiasi harus terjadi sebelum semua method app->dipanggil
-|
 */
 
 $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
-// Panggil withEloquent di sini
+// --- PERBAIKANNYA DI SINI ---
+// Aktifkan Facades (agar Hash:: dan Str:: berfungsi)
+$app->withFacades(); 
+
+// Aktifkan Eloquent (agar Model User:: berfungsi)
 $app->withEloquent(); 
+// --- AKHIR PERBAIKAN ---
+
 
 /*
 |--------------------------------------------------------------------------
@@ -59,9 +61,6 @@ $app->configure('database');
 |--------------------------------------------------------------------------
 | Register Middleware
 |--------------------------------------------------------------------------
-|
-| Middleware Global untuk semua request (termasuk CORS kustom)
-|
 */
 
 $app->middleware([
@@ -96,8 +95,9 @@ $app->register(App\Providers\AuthServiceProvider::class);
 $app->router->group([
     'namespace' => 'App\Http\Controllers',
 ], function ($router) {
-    require __DIR__.'/../routes/web.php';
+    // Path 'routes/web.php' Anda sudah benar
+    require __DIR__.'/../routes/web.php'; 
 });
 
 
-return $app; // PENTING: Application instance harus di-return di akhir file
+return $app;
