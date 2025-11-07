@@ -53,23 +53,23 @@ class _LoginFormState extends State<LoginForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Input Email dengan Icon
+          // Input Email dengan Icon Email
           CustomTextField(
             hint: 'Email',
             controller: _emailController,
             validator: Validator.isEmail,
             keyboardType: TextInputType.emailAddress,
-            prefixIcon: const Icon(Icons.email, color: Colors.grey), // Tambahkan icon
+            prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
           ),
           const SizedBox(height: 16),
 
-          // Input Password dengan Icon
+          // Input Password dengan Icon Lock
           CustomTextField(
             hint: 'Password',
             controller: _passwordController,
             validator: Validator.notEmpty,
             obscureText: true,
-            prefixIcon: const Icon(Icons.lock, color: Colors.grey), // Tambahkan icon
+            prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
           ),
           
           Align(
@@ -83,17 +83,42 @@ class _LoginFormState extends State<LoginForm> {
           ),
 
           const SizedBox(height: 24),
-          Consumer<AuthProvider>(
-            builder: (context, auth, child) {
-              if (auth.loading) {
-                return const Center(child: LoadingIndicator());
-              }
-              return CustomButton(
-                label: 'Login',
-                onPressed: _submitLogin,
-              );
-            },
+          Row(
+            children: [
+              // Tombol Login
+              Expanded(
+                child: Consumer<AuthProvider>(
+                  builder: (context, auth, child) {
+                    if (auth.loading) {
+                      return const Center(child: LoadingIndicator());
+                    }
+                    return CustomButton(
+                      label: 'Login',
+                      onPressed: _submitLogin,
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 15),
+              // Tombol Biometrik (Face Recognition Icon)
+              Container(
+                height: 50,
+                width: 50,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.face, size: 30),
+                  color: Theme.of(context).colorScheme.primary,
+                  onPressed: () {
+                    // TODO: Panggil Biometric Login
+                  },
+                ),
+              )
+            ],
           ),
+
         ],
       ),
     );

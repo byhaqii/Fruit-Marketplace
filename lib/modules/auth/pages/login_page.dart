@@ -1,5 +1,4 @@
-// lib/modules/auth/pages/login_page.dart (Versi diperbaiki)
-
+// lib/modules/auth/pages/login_page.dart
 import 'package:flutter/material.dart';
 import '../widgets/login_form.dart';
 
@@ -11,85 +10,74 @@ class LoginPage extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     
     return Scaffold(
-      // Latar belakang putih untuk keseluruhan Scaffold
-      backgroundColor: Colors.white, 
+      // Scaffold background kini diatur oleh Theme
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-           Container(
+            // Area Header (Mencapai 40% dari tinggi layar)
+            Container(
               height: size.height * 0.40, 
               width: size.width,
-              // HAPUS BARIS INI:
-              // color: Theme.of(context).colorScheme.primary.withOpacity(0.8), // <--- JANGAN GUNAKAN INI JIKA ADA DECORATION
-              
-              // Jaga agar Decoration menjadi satu-satunya sumber pewarnaan/styling
               decoration: BoxDecoration(
-                // PINDAHKAN WARNA KE SINI:
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
-                
-                // Coba muat gambar lagi (pastikan aset ada dan pubspec sudah di-get)
+                // Warna primer yang sudah diatur di theme
+                color: Theme.of(context).colorScheme.primary, 
                 image: const DecorationImage(
-                  // GANTI DENGAN ASSET YANG BENAR
-                 image: const AssetImage('assets/fruit_background.jpg'),
+                  image: AssetImage('assets/fruit_background.jpg'), 
                   fit: BoxFit.cover,
+                  // Gunakan filter yang lebih halus untuk kontras
                   colorFilter: ColorFilter.mode(
-                    Colors.black, BlendMode.dstATop // Gunakan dstATop agar warna tema Anda terlihat
+                    Colors.black, 
+                    BlendMode.dstATop // Memungkinkan warna tema terlihat di atas gambar
                   ),
                 ),
               ),
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 30, bottom: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Teks ini harus berwarna putih agar kontras dengan latar belakang ungu/hijau
-                    const Text( 
-                      'Hallo!',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white, 
-                      ),
+              // PENTING: Posisikan teks agak ke atas dan ke kiri
+              alignment: const Alignment(-0.8, 0.5), // X: -0.8 (kiri), Y: 0.5 (agak ke atas)
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Text( 
+                    'Hallo!',
+                    style: TextStyle(
+                      fontSize: 40, // Sedikit lebih kecil agar rapi
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white, 
                     ),
-                    const Text(
-                      'Welcome to Fruit Market', 
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white70, 
-                      ),
+                  ),
+                  Text(
+                    'Welcome to Fruit Market', 
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70, 
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
-            // Area Form dengan Curved Top (Tinggi 60%)
+            // Area Form dengan Curved Top
             Container(
               width: size.width,
               constraints: BoxConstraints(minHeight: size.height * 0.60),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor, // Background Form mengikuti Scaffold
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(40), 
                   topRight: Radius.circular(40),
                 ),
               ),
-              // Geser ke atas untuk menutupi bagian bawah header
-              transform: Matrix4.translationValues(0.0, -30.0, 0.0), 
+              // Geser ke atas (sesuaikan nilai -30.0 jika kurang pas)
+              transform: Matrix4.translationValues(0.0, -40.0, 0.0), 
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    // Judul Login (warna otomatis dari Theme Text Span)
+                    Text(
                       'Login',
-                      style: TextStyle(
-                        fontSize: 32, 
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 20),
                     const LoginForm(),
@@ -97,9 +85,10 @@ class LoginPage extends StatelessWidget {
                     Center(
                       child: TextButton(
                         onPressed: () {
-                          // TODO: Implementasi navigasi ke halaman Register
+                          // TODO: Navigasi ke Register
                         },
-                        child: Text('Don\'t have account? Sign Up', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
+                        child: Text('Don\'t have account? Sign Up', 
+                            style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
                       ),
                     ),
                   ],
