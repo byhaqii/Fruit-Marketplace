@@ -18,7 +18,7 @@ class _DashboardPageState extends State<DashboardPage> {
   // Daftar halaman/konten placeholder 
   final List<Widget> pages = [
     const Center(child: Text('Halaman Home')),
-    const Center(child: Text('Halaman Store')),
+    const Center(child: Text('Halaman Marketplace')),
     const Center(child: Text('Halaman Statistic')),
     const Center(child: Text('Halaman Akun')),
   ];

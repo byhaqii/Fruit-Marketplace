@@ -1,4 +1,3 @@
-// lib/widgets/bottom_bar.dart
 import 'package:flutter/material.dart';
 import '_nav_item.dart'; // Import NavItem
 
@@ -14,8 +13,8 @@ class NavData {
 // Data navigasi untuk BottomBar
 final List<NavData> navItems = [
   const NavData(icon: Icons.home, label: 'Home', route: '/'),
-  const NavData(icon: Icons.shopping_bag, label: 'Store', route: '/produk'),
-  const NavData(icon: Icons.bar_chart, label: 'Statistic', route: '/statistic'), 
+  const NavData(icon: Icons.shopping_bag, label: 'Marketplace', route: '/produk'),
+  const NavData(icon: Icons.bar_chart, label: 'Statisticssssss', route: '/statistic'), 
   const NavData(icon: Icons.person, label: 'Akun', route: '/akun'), 
 ];
 
@@ -54,7 +53,7 @@ class BottomBar extends StatelessWidget {
               activeColor: primaryColor,
             ),
             
-            // Item 2: Store
+            // Item 2: Marketplace
             NavItem(
               icon: navItems[1].icon,
               label: navItems[1].label,
