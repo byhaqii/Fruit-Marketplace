@@ -10,7 +10,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PBL Semester5',
+      title: 'Fruitify ',
       theme: AppTheme.light(),
       // Gunakan AuthCheck sebagai home, atau sebagai initialRoute (kita gunakan route map)
       initialRoute: Routes.initial,
