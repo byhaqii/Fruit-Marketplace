@@ -15,6 +15,9 @@ class App extends StatelessWidget {
       // Gunakan AuthCheck sebagai home, atau sebagai initialRoute (kita gunakan route map)
       initialRoute: Routes.initial,
       routes: Routes.routes,
+
+      debugShowCheckedModeBanner: false,
+      
       // Fallback jika rute tidak ditemukan:
       onUnknownRoute: (settings) => MaterialPageRoute(builder: (context) => const AuthCheck()),
     );

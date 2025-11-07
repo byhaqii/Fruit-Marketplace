@@ -6,6 +6,7 @@ import '../../../utils/validator.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_textfield.dart';
 import '../../../widgets/loading_indicator.dart';
+import '../pages/biometric_login_page.dart'; // Import untuk navigasi biometrik
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -28,11 +29,13 @@ class _LoginFormState extends State<LoginForm> {
           _passwordController.text,
         );
         
+        // Navigasi ke Dashboard setelah berhasil
         Navigator.pushReplacementNamed(context, '/'); 
 
       } catch (e) {
+        // Menangkap error dari ApiClient dan menampilkannya di SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(content: Text('Error Login: ${e.toString().replaceAll("Exception:", "")}')),
         );
       }
     }
@@ -112,13 +115,18 @@ class _LoginFormState extends State<LoginForm> {
                   icon: const Icon(Icons.face, size: 30),
                   color: Theme.of(context).colorScheme.primary,
                   onPressed: () {
-                    // TODO: Panggil Biometric Login
+                    // Panggil Biometric Login Page
+                    Navigator.push(
+                      context, 
+                      MaterialPageRoute(
+                        builder: (context) => const BiometricLoginPage(),
+                      ),
+                    );
                   },
                 ),
-              )
+              ),
             ],
           ),
-
         ],
       ),
     );

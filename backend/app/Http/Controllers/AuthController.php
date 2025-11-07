@@ -2,25 +2,33 @@
 
 namespace App\Http\Controllers;
 
+// Tambahkan semua USE statements yang diperlukan
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Http\JsonResponse; // Gunakan ini untuk respon yang konsisten
 
 class AuthController extends Controller
 {
     /**
-     * Handle a login request to the application.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * Menangani permintaan login.
      */
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
-        $this->validate($request, [
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
+        try {
+            // $this->validate() adalah method dari BaseController Lumen
+            $this->validate($request, [ 
+                'email' => 'required|email',
+                'password' => 'required'
+            ]);
+        } catch (ValidationException $e) {
+             return response()->json([
+                'message' => 'Input tidak valid',
+                'errors' => $e->errors()
+            ], 422);
+        }
 
         $user = User::where('email', $request->input('email'))->first();
 
@@ -34,21 +42,17 @@ class AuthController extends Controller
         $user->api_token = Str::random(60);
         $user->save();
 
-        // Return token and role for the mobile app
         return response()->json([
             'message' => 'Login berhasil',
             'token' => $user->api_token,
-            'role' => $user->role, // Multi-role login success
+            'role' => $user->role,
         ]);
     }
     
     /**
-     * Log the user out (by invalidating the token).
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * Menangani permintaan logout.
      */
-    public function logout(Request $request)
+    public function logout(Request $request): JsonResponse
     {
         $user = $request->user();
         if ($user) {

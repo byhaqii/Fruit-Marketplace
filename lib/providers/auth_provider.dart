@@ -19,7 +19,6 @@ class AuthProvider with ChangeNotifier {
     final token = await PreferencesHelper.getAuthToken();
     final role = await PreferencesHelper.getUserRole();
     
-    // Check if token and role exist locally
     if (token != null && role != null) {
       _isLoggedIn = true;
       _userRole = role;
@@ -27,7 +26,6 @@ class AuthProvider with ChangeNotifier {
       _isLoggedIn = false;
       _userRole = null;
     }
-    // Tidak perlu notifyListeners di sini, karena AuthCheck akan membaca status awal
   }
 
 
@@ -64,10 +62,9 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> logout() async {
     try {
-      // Mengandalkan logic di ApiClient untuk mengirim token
       await apiClient.post('/auth/logout', null);
     } catch (e) {
-      // Ignore error, fokus pada penghapusan token lokal
+      // Abaikan error, fokus pada penghapusan token lokal
     }
     await PreferencesHelper.clearAll();
     _isLoggedIn = false;

@@ -17,7 +17,7 @@ class ApiClient {
               receiveTimeout: const Duration(milliseconds: 30000),
             ),
           ) {
-    // Menambahkan Interceptor opsional untuk logging
+    // ...
   }
   
   Future<Options> optionsWithAuth() async {
@@ -29,10 +29,8 @@ class ApiClient {
     );
   }
 
-  // Helper untuk menentukan apakah route perlu token
   Future<Options?> _getFinalOptions(String path, Options? options) async {
     if (options != null) return options;
-    // Jika path BUKAN untuk auth (login, register), kirim token
     if (!path.contains('/auth/')) {
         return await optionsWithAuth();
     }
@@ -96,8 +94,20 @@ class ApiClient {
     if (e.response != null) {
       final status = e.response?.statusCode;
       final respData = e.response?.data;
+      
+      String errorMessage = 'Terjadi kesalahan tidak dikenal.';
+      try {
+        if (respData is Map<String, dynamic> && respData.containsKey('message')) {
+            errorMessage = respData['message'];
+        } else if (respData is String) {
+            errorMessage = respData;
+        }
+      } catch (_) {
+        // Abaikan jika decoding gagal
+      }
+      
       return Exception(
-        'Request failed ($status): ${respData is String ? respData : jsonEncode(respData)}',
+        'Permintaan gagal ($status): $errorMessage',
       );
     }
     return Exception(e.message);
