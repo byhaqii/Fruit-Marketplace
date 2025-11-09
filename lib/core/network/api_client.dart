@@ -1,6 +1,6 @@
 // lib/core/network/api_client.dart
 import 'dart:convert';
-import 'package:dio/dio.dart';
+import 'package:dio/dio.dart'; // Pastikan Dio diimpor
 import '../../config/env.dart';
 import '../storage/preferences_helper.dart'; 
 
@@ -31,10 +31,10 @@ class ApiClient {
 
   Future<Options?> _getFinalOptions(String path, Options? options) async {
     if (options != null) return options;
-    if (!path.contains('/auth/')) {
-        return await optionsWithAuth();
+    if (path == '/auth/login' || path == '/auth/register') {
+      return null; 
     }
-    return null;
+    return await optionsWithAuth();
   }
 
   Future<dynamic> get(
@@ -61,9 +61,19 @@ class ApiClient {
     Options? options,
   }) async {
     try {
+      
+      // --- PERBAIKAN LOGIKA PENGIRIMAN DATA ---
+      dynamic postData = data;
+      // Jika ini adalah login atau register, ubah Map menjadi FormData
+      // agar backend PHP dapat membacanya sebagai form-data.
+      if ((path == '/auth/login' || path == '/auth/register') && data is Map<String, dynamic>) {
+        postData = FormData.fromMap(data); 
+      }
+      // --- AKHIR PERBAIKAN ---
+
       final response = await dio.post(
         path,
-        data: data,
+        data: postData, // Gunakan postData yang sudah diformat
         queryParameters: queryParameters,
         options: await _getFinalOptions(path, options),
       );
@@ -89,7 +99,7 @@ class ApiClient {
   Exception _handleDioError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout || 
         e.type == DioExceptionType.receiveTimeout) {
-      return Exception('Request timed out');
+      return Exception('Request timed out. Pastikan IP/Firewall benar.');
     }
     if (e.response != null) {
       final status = e.response?.statusCode;

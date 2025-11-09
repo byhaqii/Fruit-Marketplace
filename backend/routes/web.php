@@ -12,21 +12,17 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
-$router->group(['namespace' => 'App\Http\Controllers'], function ($router) {
-    
-    // Auth Routes
-    // Pastikan baris ini ada dan tidak dikomentari
-    $router->post('/auth/login', 'AuthController@login');
+// Pastikan grup namespace App\Http\Controllers sudah dihapus dari sini
+// (karena sudah ada di bootstrap/app.php)
 
-    // Protected Routes (Perlu token untuk akses)
-    $router->group(['middleware' => 'auth'], function () use ($router) {
-        $router->post('/auth/logout', 'AuthController@logout');
-        
-        // Contoh endpoint untuk mendapatkan profil pengguna yang sedang login
-        $router->get('/user/profile', function (\Illuminate\Http\Request $request) {
-            return response()->json($request->user());
-        });
-        
-        // Route untuk modul-modul lain akan ditambahkan di sini
+// Auth Routes
+// Pastikan ini adalah 'post', bukan 'get'
+$router->post('/auth/login', 'AuthController@login');
+
+// Protected Routes
+$router->group(['middleware' => 'auth'], function () use ($router) {
+    $router->post('/auth/logout', 'AuthController@logout');
+    $router->get('/user/profile', function (\Illuminate\Http\Request $request) {
+        return response()->json($request->user());
     });
 });

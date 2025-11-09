@@ -2,10 +2,9 @@
 
 require_once __DIR__.'/../vendor/autoload.php';
 
-// --- IMPORTS YANG DIBUTUHKAN ---
+// Menggunakan middleware CORS kustom Anda
 use App\Http\Middleware\CorsMiddleware; 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// --- END IMPORTS ---
 
 
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
@@ -25,10 +24,8 @@ $app = new Laravel\Lumen\Application(
 );
 
 // --- PERBAIKANNYA DI SINI ---
-// Aktifkan Facades (agar Hash:: dan Str:: berfungsi)
+// Hapus tanda '//' dari dua baris di bawah ini
 $app->withFacades(); 
-
-// Aktifkan Eloquent (agar Model User:: berfungsi)
 $app->withEloquent(); 
 // --- AKHIR PERBAIKAN ---
 
@@ -95,7 +92,6 @@ $app->register(App\Providers\AuthServiceProvider::class);
 $app->router->group([
     'namespace' => 'App\Http\Controllers',
 ], function ($router) {
-    // Path 'routes/web.php' Anda sudah benar
     require __DIR__.'/../routes/web.php'; 
 });
 
