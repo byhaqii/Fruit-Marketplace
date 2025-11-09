@@ -27,7 +27,7 @@ $app = new Laravel\Lumen\Application(
 // Hapus tanda '//' dari dua baris di bawah ini
 $app->withFacades(); 
 $app->withEloquent(); 
-// --- AKHIR PERBAIKAN ---
+
 
 
 /*

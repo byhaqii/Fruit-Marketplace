@@ -66,9 +66,9 @@ class ApiClient {
       dynamic postData = data;
       // Jika ini adalah login atau register, ubah Map menjadi FormData
       // agar backend PHP dapat membacanya sebagai form-data.
-      if ((path == '/auth/login' || path == '/auth/register') && data is Map<String, dynamic>) {
-        postData = FormData.fromMap(data); 
-      }
+     if ((path == '/auth/login' || path == '/auth/register') && data is Map<String, dynamic>) {
+  postData = FormData.fromMap(data); 
+}
       // --- AKHIR PERBAIKAN ---
 
       final response = await dio.post(

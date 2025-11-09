@@ -28,7 +28,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-
   Future<void> login(String email, String password) async {
     _setLoading(true);
     try {
@@ -59,6 +58,35 @@ class AuthProvider with ChangeNotifier {
       rethrow;
     }
   }
+  
+  // --- TAMBAHKAN FUNGSI BARU INI ---
+  Future<void> register(String name, String email, String password, String confirmPassword, String phone) async {
+    _setLoading(true);
+    try {
+      // Panggil API Register ke backend Lumen
+      // ApiClient akan otomatis mengirim FormData karena path /auth/register
+      final resp = await apiClient.post('/auth/register', {
+        'name': name,
+        'email': email,
+        'password': password,
+        'confirm_password': confirmPassword,
+        'phone': phone,
+      });
+
+      // Jika berhasil (201), backend akan mengembalikan pesan sukses
+      if (resp is Map<String, dynamic> && resp.containsKey('message')) {
+         _setLoading(false);
+         return; // Sukses
+      }
+      
+      throw Exception('Registrasi gagal: Respon API tidak valid.');
+
+    } catch (e) {
+      _setLoading(false);
+      rethrow; // Biarkan UI (RegisterForm) menangani error
+    }
+  }
+  // --- AKHIR FUNGSI BARU ---
 
   Future<void> logout() async {
     try {

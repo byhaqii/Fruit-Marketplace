@@ -16,6 +16,7 @@ class RegisterForm extends StatefulWidget {
 
 class _RegisterFormState extends State<RegisterForm> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController(); // <-- TAMBAHAN BARU
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -23,28 +24,38 @@ class _RegisterFormState extends State<RegisterForm> {
 
   Future<void> _submitRegister() async {
     if (_formKey.currentState?.validate() ?? false) {
-      // TODO: Implementasi registrasi ke backend Lumen
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       try {
-        // Asumsi: Logic registrasi akan memanggil API /auth/register (belum dibuat)
-        // Untuk sekarang, kita mock sukses dan kembali ke Login.
-        await Future.delayed(const Duration(seconds: 1)); // Mock loading
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text('Registrasi Sukses! Silakan Login.')),
+        // Panggil fungsi register baru di AuthProvider
+        await authProvider.register(
+          _nameController.text,
+          _emailController.text,
+          _passwordController.text,
+          _confirmPasswordController.text,
+          _phoneController.text,
         );
-        Navigator.pop(context); // Kembali ke halaman login
+        
+        // Tampilkan notifikasi sukses
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Registrasi Sukses! Silakan Login.')),
+          );
+          Navigator.pop(context); // Kembali ke halaman login
+        }
 
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error registrasi: ${e.toString()}')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${e.toString().replaceAll("Exception:", "")}')),
+          );
+        }
       }
     }
   }
 
   @override
   void dispose() {
+    _nameController.dispose(); // <-- TAMBAHAN BARU
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -60,6 +71,16 @@ class _RegisterFormState extends State<RegisterForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Input Nama Lengkap (TAMBAHAN BARU)
+          CustomTextField(
+            hint: 'Nama Lengkap',
+            controller: _nameController,
+            validator: Validator.notEmpty, // Gunakan validator
+            keyboardType: TextInputType.name,
+            prefixIcon: const Icon(Icons.person_outline, color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+
           // Input Email
           CustomTextField(
             hint: 'Email',
@@ -99,7 +120,7 @@ class _RegisterFormState extends State<RegisterForm> {
           CustomTextField(
             hint: 'Phone',
             controller: _phoneController,
-            validator: Validator.notEmpty,
+            validator: Validator.notEmpty, // Sesuaikan jika boleh null
             keyboardType: TextInputType.phone,
             prefixIcon: const Icon(Icons.phone_outlined, color: Colors.grey),
           ),
