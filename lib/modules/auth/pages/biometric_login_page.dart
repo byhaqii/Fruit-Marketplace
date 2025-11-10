@@ -1,8 +1,9 @@
 // lib/modules/auth/pages/biometric_login_page.dart
-
 import 'package:flutter/material.dart';
-import '../../../../widgets/loading_indicator.dart';
+import 'package:provider/provider.dart';
 import '../../../core/services/biometric_service.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../widgets/loading_indicator.dart';
 
 class BiometricLoginPage extends StatefulWidget {
   const BiometricLoginPage({super.key});
@@ -19,7 +20,6 @@ class _BiometricLoginPageState extends State<BiometricLoginPage> {
   @override
   void initState() {
     super.initState();
-    // Memulai autentikasi setelah widget selesai dibangun
     Future.microtask(() => _startBiometricAuth());
   }
 
@@ -33,59 +33,72 @@ class _BiometricLoginPageState extends State<BiometricLoginPage> {
   }
 
   Future<void> _startBiometricAuth() async {
-    _updateMessage('Memeriksa token dan otentikasi...');
+    _updateMessage('Pindai sidik jari/wajah Anda...');
     
-    // 1. Cek apakah ada token yang tersimpan
-    final userRole = await _biometricService.getTokenAndRole();
-
-    if (userRole == null) {
-      _updateMessage('Anda harus Login manual sekali terlebih dahulu.', loading: false);
-      // Tunggu 3 detik lalu kembali ke Login Page
-      await Future.delayed(const Duration(seconds: 3));
-      if (mounted) Navigator.pop(context);
-      return;
+    // 1. Cek apakah perangkat keras didukung
+    final isAvailable = await _biometricService.isBiometricAvailable();
+    if (!isAvailable) {
+      _updateMessage('Perangkat biometrik tidak tersedia. Silakan login manual.', loading: false);
+      return; // Tetap di halaman ini, biarkan user tekan "Login Manual"
     }
 
-    // 2. Memulai Biometrik
+    // 2. Tampilkan prompt autentikasi
     final isAuthenticated = await _biometricService.authenticate();
 
     if (isAuthenticated) {
-      _updateMessage('Autentikasi Berhasil! Masuk sebagai $userRole.', loading: false);
-      // Navigasi ke Dashboard
-      await Future.delayed(const Duration(seconds: 1));
+      _updateMessage('Autentikasi Berhasil!', loading: false);
+      
+      // Set sesi sebagai aktif
       if (mounted) {
-        // Menggantikan seluruh stack navigasi
-        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        // (AuthCheck akan otomatis mengarahkan ke Dashboard)
+        await Provider.of<AuthProvider>(context, listen: false).setAuthenticated(true);
       }
     } else {
-      _updateMessage('Autentikasi gagal. Silakan coba lagi atau Login manual.', loading: false);
-      // Beri opsi untuk kembali ke login manual
+      _updateMessage('Autentikasi gagal. Silakan coba lagi.', loading: false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Biometric Login')),
+      backgroundColor: Colors.white,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (_isLoading) const LoadingIndicator(),
-            const SizedBox(height: 20),
-            Text(
-              _message, 
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Theme.of(context).colorScheme.primary),
-            ),
-            const SizedBox(height: 40),
-            if (!_isLoading)
-              TextButton.icon(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.keyboard_backspace),
-                label: const Text('Kembali ke Login Manual'),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.fingerprint,
+                color: Theme.of(context).colorScheme.primary,
+                size: 64,
               ),
-          ],
+              const SizedBox(height: 20),
+              Text(
+                _message, 
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 40),
+
+              // Tombol untuk mencoba lagi
+              if (!_isLoading)
+                TextButton.icon(
+                  onPressed: _startBiometricAuth,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Coba Lagi'),
+                ),
+              
+              // Tombol untuk kembali ke login manual
+              TextButton(
+                onPressed: () {
+                  // Kembali ke AuthCheck, yang akan mengarahkan ke LoginPage
+                  Provider.of<AuthProvider>(context, listen: false).disableBiometrics();
+                },
+                child: const Text('Gunakan Password Saja'),
+              ),
+            ],
+          ),
         ),
       ),
     );

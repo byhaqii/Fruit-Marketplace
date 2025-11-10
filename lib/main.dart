@@ -11,9 +11,9 @@ void  main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        // Tambahkan provider lain di sini (Keuangan, Warga, dll.)
+        
       ],
-      child: const App(), // App akan me-render AuthCheck di dalamnya
+      child: const App(), 
     ),
   );
 }

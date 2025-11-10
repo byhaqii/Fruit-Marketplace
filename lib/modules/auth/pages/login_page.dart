@@ -1,7 +1,9 @@
 // lib/modules/auth/pages/login_page.dart
 import 'package:flutter/material.dart';
 import '../widgets/login_form.dart';
+// Hapus import yang tidak perlu seperti Provider dan BiometricLoginPage
 
+// Kembalikan ke StatelessWidget (ini versi yang benar)
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
@@ -16,14 +18,13 @@ class LoginPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-            // Area Header dengan Gambar dan Gradasi (40%)
+            // Area Header (Mencapai 40% dari tinggi layar)
             Container(
               height: size.height * 0.40, 
               width: size.width,
-              // Hapus BoxDecoration image, kita pindahkan ke Stack
               child: Stack( 
                 children: [
-                  // Layer 0: Gambar Latar Belakang Penuh (Background Asli)
+                  // Layer 0: Gambar Latar Belakang
                   const Positioned.fill(
                     child: Image(
                       image: AssetImage('assets/fruit_background.jpg'), 
@@ -31,7 +32,7 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
 
-                  // Layer 1: Gradasi Hijau Transparan (Overlay)
+                  // Layer 1: Gradasi Hijau Transparan
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
@@ -43,9 +44,7 @@ class LoginPage extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            // Mulai dari 50% opacity, agar gambar terlihat
                             primaryColor.withOpacity(0.5), 
-                            // Memudar ke 10% opacity, transisi yang lebih halus
                             primaryColor.withOpacity(0.1), 
                           ],
                         ),
@@ -57,7 +56,7 @@ class LoginPage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 40.0, left: 30),
                     child: Align(
-                      alignment: const Alignment(-0.8, 0.5), // Posisikan di tengah-tengah area teks
+                      alignment: const Alignment(-0.8, 0.5),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
@@ -96,7 +95,6 @@ class LoginPage extends StatelessWidget {
                   topRight: Radius.circular(40),
                 ),
               ),
-              // Geser ke atas agar kurva tumpang tindih dengan header
               transform: Matrix4.translationValues(0.0, -40.0, 0.0), 
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
@@ -108,7 +106,8 @@ class LoginPage extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleLarge!.copyWith(fontSize: 32),
                     ),
                     const SizedBox(height: 20),
-                    const LoginForm(),
+                    // LoginForm (yang sudah tidak ada tombol biometriknya)
+                    const LoginForm(), 
                     const SizedBox(height: 20),
                     Center(
                       child: TextButton(

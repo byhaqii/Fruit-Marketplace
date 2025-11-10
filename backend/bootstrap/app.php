@@ -23,11 +23,10 @@ $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
-// --- PERBAIKANNYA DI SINI ---
-// Hapus tanda '//' dari dua baris di bawah ini
+// --- PERBAIKAN ERROR 500 ---
 $app->withFacades(); 
 $app->withEloquent(); 
-
+// --- AKHIR PERBAIKAN ---
 
 
 /*

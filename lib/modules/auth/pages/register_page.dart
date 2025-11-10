@@ -1,11 +1,14 @@
 // lib/modules/auth/pages/register_page.dart
-
 import 'package:flutter/material.dart';
 import '../../../config/constants.dart';
-import '../widgets/register_form.dart';
+import '../widgets/register_form.dart'; 
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
+
+  // DEFINISI WARNA GRADASI BARU (Sama seperti Login)
+  static const Color topGradientColor = Color(0xFF2D7F6A); 
+  static const Color bottomGradientColor = Color(0xFF51E5BF);
 
   void _backToLogin(BuildContext context) {
     Navigator.pop(context);
@@ -15,55 +18,86 @@ class RegisterPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final primaryColor = Theme.of(context).colorScheme.primary;
-
-    // DEFINISI WARNA GRADASI BARU
-    const Color topGradientColor = Color(0xFF26BE97); // Hijau Cerah/Teal
-    const Color bottomGradientColor = Color(
-      0xFF1E5A4A,
-    ); // Hijau Gelap (Warna Tema)
-
+    
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, 
       extendBodyBehindAppBar: true,
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
             // Area Header dengan Gambar dan Gradasi (40%)
             Container(
-              height: size.height * 0.40,
+              height: size.height * 0.40, 
               width: size.width,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-                image: DecorationImage(
-                  image: const AssetImage('assets/fruit_background.jpg'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-              child: Stack(
+              child: Stack( 
                 children: [
-                  // Layer 1: Gradasi Hijau Kustom
+                  // Layer 0: Gambar Latar Belakang
+                  const Positioned.fill(
+                    child: Image(
+                      image: AssetImage('assets/fruit_background.jpg'), 
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+
+                  // Layer 1: Gradasi Hijau Kustom (Overlay)
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(40),
+                          bottomLeft: Radius.circular(40), 
                           bottomRight: Radius.circular(40),
                         ),
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          // MENGGUNAKAN DUA WARNA BARU
                           colors: [
-                            // Mulai dari 50% opacity, agar gambar terlihat
-                            primaryColor.withOpacity(0.5),
-                            // Memudar ke 10% opacity, transisi yang lebih halus
-                            primaryColor.withOpacity(0.1),
+                            topGradientColor.withOpacity(0.7), 
+                            bottomGradientColor.withOpacity(0.5), 
                           ],
                         ),
                       ),
+                    ),
+                  ),
+
+                  // Layer 2: Tombol Back & Teks "Sign Up"
+                  Padding(
+                    padding: const EdgeInsets.only(top: 40.0, left: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () => _backToLogin(context),
+                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                          label: const Text('Back to login', style: TextStyle(color: Colors.white)),
+                          style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                        ),
+                        
+                        Expanded(
+                          child: Align(
+                            alignment: const Alignment(-0.8, 0.5),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text( 
+                                  'Sign Up',
+                                  style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white, 
+                                  ),
+                                ),
+                                Text(
+                                  'Join ${AppConstants.marketplaceName}',
+                                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                                    color: Colors.white70, 
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -75,45 +109,37 @@ class RegisterPage extends StatelessWidget {
               width: size.width,
               constraints: BoxConstraints(minHeight: size.height * 0.60),
               decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
+                color: Theme.of(context).scaffoldBackgroundColor, 
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(40),
+                  topLeft: Radius.circular(40), 
                   topRight: Radius.circular(40),
                 ),
               ),
-              transform: Matrix4.translationValues(0.0, -40.0, 0.0),
+              transform: Matrix4.translationValues(0.0, -40.0, 0.0), 
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    Text(
-                      'Sign Up',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleLarge!.copyWith(fontSize: 32),
-                    ),
-                    const SizedBox(height: 20),
-                    const RegisterForm(),
-
-                    const SizedBox(height: 20),
-                    Center(
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pop(context); // Kembali ke Login Page
-                        },
-                        child: Text(
-                          'Already have an account? Login',
-                          style: TextStyle(color: primaryColor),
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                      Text(
+                        'Sign Up',
+                        style: Theme.of(context).textTheme.titleLarge!.copyWith(fontSize: 32),
+                      ),
+                      const SizedBox(height: 20),
+                      const RegisterForm(),
+                      
+                      const SizedBox(height: 20),
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pop(context); // Kembali ke Login Page
+                          },
+                          child: Text('Already have an account? Login', 
+                              style: TextStyle(color: primaryColor)),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                   ],
+                ), 
               ),
             ),
           ],
