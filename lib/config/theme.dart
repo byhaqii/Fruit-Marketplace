@@ -14,6 +14,7 @@ class AppTheme {
         primary: primaryGreen,
         secondary: primaryGreen, // Digunakan untuk link/text button
       ),
+      useMaterial3: true,
       scaffoldBackgroundColor: lightBackground, 
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,

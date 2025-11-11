@@ -103,6 +103,8 @@ class _DashboardPageState extends State<DashboardPage> {
       NavItem(Icons.person, 'Akun', profileScreen), 
     ];
   }
+  // --- END LOGIC BOTTOM NAV BAR ---
+
 
   @override
   Widget build(BuildContext context) {
