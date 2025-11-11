@@ -11,29 +11,35 @@ import '../warga/pages/warga_list_page.dart';
 import 'dashboard_content.dart';
 import '../keuangan/pages/iuran_page.dart';
 import '../profile/profile_page.dart'; 
-import 'admin_control_panel.dart'; // <-- IMPORT CONTROL PANEL BARU
+import 'admin_control_panel.dart'; 
 
-// ... (Definisi NavItem tetap sama) ...
+// Definisi Struktur Menu per Role
 class NavItem {
   final IconData icon;
   final String label;
   final Widget screen;
+
   NavItem(this.icon, this.label, this.screen);
 }
 
-
 class DashboardPage extends StatefulWidget {
-  // ... (kode StatefulWidget tetap sama) ...
   const DashboardPage({super.key});
+
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-
 class _DashboardPageState extends State<DashboardPage> {
   int _currentIndex = 0;
   List<NavItem> _navItems = []; 
-  String _appBarTitle = AppConstants.appName; // Default title
+  String _appBarTitle = AppConstants.appName; 
+
+  // --- DEFINISI GRADASI BARU DARI XML ---
+  // Warna hijau primer (Offset 0.4)
+  static const Color topGradientColor = Color(0xFF2D7F6A); 
+  // Warna teal transparan (B3 = 70% opacity, Offset 1.0)
+  static const Color bottomGradientColor = Color(0xB351E5BF); 
+  // --- AKHIR DEFINISI GRADASI ---
 
   @override
   void initState() {
@@ -41,7 +47,6 @@ class _DashboardPageState extends State<DashboardPage> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     _navItems = _getNavItems(auth.userRole);
     
-    // Set judul AppBar awal
     if (auth.userRole == 'admin') {
       _appBarTitle = 'Admin Control Panel';
     } else {
@@ -108,28 +113,59 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Ambil role admin untuk cek AppBar
     final bool isAdmin = Provider.of<AuthProvider>(context, listen: false).userRole == 'admin';
     
     return Scaffold(
+      // Atur AppBar agar transparan
+      extendBodyBehindAppBar: true, // Membuat body menembus ke belakang AppBar
       appBar: AppBar(
-        title: Text(_appBarTitle, style: Theme.of(context).appBarTheme.titleTextStyle),
+        title: Text(
+          _appBarTitle, 
+          // Atur warna teks AppBar menjadi putih agar kontras dengan gradasi
+          style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(color: Colors.white)
+        ),
         automaticallyImplyLeading: false, 
+        backgroundColor: Colors.transparent, // Buat AppBar transparan
+        elevation: 0, // Hapus bayangan
       ),
 
-      body: _navItems[_currentIndex].screen,
+      // Gunakan Stack untuk menempatkan gradasi di belakang konten
+      body: Stack(
+        children: [
+          // Layer 1: Gradasi Background (Sesuai XML Anda)
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [topGradientColor, bottomGradientColor],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: [0.4, 1.0], // Sesuai offset 0.4 dan 1.0
+              ),
+            ),
+          ),
+          
+          // Layer 2: Konten Halaman (yang sekarang transparan)
+          // Tambahkan SafeArea agar konten tidak tertutup notch/status bar
+          SafeArea(
+            child: _navItems[_currentIndex].screen,
+          ),
+        ],
+      ),
       
+      // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.white, // Biarkan putih agar kontras
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
           setState(() {
             _currentIndex = index;
-            // Update judul AppBar saat tab diganti (kecuali untuk Admin)
-            if (!isAdmin) {
+            // Update judul AppBar saat tab diganti
+            if (isAdmin && index == 0) {
+              _appBarTitle = 'Admin Control Panel';
+            } else {
               _appBarTitle = _navItems[index].label;
             }
           });
