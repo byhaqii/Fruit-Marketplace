@@ -4,16 +4,16 @@ import 'package:provider/provider.dart';
 import 'app.dart';
 import 'providers/auth_provider.dart';
 
-void  main() {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        
+        // Tambahkan provider lain di sini (Keuangan, Warga, dll.)
       ],
-      child: const App(), 
+      child: const App(), // App akan me-render AuthCheck di dalamnya
     ),
   );
 }
