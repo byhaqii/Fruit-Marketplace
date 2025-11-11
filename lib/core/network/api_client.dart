@@ -1,6 +1,6 @@
 // lib/core/network/api_client.dart
 import 'dart:convert';
-import 'package:dio/dio.dart';
+import 'package:dio/dio.dart'; // Pastikan Dio diimpor
 import '../../config/env.dart';
 import '../storage/preferences_helper.dart'; 
 
@@ -17,7 +17,7 @@ class ApiClient {
               receiveTimeout: const Duration(milliseconds: 30000),
             ),
           ) {
-    // Menambahkan Interceptor opsional untuk logging
+    // ...
   }
   
   Future<Options> optionsWithAuth() async {
@@ -29,14 +29,12 @@ class ApiClient {
     );
   }
 
-  // Helper untuk menentukan apakah route perlu token
   Future<Options?> _getFinalOptions(String path, Options? options) async {
     if (options != null) return options;
-    // Jika path BUKAN untuk auth (login, register), kirim token
-    if (!path.contains('/auth/')) {
-        return await optionsWithAuth();
+    if (path == '/auth/login' || path == '/auth/register') {
+      return null; 
     }
-    return null;
+    return await optionsWithAuth();
   }
 
   Future<dynamic> get(
@@ -63,9 +61,19 @@ class ApiClient {
     Options? options,
   }) async {
     try {
+      
+      // --- PERBAIKAN LOGIKA PENGIRIMAN DATA ---
+      dynamic postData = data;
+      // Jika ini adalah login atau register, ubah Map menjadi FormData
+      // agar backend PHP dapat membacanya sebagai form-data.
+     if ((path == '/auth/login' || path == '/auth/register') && data is Map<String, dynamic>) {
+  postData = FormData.fromMap(data); 
+}
+      // --- AKHIR PERBAIKAN ---
+
       final response = await dio.post(
         path,
-        data: data,
+        data: postData, // Gunakan postData yang sudah diformat
         queryParameters: queryParameters,
         options: await _getFinalOptions(path, options),
       );
@@ -91,13 +99,25 @@ class ApiClient {
   Exception _handleDioError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout || 
         e.type == DioExceptionType.receiveTimeout) {
-      return Exception('Request timed out');
+      return Exception('Request timed out. Pastikan IP/Firewall benar.');
     }
     if (e.response != null) {
       final status = e.response?.statusCode;
       final respData = e.response?.data;
+      
+      String errorMessage = 'Terjadi kesalahan tidak dikenal.';
+      try {
+        if (respData is Map<String, dynamic> && respData.containsKey('message')) {
+            errorMessage = respData['message'];
+        } else if (respData is String) {
+            errorMessage = respData;
+        }
+      } catch (_) {
+        // Abaikan jika decoding gagal
+      }
+      
       return Exception(
-        'Request failed ($status): ${respData is String ? respData : jsonEncode(respData)}',
+        'Permintaan gagal ($status): $errorMessage',
       );
     }
     return Exception(e.message);
