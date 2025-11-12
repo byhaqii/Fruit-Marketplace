@@ -1,0 +1,3 @@
+class FaceRecognitionService {
+  // ...face recognition helpers...
+}

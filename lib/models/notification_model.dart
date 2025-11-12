@@ -1,0 +1,3 @@
+class NotificationModel {
+  // ...notification model fields...
+}
