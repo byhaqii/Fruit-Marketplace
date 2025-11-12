@@ -1,3 +1,0 @@
-class AuthController {
-  // ...business logic for auth...
-}
