@@ -2,8 +2,9 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Warna hijau primer BARU: #2D7F6A
-  static const Color primaryGreen = Color(0xFF2D7F6A); 
+  // Warna hijau primer dari mockup: #388E3C
+  static const Color primaryGreen = Color(0xFF388E3C); 
+  // Warna latar belakang form yang sangat terang
   static const Color lightBackground = Color(0xFFF7F7F7);
 
   static ThemeData light() {
@@ -26,18 +27,6 @@ class AppTheme {
         titleLarge: base.textTheme.titleLarge!.copyWith(
           color: primaryGreen, 
           fontWeight: FontWeight.bold,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryGreen,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          minimumSize: const Size(double.infinity, 50),
-          elevation: 5,
         ),
       ),
     );

@@ -14,18 +14,13 @@ return new class extends Migration
         Schema::create('warga', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->unique()->constrained('users')->onDelete('cascade');
-            $table->string('nik', 16)->unique()->nullable()->comment('Dari OCR KTP'); // Dibuat nullable
+            $table->string('nik', 16)->unique()->comment('Dari OCR KTP');
             $table->string('nama');
             $table->string('tempat_lahir')->nullable();
             $table->date('tanggal_lahir')->nullable();
-            $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan'])->nullable(); // Dibuat nullable
+            $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan']);
             $table->text('alamat')->nullable();
             $table->string('no_kk')->nullable()->comment('Dari OCR KK');
-            
-            // --- INI PERBAIKANNYA ---
-            $table->string('no_telp')->nullable(); // Tambahkan kolom no_telp
-            // --- AKHIR PERBAIKAN ---
-            
             $table->enum('status_keluarga', ['Kepala Keluarga', 'Suami', 'Istri', 'Anak', 'Lain-lain'])->nullable();
             $table->string('foto_ktp_path')->nullable()->comment('Jalur penyimpanan foto KTP (untuk Face Verification)');
             $table->boolean('is_verified')->default(false)->comment('Verifikasi data warga baru');

@@ -9,7 +9,6 @@ import '../modules/marketplace/pages/produk_list_page.dart';
 import '../modules/notification/notification_page.dart';
 import '../modules/warga/pages/warga_list_page.dart';
 import '../modules/keuangan/pages/laporan_page.dart';
-import '../modules/profile/settings_page.dart'; // <-- IMPORT BARU
 
 class Routes {
   static const String initial = '/auth-check'; 
@@ -20,9 +19,6 @@ class Routes {
     '/login': (context) => const LoginPage(),
     '/register': (context) => const RegisterPage(),
     
-    // Rute Pengaturan Baru
-    '/settings': (context) => const SettingsPage(), // <-- TAMBAHKAN BARIS INI
-
     // Core Modules (Hanya diakses melalui BottomNav)
     '/': (context) => const DashboardPage(),
     '/warga': (context) => const WargaListPage(),
