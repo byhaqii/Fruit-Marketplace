@@ -11,8 +11,7 @@ class ProdukDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const String dummyDescription =
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi vitae odio nec metus interdum interdum in sit amet nunc. In ut iaculis lorem, condimentum egestas nulla. Nunc vel vestibulum libero. Proin modo nibh vel rhoncus turpis. Donec id erat dui. Integer luctus massa, iaculis at enim, imperdiet semper ipsum. Pellentesque accumsan purus id pellentesque posuere. Donec imperdiet feugiat tortor ac rhoncus. Integer in odio vel purus gravida euismod. Cras congue orci enim, non varius tortor dictum at.";
+    // Hapus deklarasi dummyDescription yang tidak terpakai
 
     return Scaffold(
       appBar: AppBar(
@@ -30,22 +29,23 @@ class ProdukDetailPage extends StatelessWidget {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 80), 
+            padding: const EdgeInsets.only(bottom: 80),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Hero(
                   tag: produk.id,
                   child: AspectRatio(
-                    aspectRatio: 1.2, 
+                    aspectRatio: 1.2,
                     child: Container(
-                      color: const Color(0xFFF9E8E8), 
+                      color: const Color(0xFFF9E8E8),
                       child: Image.network(
-                        'https://images.unsplash.com/photo-1619665671569-808848d689b0', 
+                        produk.imageUrl, // Menggunakan imageUrl dari model
                         fit: BoxFit.cover,
                         errorBuilder: (c, o, s) => Container(
-                            color: Colors.grey[200],
-                            child: const Icon(Icons.broken_image)),
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.broken_image),
+                        ),
                       ),
                     ),
                   ),
@@ -59,7 +59,7 @@ class ProdukDetailPage extends StatelessWidget {
                       const SizedBox(height: 20),
                       const Divider(height: 1, color: Colors.black12),
                       const SizedBox(height: 16),
-                      _buildInfoSection('Informasi Produk', dummyDescription),
+                      _buildInfoSection('Informasi Produk', produk.description), // Menggunakan deskripsi dari model
                       const SizedBox(height: 16),
                       const Divider(height: 1, color: Colors.black12),
                       const SizedBox(height: 16),
@@ -81,15 +81,15 @@ class ProdukDetailPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Pepaya Amerika Grade Import', // Judul disesuaikan untuk desain
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          produk.title, // Menggunakan title dari model
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(
           produk.formattedPrice,
           style: const TextStyle(
-            fontSize: 22, 
+            fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
@@ -256,8 +256,7 @@ class ProdukDetailPage extends StatelessWidget {
               flex: 3,
               child: OutlinedButton.icon(
                 onPressed: () {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(const SnackBar(content: Text('Ditambahkan ke keranjang')));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ditambahkan ke keranjang')));
                 },
                 icon: const Icon(Icons.add, color: Colors.green),
                 label: const Text('Keranjang', style: TextStyle(color: Colors.green)),

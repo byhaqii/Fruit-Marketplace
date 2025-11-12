@@ -9,7 +9,7 @@ class UserModel {
   final String mobileNumber;
   final String address;
 
-  UserModel({
+  const UserModel({
     required this.id,
     required this.name,
     required this.email,
@@ -45,12 +45,12 @@ class UserModel {
   };
 
   // Contoh data dummy untuk Profile Page
-  static UserModel get dummyUser => UserModel(
+  static UserModel get dummyUser => const UserModel(
     id: 'u001',
     name: 'Muhammad Rizal Al Baihaqi',
     email: 'mrizalalbainaqi@gmail.com',
     nik: '2341720225',
-    dob: '12 June 2004',
+    dob: '12 June 2004', // Format string
     gender: 'Male',
     mobileNumber: '0822-2847-2871',
     address: 'Jl. Bareng Raya 2N 550c',

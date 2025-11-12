@@ -2,8 +2,10 @@
 
 import 'package:flutter/material.dart';
 import '../../widgets/bottombar.dart';
-import '../marketplace/pages/produk_list_page.dart'; // pastikan folder 'pages' sesuai struktur Anda
-import '../profile/pages/account_page.dart'; // <<< PATH BARU UNTUK ACCOUNT PAGE
+import '../marketplace/pages/produk_list_page.dart';
+import '../profile/pages/account_page.dart';
+// 🌟 IMPORT BARU
+import '../history/pages/transaction_history_page.dart'; 
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -13,7 +15,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // 0: Home, 1: Store (Marketplace), 2: Statistic, 3: Akun
+  // 0: Home, 1: Store (Marketplace), 2: Statistic (History), 3: Akun
   // Mengatur default ke 0 (Home)
   int _selectedIndex = 0; 
 
@@ -21,7 +23,8 @@ class _DashboardPageState extends State<DashboardPage> {
   final List<Widget> _pages = const [
     Center(child: Text('Halaman Home')), // Index 0
     ProdukListPage(), // Index 1: Marketplace
-    Center(child: Text('Halaman Statistic')), // Index 2
+    // 🌟 MENGGANTI INI
+    TransactionHistoryPage(), // Index 2: History/Statistic
     AccountPage(), // Index 3: Menggunakan AccountPage
   ];
 

@@ -1,61 +1,18 @@
-// file transaction_history_page.dart
+// lib/modules/history/pages/transaction_history_page.dart
+
 import 'package:flutter/material.dart';
+import '../../../models/transaksi_model.dart';
 
 class TransactionHistoryPage extends StatelessWidget {
   const TransactionHistoryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> transactions = [
-      {
-        'title': 'Papaya Lokal Grade...',
-        'date': '10 November 2025',
-        'weight': '50kg',
-        'price': 'Rp. 10.000',
-        'status': 'Berhasil',
-        'imageUrl': 'https://images.unsplash.com/photo-1619665671569-808848d689b0?w=80',
-      },
-      {
-        'title': 'Banana Black Mamb...',
-        'date': '11 November 2025',
-        'weight': '20kg',
-        'price': 'Rp. 20.000',
-        'status': 'Gagal',
-        'imageUrl': 'https://picsum.photos/80/80',
-      },
-      {
-        'title': 'Pisang Kuning Ameri...',
-        'date': '10 November 2025',
-        'weight': '50kg',
-        'price': 'Rp. 10.000',
-        'status': 'Berhasil',
-        'imageUrl': 'https://images.unsplash.com/photo-1574226388484-93e878788e5b?w=80',
-      },
-      {
-        'title': 'Papaya Lokal Grade...',
-        'date': '10 November 2025',
-        'weight': '50kg',
-        'price': 'Rp. 10.000',
-        'status': 'Berhasil',
-        'imageUrl': 'https://images.unsplash.com/photo-1619665671569-808848d689b0?w=80',
-      },
-      {
-        'title': 'Papaya Lokal Grade...',
-        'date': '10 November 2025',
-        'weight': '50kg',
-        'price': 'Rp. 10.000',
-        'status': 'Berhasil',
-        'imageUrl': 'https://images.unsplash.com/photo-1619665671569-808848d689b0?w=80',
-      },
-    ];
+    // Menghilangkan data dummy. Menggunakan list kosong sebagai ganti
+    // simulasi data yang akan dimuat dari API.
+    final List<TransaksiModel> transactions = [];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('History'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
       body: Column(
         children: [
           Padding(
@@ -93,24 +50,27 @@ class TransactionHistoryPage extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: transactions.length,
-              itemBuilder: (context, index) {
-                return _buildTransactionCard(context, transactions[index]);
-              },
-            ),
+            child: transactions.isEmpty
+                ? const Center(child: Text('Tidak ada riwayat transaksi.')) // Tambahkan pesan jika kosong
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: transactions.length,
+                    // Mengoper objek TransaksiModel
+                    itemBuilder: (context, index) {
+                      return _buildTransactionCard(context, transactions[index]);
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTransactionCard(BuildContext context, Map<String, dynamic> data) {
-    final isSuccess = data['status'] == 'Berhasil';
+  Widget _buildTransactionCard(BuildContext context, TransaksiModel data) {
+    // Menggunakan properti isSuccess dari model
+    final isSuccess = data.isSuccess;
     final buttonText = isSuccess ? 'Beri Ulasan' : 'Beli Lagi';
-    // Menggunakan Theme.of(context).colorScheme.primary sebagai warna default/beli lagi (hijau tua)
-    final buttonColor = isSuccess ? Colors.green : Theme.of(context).colorScheme.primary; 
+    final buttonColor = isSuccess ? Colors.green : Theme.of(context).colorScheme.primary;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -131,7 +91,8 @@ class TransactionHistoryPage extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 image: DecorationImage(
-                  image: NetworkImage(data['imageUrl']),
+                  // Menggunakan properti imageUrl
+                  image: NetworkImage(data.imageUrl),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -143,7 +104,8 @@ class TransactionHistoryPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    data['title'],
+                    // Menggunakan properti title
+                    data.title,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -152,14 +114,16 @@ class TransactionHistoryPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(data['date'], style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                      Text(data['weight'], style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      // Menggunakan properti date
+                      Text(data.date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      // Menggunakan properti weight
+                      Text(data.weight, style: const TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(data['price'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  // Menggunakan properti price
+                  Text(data.price, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 8),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -171,7 +135,8 @@ class TransactionHistoryPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          data['status'],
+                          // Menggunakan properti status
+                          data.status,
                           style: TextStyle(
                             color: isSuccess ? Colors.green : Colors.red,
                             fontWeight: FontWeight.bold,
@@ -183,7 +148,8 @@ class TransactionHistoryPage extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('$buttonText untuk ${data['title']}')),
+                            // Menggunakan properti title
+                            SnackBar(content: Text('$buttonText untuk ${data.title}')),
                           );
                         },
                         style: ElevatedButton.styleFrom(

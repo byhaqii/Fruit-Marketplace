@@ -14,7 +14,7 @@ class NavData {
 final List<NavData> navItems = [
   const NavData(icon: Icons.home, label: 'Home', route: '/'),
   const NavData(icon: Icons.shopping_bag, label: 'Marketplace', route: '/produk'),
-  const NavData(icon: Icons.bar_chart, label: 'Statisticssssss', route: '/statistic'), 
+  const NavData(icon: Icons.history, label: 'History', route: '/history'), 
   const NavData(icon: Icons.person, label: 'Akun', route: '/akun'), 
 ];
 
