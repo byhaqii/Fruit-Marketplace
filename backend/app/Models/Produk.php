@@ -2,24 +2,35 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Produk extends Model
 {
+    use HasFactory;
+
     protected $table = 'produk';
 
     protected $fillable = [
-        'warga_id', 'nama_produk', 'deskripsi', 'harga', 'stok', 
-        'foto_produk_path', 'kategori', 'status_jual'
+        'nama_produk',
+        'deskripsi',
+        'harga',
+        'stok',
+        'kategori',
+        'gambar_url',
     ];
 
-    // Relasi ke Warga (sebagai penjual)
-    public function penjual()
+    /**
+     * Relasi BARU: Satu produk bisa ada di BANYAK order_items
+     */
+    public function orderItems()
     {
-        return $this->belongsTo(Warga::class, 'warga_id');
+        return $this->hasMany(OrderItem::class);
     }
-
-    // Relasi ke Review
+    
+    /**
+     * Relasi ke Review (ini seharusnya sudah ada)
+     */
     public function reviews()
     {
         return $this->hasMany(Review::class);

@@ -8,24 +8,40 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('transaksi', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('iuran_id')->constrained('iuran')->onDelete('cascade');
-            $table->foreignId('warga_id')->constrained('warga')->onDelete('cascade');
-            $table->decimal('nominal_bayar', 15, 2);
-            $table->enum('metode_pembayaran', ['Tunai', 'Transfer', 'QRIS'])->default('Transfer');
-            $table->date('tanggal_bayar')->useCurrent();
+            // user_id adalah foreign key ke tabel users
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             
-            // Kolom untuk fitur CV (OCR Bukti Transfer)
-            $table->string('bukti_transfer_path')->nullable();
-            $table->enum('status_verifikasi', ['pending', 'verified', 'rejected'])->default('pending');
-            $table->foreignId('verified_by_user_id')->nullable()->constrained('users')->onDelete('set null');
+            // ID unik yang bisa dilihat oleh user, misal: INV-2025-12345
+            $table->string('order_id')->unique(); 
 
-            // Kolom untuk fitur ML (Prediksi/Anomaly)
-            $table->boolean('is_anomaly')->default(false)->comment('Hasil Anomaly Detection ML');
+            // total_harga adalah total dari SEMUA item dalam pesanan
+            $table->decimal('total_harga', 10, 2); 
+            
+            // Status PESANAN (logistik)
+            $table->string('order_status')->default('pending'); // misal: pending, processing, shipped, completed, cancelled
+            
+            // --- Detail Pembayaran Sesuai Rencana Sistem ---
+            // 'cod', 'gateway' (QRIS, Gopay), 'manual_transfer'
+            $table->string('payment_method')->nullable(); 
+            
+            // Status PEMBAYARAN
+            $table->string('payment_status')->default('pending'); // misal: pending, paid, failed
+            
+            // URL ke gambar bukti transfer jika payment_method = 'manual_transfer'
+            $table->string('bukti_bayar_url')->nullable(); 
+            
+            // ID referensi dari payment gateway (jika pakai)
+            $table->string('payment_gateway_ref')->nullable(); 
+
+            // Alamat pengiriman, bisa dibuat lebih detail jika perlu
+            $table->text('alamat_pengiriman')->nullable(); 
             
             $table->timestamps();
         });
@@ -33,8 +49,10 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('transaksi');
     }
