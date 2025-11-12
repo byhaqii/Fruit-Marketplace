@@ -11,7 +11,8 @@ class Warga extends Model
     protected $fillable = [
         'user_id', 'nik', 'nama', 'tempat_lahir', 'tanggal_lahir', 
         'jenis_kelamin', 'alamat', 'no_kk', 'status_keluarga', 
-        'foto_ktp_path', 'is_verified'
+        'foto_ktp_path', 'is_verified', // <--- KOMA DIPERLUKAN DI SINI
+        'no_telp'
     ];
 
     // Relasi ke User

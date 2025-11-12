@@ -28,12 +28,18 @@ class _LoginFormState extends State<LoginForm> {
           _passwordController.text,
         );
         
-        Navigator.pushReplacementNamed(context, '/'); 
+        // Navigasi ke Dashboard setelah berhasil
+        // (Pastikan context masih valid setelah async call)
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/'); 
+        }
 
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error Login: ${e.toString().replaceAll("Exception:", "")}')),
+          );
+        }
       }
     }
   }
@@ -112,13 +118,12 @@ class _LoginFormState extends State<LoginForm> {
                   icon: const Icon(Icons.face, size: 30),
                   color: Theme.of(context).colorScheme.primary,
                   onPressed: () {
-                    // TODO: Panggil Biometric Login
+                    
                   },
                 ),
-              )
+              ),
             ],
           ),
-
         ],
       ),
     );

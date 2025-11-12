@@ -1,20 +1,15 @@
-// lib/models/user_model.dart
 class UserModel {
+  final String id;
   final String name;
-  final String nik;
-  final String mobileNumber;
   final String email;
-  final String address;
-  final String gender;
-  final String dob; // Date of Birth
 
-  UserModel({
-    required this.name,
-    required this.nik,
-    required this.mobileNumber,
-    required this.email,
-    required this.address,
-    required this.gender,
-    required this.dob,
-  });
+  UserModel({required this.id, required this.name, required this.email});
+
+  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
+    id: json['id']?.toString() ?? '',
+    name: json['name'] ?? '',
+    email: json['email'] ?? '',
+  );
+
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'email': email};
 }

@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+// Tambah semua USE statements yang diperlukan
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model; // Pastikan ini terimpor
 use Laravel\Lumen\Auth\Authorizable;
 
 class User extends Model implements AuthenticatableContract, AuthorizableContract
@@ -15,27 +16,16 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     protected $table = 'users';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var string[]
-     */
     protected $fillable = [
         'name', 'email', 'password', 'role', 'api_token'
     ];
 
-    /**
-     * The attributes excluded from the model's JSON form.
-     *
-     * @var string[]
-     */
     protected $hidden = [
         'password', 'api_token',
     ];
     
-    // Relasi ke Warga
     public function warga()
     {
-        return $this->hasOne(Warga::class);
+        return $this->hasOne(Warga::class); 
     }
 }
