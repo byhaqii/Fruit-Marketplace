@@ -1,3 +1,0 @@
-class NotificationService {
-  // ...local and push notification helpers...
-}

@@ -1,3 +1,0 @@
-class WebSocketService {
-  // ...initialize and manage websocket connections...
-}

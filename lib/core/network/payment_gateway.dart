@@ -1,3 +1,0 @@
-class PaymentGateway {
-  // ...integration points for payment providers...
-}

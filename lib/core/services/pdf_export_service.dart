@@ -1,3 +1,0 @@
-class PdfExportService {
-  // ...export PDF helpers...
-}

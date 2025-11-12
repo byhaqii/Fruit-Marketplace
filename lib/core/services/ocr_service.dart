@@ -1,3 +1,0 @@
-class OcrService {
-  // ...OCR helper wrappers...
-}

@@ -1,3 +1,0 @@
-class ProdukModel {
-  // ...basic produk model fields...
-}

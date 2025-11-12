@@ -1,3 +1,0 @@
-class Formatter {
-  // ...formatting helpers (currency, dates)...
-}

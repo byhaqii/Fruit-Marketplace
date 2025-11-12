@@ -1,3 +1,0 @@
-class DatabaseHelper {
-  // ...sqlite/realm initialization and helpers...
-}
