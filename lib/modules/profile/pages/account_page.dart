@@ -1,7 +1,9 @@
+// folder lib folder modules folder profile folder pages file account_page.dart
 // lib/profile/pages/account_page.dart (Unified File - rewritten)
 // Pastikan path UserModel sesuai proyekmu.
 import 'package:flutter/material.dart';
 import '../../../models/user_model.dart';
+import 'package:intl/intl.dart'; // Tambahkan ini untuk format tanggal
 
 /// ==============================
 /// 1) SETTING PAGE (Sub-Screen)
@@ -124,8 +126,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Dummy user - pastikan UserModel.dummyUser tersedia
-  final UserModel user = UserModel.dummyUser;
+  // 🚨 Ganti UserModel.dummyUser dengan UserModel.simulatedApiUser
+  final UserModel user = UserModel.simulatedApiUser;
 
   late final TextEditingController _fullNameController;
   late final TextEditingController _nikController;
@@ -152,7 +154,20 @@ class _ProfilePageState extends State<ProfilePage> {
     _addressController = TextEditingController(text: user.address);
 
     _selectedGender = user.gender;
-    _selectedDateOfBirth = user.dob;
+    // Format tanggal dari YYYY-MM-DD ke "DD Bulan YYYY" untuk tampilan
+    try {
+      final dateTime = DateTime.parse(user.dob);
+      _selectedDateOfBirth = DateFormat('d MMMM yyyy', 'id_ID').format(dateTime); 
+      // Menggunakan intl.dart, perlu menambahkan dependency intl di pubspec.yaml
+      // Jika tidak menggunakan intl, gunakan fungsi _monthName di bawah.
+    } catch (_) {
+      _selectedDateOfBirth = user.dob; // fallback
+    }
+    
+    // Fallback jika intl tidak digunakan, atau jika ingin tetap menggunakan fungsi lokal
+    if (_selectedDateOfBirth == user.dob) {
+      _selectedDateOfBirth = _formatDateForDisplay(user.dob);
+    }
   }
 
   @override
@@ -165,11 +180,21 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  // Helper untuk format tanggal dari YYYY-MM-DD ke 'DD Bulan YYYY'
+  String _formatDateForDisplay(String dateString) {
+    try {
+      final dateTime = DateTime.parse(dateString);
+      return "${dateTime.day} ${_monthName(dateTime.month)} ${dateTime.year}";
+    } catch (_) {
+      return dateString;
+    }
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     DateTime initialDate;
     try {
-      // Coba parse tanggal dari user.dob (basic)
-      initialDate = DateTime.parse(user.dob.replaceAll(RegExp(r'[a-zA-Z]'), '').trim());
+      // Coba parse tanggal dari user.dob (YYYY-MM-DD)
+      initialDate = DateTime.parse(user.dob);
     } catch (_) {
       initialDate = DateTime(2000);
     }
@@ -183,6 +208,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (picked != null) {
       setState(() {
+        // Update tampilan dengan format lokal
         _selectedDateOfBirth =
             "${picked.day} ${_monthName(picked.month)} ${picked.year}";
       });
@@ -190,6 +216,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String _monthName(int m) {
+    // Fungsi ini tidak diperlukan jika menggunakan package intl di atas
     const months = [
       'Januari',
       'Februari',
@@ -386,6 +413,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildGenderSelection(Color primaryColor) {
+    // Mapping agar sesuai dengan data seeder: 'Laki-laki' dan 'Perempuan'
+    const List<String> genderOptions = ['Laki-laki', 'Perempuan'];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -395,9 +425,9 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         Row(
           children: [
-            Expanded(child: _buildGenderOption('Male', primaryColor)),
+            Expanded(child: _buildGenderOption(genderOptions[0], primaryColor)),
             const SizedBox(width: 16),
-            Expanded(child: _buildGenderOption('Female', primaryColor)),
+            Expanded(child: _buildGenderOption(genderOptions[1], primaryColor)),
           ],
         ),
       ],
@@ -448,7 +478,8 @@ class AccountPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final UserModel user = UserModel.dummyUser;
+    // 🚨 Ganti UserModel.dummyUser dengan UserModel.simulatedApiUser
+    final UserModel user = UserModel.simulatedApiUser;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
