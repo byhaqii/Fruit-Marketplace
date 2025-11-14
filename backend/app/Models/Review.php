@@ -8,9 +8,11 @@ class Review extends Model
 {
     protected $table = 'reviews';
 
+    // --- PERUBAHAN DI SINI ---
     protected $fillable = [
-        'produk_id', 'warga_id', 'rating', 'komentar'
+        'produk_id', 'user_id', 'rating', 'komentar' // Ganti warga_id menjadi user_id
     ];
+    // --- AKHIR PERUBAHAN ---
 
     // Relasi ke Produk
     public function produk()
@@ -18,9 +20,11 @@ class Review extends Model
         return $this->belongsTo(Produk::class);
     }
 
-    // Relasi ke Warga (pemberi review)
-    public function warga()
+    // --- PERUBAHAN DI SINI ---
+    // Relasi ke User (pemberi review)
+    public function user()
     {
-        return $this->belongsTo(Warga::class);
+        return $this->belongsTo(User::class);
     }
+    // --- AKHIR PERUBAHAN ---
 }

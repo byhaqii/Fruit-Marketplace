@@ -14,13 +14,19 @@ return new class extends Migration
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('produk_id')->constrained('produk')->onDelete('cascade');
-            $table->foreignId('warga_id')->constrained('warga')->onDelete('cascade')->comment('Pemberi review');
+            
+            // --- PERUBAHAN DI SINI ---
+            // Mengganti warga_id menjadi user_id
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->comment('Pemberi review');
+            // --- AKHIR PERUBAHAN ---
+
             $table->unsignedTinyInteger('rating')->comment('Nilai 1 sampai 5');
             $table->text('komentar')->nullable();
             $table->timestamps();
             
-            // Memastikan satu warga hanya bisa review satu produk sekali
-            $table->unique(['produk_id', 'warga_id']);
+            // --- PERUBAHAN DI SINI ---
+            // Menyesuaikan unique constraint
+            $table->unique(['produk_id', 'user_id']);
         });
     }
 

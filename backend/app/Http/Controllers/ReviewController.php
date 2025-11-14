@@ -12,9 +12,9 @@ class ReviewController extends Controller
     /**
      * Menampilkan review untuk produk tertentu.
      */
-    public function index($produk_id)
+    public function index($id) // <-- DIPERBAIKI: dari $produk_id menjadi $id
     {
-        $reviews = Review::where('produk_id', $produk_id)
+        $reviews = Review::where('produk_id', $id) // <-- DIPERBAIKI: dari $produk_id menjadi $id
                         ->with('user') // Tampilkan data user yang memberi review
                         ->latest()
                         ->get();
@@ -25,7 +25,7 @@ class ReviewController extends Controller
     /**
      * Menyimpan review baru untuk produk tertentu.
      */
-    public function store(Request $request, $produk_id)
+    public function store(Request $request, $id) // <-- DIPERBAIKI: dari $produk_id menjadi $id
     {
         $validator = Validator::make($request->all(), [
             'rating' => 'required|integer|min:1|max:5',
@@ -41,7 +41,7 @@ class ReviewController extends Controller
 
         $review = Review::create([
             'user_id' => Auth::id(),
-            'produk_id' => $produk_id,
+            'produk_id' => $id, // <-- DIPERBAIKI: dari $produk_id menjadi $id
             'rating' => $request->rating,
             'komentar' => $request->komentar,
         ]);

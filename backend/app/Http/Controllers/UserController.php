@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator; // <-- Pastikan ini ditambahkan
 
 class UserController extends Controller
 {
@@ -64,7 +65,8 @@ class UserController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:6',
-                'role' => 'required|in:admin,ketua_rt,ketua_rw,bendahara,sekretaris,warga', // Validasi role
+                // --- DIPERBAIKI DISINI ---
+                'role' => 'required|in:admin,penjual,pembeli', // Validasi role baru
             ]);
         } catch (ValidationException $e) {
              return response()->json(['message' => 'Input tidak valid', 'errors' => $e->errors()], 422);
@@ -84,41 +86,42 @@ class UserController extends Controller
      * Memperbarui pengguna (Hanya Admin).
      * PUT /users/{id}
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(Request $request, $id)
     {
-        if (!$this->isAdmin($request)) {
-            return response()->json(['message' => 'Akses ditolak'], 403);
-        }
-
+        // (Otorisasi admin sudah ada di dalam file routes/web.php, jadi tidak perlu cek $this->isAdmin di sini)
+        
         $user = User::find($id);
         if (!$user) {
-            return response()->json(['message' => 'Pengguna tidak ditemukan'], 404);
+            return response()->json(['message' => 'User tidak ditemukan'], 404);
         }
 
-        try {
-            $this->validate($request, [
-                'name' => 'string|max:255',
-                'email' => 'email|unique:users,email,'.$id, // Unik, kecuali untuk ID ini sendiri
-                'role' => 'in:admin,ketua_rt,ketua_rw,bendahara,sekretaris,warga',
-                'password' => 'nullable|string|min:6', // Password opsional untuk diubah
-            ]);
-        } catch (ValidationException $e) {
-             return response()->json(['message' => 'Input tidak valid', 'errors' => $e->errors()], 422);
+        // Validasi
+        $validator = Validator::make($request->all(), [
+            'name' => 'string|max:255',
+            // Pastikan email unik, KECUALI untuk ID user ini sendiri
+            'email' => 'string|email|unique:users,email,' . $id, 
+            'role' => 'in:admin,penjual,pembeli' // Validasi ini sudah benar
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Input tidak valid', 'errors' => $validator->errors()], 422);
         }
 
-        // Update data dasar
+        // Menggunakan fill() untuk update field yang diizinkan di $fillable
         $user->fill($request->only(['name', 'email', 'role']));
 
-        // Update password jika diisi
-        if ($request->has('password')) {
-            $user->password = Hash::make($request->input('password'));
+        // Jika ada password baru, hash dan update
+        if ($request->has('password') && $request->password) { // Ditambahkan cek $request->password
+            $user->password = Hash::make($request->password);
         }
-        
+
         $user->save();
 
-        return response()->json($user);
+        return response()->json([
+            'message' => 'User berhasil diperbarui',
+            'data' => $user
+        ]);
     }
-
     /**
      * Menghapus pengguna (Hanya Admin).
      * DELETE /users/{id}
@@ -134,10 +137,10 @@ class UserController extends Controller
             return response()->json(['message' => 'Pengguna tidak ditemukan'], 404);
         }
         
-        // TODO: Tambahkan logika untuk mencegah admin menghapus akunnya sendiri
-        // if ($request->user()->id == $id) {
-        //     return response()->json(['message' => 'Anda tidak dapat menghapus akun Anda sendiri'], 403);
-        // }
+        // Mencegah admin menghapus akunnya sendiri
+        if ($request->user()->id == $id) {
+            return response()->json(['message' => 'Anda tidak dapat menghapus akun Anda sendiri'], 403);
+        }
 
         $user->delete();
 

@@ -16,16 +16,51 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     protected $table = 'users';
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var string[]
+     */
     protected $fillable = [
         'name', 'email', 'password', 'role', 'api_token'
     ];
 
+    /**
+     * The attributes excluded from the model's JSON form.
+     *
+     * @var string[]
+     */
     protected $hidden = [
         'password', 'api_token',
     ];
     
-    public function warga()
+    // --- PERBAIKAN ---
+    // Relasi 'warga()' DIHAPUS karena tabel 'warga' sudah tidak relevan
+    // dengan skema baru 'penjual'/'pembeli'.
+
+    /**
+     * Relasi opsional: Seorang User (jika rolenya 'penjual') bisa memiliki banyak Produk.
+     */
+    public function produk()
     {
-        return $this->hasOne(Warga::class); 
+        // Asumsi foreign key di tabel 'produk' adalah 'user_id'
+        return $this->hasMany(Produk::class, 'user_id');
+    }
+
+    /**
+     * Relasi opsional: Seorang User (jika rolenya 'pembeli') bisa memiliki banyak Review.
+     */
+    public function reviews()
+    {
+        // Asumsi foreign key di tabel 'reviews' adalah 'user_id'
+        return $this->hasMany(Review::class, 'user_id');
+    }
+
+    /**
+     * Relasi opsional: Seorang User (jika rolenya 'pembeli') bisa memiliki banyak Transaksi.
+     */
+    public function transaksi()
+    {
+        return $this->hasMany(Transaksi::class, 'user_id');
     }
 }

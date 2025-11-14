@@ -16,43 +16,32 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        // --- PERUBAHAN DI SINI ---
+        // Menyesuaikan data user dengan role baru
         $users = [
             [
                 'name' => 'Admin Sistem',
                 'email' => 'admin@jawarapintar.com',
-                'role' => 'admin',
+                'role' => 'admin', // Role baru
                 'password' => Hash::make('password'),
                 'api_token' => Str::random(60),
             ],
             [
-                'name' => 'Ketua RT 01',
-                'email' => 'ketuart@jawarapintar.com',
-                'role' => 'ketua_rt',
+                'name' => 'Penjual Buah',
+                'email' => 'penjual@jawarapintar.com',
+                'role' => 'penjual', // Role baru
                 'password' => Hash::make('password'),
                 'api_token' => Str::random(60),
             ],
             [
-                'name' => 'Bendahara RT',
-                'email' => 'bendahara@jawarapintar.com',
-                'role' => 'bendahara',
-                'password' => Hash::make('password'),
-                'api_token' => Str::random(60),
-            ],
-            [
-                'name' => 'Sekretaris RT',
-                'email' => 'sekretaris@jawarapintar.com',
-                'role' => 'sekretaris',
-                'password' => Hash::make('password'),
-                'api_token' => Str::random(60),
-            ],
-            [
-                'name' => 'Warga Biasa',
-                'email' => 'warga@jawarapintar.com',
-                'role' => 'warga',
+                'name' => 'Pembeli Biasa',
+                'email' => 'pembeli@jawarapintar.com',
+                'role' => 'pembeli', // Role baru
                 'password' => Hash::make('password'),
                 'api_token' => Str::random(60),
             ],
         ];
+        // --- AKHIR PERUBAHAN ---
 
         foreach ($users as $user) {
             User::firstOrCreate(['email' => $user['email']], $user);

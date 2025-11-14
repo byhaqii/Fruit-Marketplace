@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('produk', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('warga_id')->constrained('warga')->onDelete('cascade')->comment('Penjual produk');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->comment('ID User Penjual');
             $table->string('nama_produk');
             $table->text('deskripsi')->nullable();
             $table->decimal('harga', 15, 2);
