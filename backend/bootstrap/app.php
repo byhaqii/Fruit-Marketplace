@@ -26,7 +26,10 @@ $app = new Laravel\Lumen\Application(
 // --- PERBAIKAN ERROR 500 ---
 $app->withFacades(); 
 $app->withEloquent(); 
-// --- AKHIR PERBAIKAN ---
+
+// --- TAMBAHKAN ALIAS UNTUK QR CODE ---
+$app->alias('QrCode', SimpleSoftwareIO\QrCode\Facades\QrCode::class);
+// ------------------------------------
 
 
 /*
@@ -60,7 +63,7 @@ $app->configure('database');
 */
 
 $app->middleware([
-    CorsMiddleware::class 
+    App\Http\Middleware\CorsMiddleware::class
 ]);
 
 /*
@@ -70,7 +73,7 @@ $app->middleware([
 */
 $app->routeMiddleware([
     'auth' => App\Http\Middleware\Authenticate::class,
-    'role' => App\Http\Middleware\CheckRole::class,
+    'role' => App\Http\Middleware\CheckRole::class
 ]);
 
 
@@ -81,6 +84,7 @@ $app->routeMiddleware([
 */
 
 $app->register(App\Providers\AuthServiceProvider::class);
+$app->register(SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class); // Ini sudah benar
 
 
 /*

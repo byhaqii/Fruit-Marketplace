@@ -25,6 +25,7 @@ class CheckRole
 
         // Cek apakah role user ada di dalam daftar $roles yang diizinkan
         if (!in_array($user->role, $roles)) {
+            // INILAH YANG MENGIRIM ERROR ANDA
             return response()->json(['error' => 'Unauthorized. Insufficient permissions.'], 403);
         }
 

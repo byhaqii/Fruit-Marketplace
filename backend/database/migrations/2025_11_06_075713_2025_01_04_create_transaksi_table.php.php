@@ -25,7 +25,14 @@ return new class extends Migration
             $table->decimal('total_harga', 10, 2); 
             
             // Status PESANAN (logistik)
-            $table->string('order_status')->default('pending'); // misal: pending, processing, shipped, completed, cancelled
+            $table->enum('order_status', [
+                'menunggu konfirmasi', 
+                'di proses', 
+                'dikirim', 
+                'tiba di tujuan', 
+                'cancel',
+                'pending' // (Sebaiknya pending tetap ada sebagai fallback)
+            ])->default('menunggu konfirmasi'); // misal: pending, processing, shipped, completed, cancelled
             
             // --- Detail Pembayaran Sesuai Rencana Sistem ---
             // 'cod', 'gateway' (QRIS, Gopay), 'manual_transfer'

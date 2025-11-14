@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use SimpleSoftwareIO\QrCode\Facades\QrCode; // Ini sudah benar
 use Illuminate\Support\Str;
 
 class TransaksiController extends Controller
@@ -66,7 +67,7 @@ class TransaksiController extends Controller
                 'user_id'           => Auth::id(),
                 'order_id'          => 'INV-' . strtoupper(Str::random(8)), // Buat Order ID unik
                 'total_harga'       => $request->total_harga,
-                'order_status'      => 'pending',
+                'order_status'      => 'menunggu konfirmasi', // <-- PERUBAHAN STATUS
                 'payment_method'    => $request->payment_method,
                 'payment_status'    => 'pending',
                 'alamat_pengiriman' => $request->alamat_pengiriman,
@@ -74,6 +75,7 @@ class TransaksiController extends Controller
 
             // 2. Loop dan buat Order Items
             foreach ($request->items as $item) {
+                // Pastikan Anda sudah mengganti nama file Order_Items.php menjadi OrderItem.php
                 OrderItem::create([
                     'transaksi_id'    => $transaksi->id,
                     'produk_id'       => $item['produk_id'],
@@ -87,12 +89,28 @@ class TransaksiController extends Controller
                 // $produk->save();
             }
 
+            
+            // --- LOGIKA QR CODE DIMASUKKAN DI SINI ---
+            // 3. Buat QR Code (misalnya berisi Order ID dan Total Harga)
+            $qrText = "Order ID: " . $transaksi->order_id . "\nTotal Bayar: Rp " . $transaksi->total_harga;
+
+            $qrCodeImage = QrCode::format('png')
+                                 ->size(250) // Ukuran QR Code
+                                 ->generate($qrText);
+            
+            // Konversi gambar PNG mentah menjadi string Base64
+            $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeImage);
+            // ----------------------------------------
+
+
             // Jika semua berhasil, commit
             DB::commit();
 
+            // --- TAMBAHKAN QR CODE KE RESPON JSON ---
             return response()->json([
-                'message' => 'Transaksi berhasil dibuat',
-                'data' => $transaksi->load('items') // Kirim kembali data transaksi lengkap
+                'message' => 'Transaksi berhasil dibuat, silakan lakukan pembayaran.',
+                'data' => $transaksi->load('items'), // Kirim kembali data transaksi lengkap
+                'payment_qr_code' => $qrCodeBase64   // <-- KIRIM QR CODE DI SINI
             ], 201);
 
         } catch (\Exception $e) {
