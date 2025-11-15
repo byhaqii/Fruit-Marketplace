@@ -4,14 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Order_Items extends Model
+class OrderItem extends Model
 
 {
     // Nama tabel
     protected $table = 'order_items';
 
     /**
-     * Tentukan field yang boleh diisi secara massal.
+     * 
      *
      * @var array
      */
@@ -23,7 +23,7 @@ class Order_Items extends Model
     ];
 
     /**
-     * Relasi ke model Transaksi (Order Header)
+     * 
      */
     public function transaksi()
     {
@@ -31,7 +31,7 @@ class Order_Items extends Model
     }
 
     /**
-     * Relasi ke model Produk
+     * 
      */
     public function produk()
     {

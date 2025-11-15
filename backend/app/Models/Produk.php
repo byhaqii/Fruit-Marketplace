@@ -11,20 +11,18 @@ class Produk extends Model
 
     protected $table = 'produk';
 
+    // ... $fillable ...
     protected $fillable = [
-        'user_id',      // Pastikan ini ada dari langkah CRUD Admin
+        'user_id',
         'nama_produk',
         'deskripsi',
         'harga',
         'stok',
         'kategori',
-        'gambar_url',   // Pastikan ini ada dari error sebelumnya
-        'status_jual',  // Pastikan ini ada
+        'gambar_url',
+        'status_jual',
     ];
 
-    /**
-     * Relasi ke User (Penjual)
-     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -35,13 +33,10 @@ class Produk extends Model
      */
     public function orderItems()
     {
-        // --- UBAH NAMA CLASS DI SINI ---
-        return $this->hasMany(Order_Items::class);
+        // --- PERBAIKI DI SINI ---
+        return $this->hasMany(OrderItem::class);
     }
     
-    /**
-     * Relasi ke Review
-     */
     public function reviews()
     {
         return $this->hasMany(Review::class);

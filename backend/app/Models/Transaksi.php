@@ -11,7 +11,7 @@ class Transaksi extends Model
 
     protected $table = 'transaksi';
 
-    // ... $fillable Anda tetap sama ...
+    // ... $fillable ...
     protected $fillable = [
         'user_id',
         'order_id',
@@ -25,9 +25,6 @@ class Transaksi extends Model
     ];
 
 
-    /**
-     * Relasi ke User (pembeli)
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -38,7 +35,7 @@ class Transaksi extends Model
      */
     public function items()
     {
-        // --- UBAH NAMA CLASS DI SINI ---
-        return $this->hasMany(Order_Items::class);
+        // --- PERBAIKI DI SINI ---
+        return $this->hasMany(OrderItem::class);
     }
 }

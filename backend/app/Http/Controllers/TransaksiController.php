@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaksi;
-use App\Models\Order_Items; 
+use App\Models\OrderItem; 
 use App\Models\Produk; 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse; 
@@ -35,10 +35,10 @@ class TransaksiController extends Controller
         return response()->json($transaksi);
     }
 
-    // ... method store() ...
+    
     public function store(Request $request)
     {
-        // ... (Validasi, DB::beginTransaction, dll... sama seperti sebelumnya)
+ 
         $validator = Validator::make($request->all(), [
             'total_harga'       => 'required|numeric|min:0',
             'payment_method'    => 'required|string', 
@@ -66,7 +66,7 @@ class TransaksiController extends Controller
             ]);
 
             foreach ($request->items as $item) {
-                Order_Items::create([
+                OrderItem::create([
                     'transaksi_id'    => $transaksi->id,
                     'produk_id'       => $item['produk_id'],
                     'jumlah'          => $item['jumlah'],
@@ -95,12 +95,14 @@ class TransaksiController extends Controller
             DB::rollBack();
             return response()->json([
                 'message' => 'Gagal membuat transaksi, terjadi kesalahan server.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(), 
+                'file'  => $e->getFile(),    
+                'line'  => $e->getLine() 
             ], 500);
         }
     }
 
-    // ... method show() ...
+    
     public function show($id)
     {
         // ... (Kode show Anda yang sudah ada) ...
@@ -115,9 +117,7 @@ class TransaksiController extends Controller
     }
 
 
-    /**
-     * [BARU] Update status pesanan oleh Penjual atau Admin.
-     */
+   
     public function updateStatusBySeller(Request $request, $id): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -128,7 +128,7 @@ class TransaksiController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        // --- PERBAIKAN LINTER DI SINI ---
+        
         /** @var \App\Models\Transaksi $transaksi */
         $transaksi = Transaksi::with('items.produk')->find($id);
         // ---------------------------------
@@ -141,14 +141,13 @@ class TransaksiController extends Controller
         $user = Auth::user();
         $newStatus = $request->status;
 
-        // Otorisasi: Hanya Admin atau Penjual yang produknya ada di order ini
+       
         if ($user->role !== 'admin') {
             $isSellerOfThisOrder = false;
             
-            // --- PERBAIKAN LINTER (Opsional, tapi bagus) ---
+       
             /** @var \App\Models\Order_Items $item */
-            foreach ($transaksi->items as $item) { // Baris ini sekarang aman
-            // ---------------------------------------------
+            foreach ($transaksi->items as $item) {
                 if ($item->produk && $item->produk->user_id == $user->id) {
                     $isSellerOfThisOrder = true;
                     break;
@@ -159,7 +158,7 @@ class TransaksiController extends Controller
             }
         }
 
-        // Validasi Alur Kerja (Workflow)
+        
         if ($newStatus === 'Diproses' && $transaksi->order_status !== 'menunggu konfirmasi') {
             return response()->json(['message' => 'Pesanan tidak bisa diproses karena status saat ini adalah ' . $transaksi->order_status], 422);
         }
@@ -177,9 +176,7 @@ class TransaksiController extends Controller
         ]);
     }
 
-    /**
-     * [BARU] Pembeli membatalkan pesanan.
-     */
+   
     public function cancelOrder(Request $request, $id): JsonResponse
     {
         /** @var \App\Models\Transaksi $transaksi */
@@ -205,9 +202,7 @@ class TransaksiController extends Controller
         ]);
     }
 
-    /**
-     * [BARU] Pembeli mengonfirmasi pesanan telah tiba.
-     */
+   
     public function markAsReceived(Request $request, $id): JsonResponse
     {
         /** @var \App\Models\Transaksi $transaksi */

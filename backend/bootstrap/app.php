@@ -27,7 +27,9 @@ $app = new Laravel\Lumen\Application(
 $app->withFacades(); 
 $app->withEloquent(); 
 
+// --- TAMBAHKAN ALIAS UNTUK QR CODE ---
 $app->alias('QrCode', SimpleSoftwareIO\QrCode\Facades\QrCode::class);
+// ------------------------------------
 
 
 /*
@@ -53,7 +55,7 @@ $app->singleton(
 */
 
 $app->configure('database'); 
-$app->configure('qrcode'); // <-- INI BARIS YANG PENTING
+$app->configure('qrcode'); // <-- INI BARIS YANG PALING PENTING
 
 /*
 |--------------------------------------------------------------------------
