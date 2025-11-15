@@ -147,10 +147,20 @@ class TransactionHistoryPage extends StatelessWidget {
                       // Action Button
                       ElevatedButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            // Menggunakan properti title
-                            SnackBar(content: Text('$buttonText untuk ${data.title}')),
-                          );
+                          if (isSuccess) {
+                            // Navigasi ke Halaman Rating baru
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RatingPage(transaction: data),
+                              ),
+                            );
+                          } else {
+                            // Logika "Beli Lagi"
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('$buttonText untuk ${data.title}')),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: buttonColor,
@@ -166,6 +176,142 @@ class TransactionHistoryPage extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ==============================
+/// HALAMAN RATING (BARU)
+/// ==============================
+
+class RatingPage extends StatefulWidget {
+  final TransaksiModel transaction;
+
+  const RatingPage({super.key, required this.transaction});
+
+  @override
+  State<RatingPage> createState() => _RatingPageState();
+}
+
+class _RatingPageState extends State<RatingPage> {
+  int _rating = 0; // 0 = no rating, 1-5 = star rating
+  final TextEditingController _reviewController = TextEditingController();
+
+  @override
+  void dispose() {
+    _reviewController.dispose();
+    super.dispose();
+  }
+
+  void _submitReview() {
+    final String reviewText = _reviewController.text;
+    
+    // Logika untuk submit review (misal: kirim ke API)
+    // Di sini kita hanya menampilkan SnackBar dan kembali
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Ulasan untuk ${widget.transaction.title} terkirim! (Rating: $_rating)'),
+        backgroundColor: Colors.green,
+      ),
+    );
+    
+    // Kembali ke halaman sebelumnya
+    Navigator.of(context).pop();
+  }
+
+  Widget _buildStarRating() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(5, (index) {
+        final int starValue = index + 1;
+        return IconButton(
+          onPressed: () {
+            setState(() {
+              _rating = starValue;
+            });
+          },
+          icon: Icon(
+            _rating >= starValue ? Icons.star : Icons.star_border,
+            color: _rating >= starValue ? Colors.amber[700] : Colors.grey,
+            size: 40,
+          ),
+        );
+      }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Warna hijau dari gambar
+    final Color primaryGreen = Colors.teal[600] ?? Colors.teal;
+    final Color textGreen = Colors.teal[700] ?? Colors.teal;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Rating', style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              'How was the product?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+                color: textGreen,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildStarRating(),
+            const SizedBox(height: 24),
+            TextFormField(
+              controller: _reviewController,
+              maxLines: 5,
+              decoration: InputDecoration(
+                hintText: 'Very good product',
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: primaryGreen, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton(
+          onPressed: _rating == 0 ? null : _submitReview, // Disable jika belum ada rating
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryGreen,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: Colors.grey[300],
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: const Text('Submit', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
       ),
     );

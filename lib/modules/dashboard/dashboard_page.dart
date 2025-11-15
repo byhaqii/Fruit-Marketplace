@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../widgets/bottombar.dart';
 import '../marketplace/pages/produk_list_page.dart';
 import '../profile/pages/account_page.dart';
-import '../history/pages/transaction_history_page.dart';
+// import '../history/pages/transaction_history_page.dart'; // DI-COMMENT
+import '../keuangan/pages/keuangan_page.dart'; // DITAMBAHKAN
 import 'dashboard_content_page.dart';
 import '../scan/pages/scan_page.dart';
 
@@ -33,7 +34,8 @@ class _DashboardPageState extends State<DashboardPage> {
       // Kirim fungsi _onItemTapped(1) sebagai callback
       DashboardContentPage(onSeeAllTapped: () => _onItemTapped(1)),
       const ProdukListPage(),
-      const TransactionHistoryPage(),
+      // const TransactionHistoryPage(), // DI-COMMENT
+      const KeuanganPage(), // DITAMBAHKAN
       const AccountPage(),
     ];
   }

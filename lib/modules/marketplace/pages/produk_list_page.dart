@@ -218,7 +218,7 @@ class ProdukCard extends StatelessWidget {
                   
                   // 8. Teks "500 g (1pcs)"
                   const Text(
-                    '500 g (1pcs)',
+                    '500 g',
                     style: TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                   // -------------------------

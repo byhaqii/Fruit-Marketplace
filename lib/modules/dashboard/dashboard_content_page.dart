@@ -1,14 +1,12 @@
 // lib/modules/dashboard/dashboard_content_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../models/user_model.dart'; // Path model ini benar
-
-// --- 1. IMPORT (Sudah benar) ---
+import '../../../models/user_model.dart'; 
 import '../marketplace/pages/produk_list_page.dart';
 import '../marketplace/pages/produk_detail_page.dart';
+import '../notification/pages/notification_page.dart';
 
 class DashboardContentPage extends StatelessWidget {
-  // 1. Tambahkan parameter callback
   final VoidCallback onSeeAllTapped;
 
   const DashboardContentPage({
@@ -36,7 +34,7 @@ class DashboardContentPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- BAGIAN 1: KARTU PUTIH STATIS (Welcome) ---
-            _buildWelcomeCard(user),
+            _buildWelcomeCard(context, user), // Perlu context untuk navigasi
 
             // --- BAGIAN 2: KONTEN SCROLLABLE (Analytics + Sisa) ---
             Expanded(
@@ -87,7 +85,7 @@ class DashboardContentPage extends StatelessWidget {
   }
 
   // --- WIDGET KARTU 1 (STATIS: Welcome) ---
-  Widget _buildWelcomeCard(UserModel user) {
+  Widget _buildWelcomeCard(BuildContext context, UserModel user) {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 8.0),
@@ -115,13 +113,69 @@ class DashboardContentPage extends StatelessWidget {
               ),
             ],
           ),
-          const CircleAvatar(
-            radius: 24,
-            backgroundColor: Colors.white,
-            backgroundImage: NetworkImage('https://picsum.photos/200/200'),
+          // --- PERUBAHAN DI SINI ---
+          Row(
+            children: [
+              _buildNotificationButton(context), // Tombol Notifikasi
+              const SizedBox(width: 12), // Jarak antara ikon dan avatar
+              const CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.white,
+                backgroundImage: NetworkImage('https://picsum.photos/200/200'),
+              ),
+            ],
+          ),
+          // --- AKHIR PERUBAHAN ---
+        ],
+      ),
+    );
+  }
+
+  // --- WIDGET BARU UNTUK TOMBOL NOTIFIKASI ---
+  Widget _buildNotificationButton(BuildContext context) {
+    return IconButton(
+      icon: Stack(
+        clipBehavior: Clip.none, // Agar badge bisa keluar dari batas ikon
+        children: [
+          Icon(
+            Icons.notifications_outlined,
+            color: Colors.grey[700], // Sesuai gambar
+            size: 28,
+          ),
+          Positioned(
+            top: -4,
+            right: -4,
+            child: Container(
+              padding: const EdgeInsets.all(2), // Padding untuk lingkaran
+              decoration: BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 18,
+                minHeight: 18,
+              ),
+              child: const Text(
+                '4', // Hardcoded "4" sesuai gambar
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
         ],
       ),
+      onPressed: () {
+        // Navigasi ke Halaman Notifikasi
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const NotificationPage()),
+        );
+      },
     );
   }
 

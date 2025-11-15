@@ -101,7 +101,6 @@ class ProdukDetailPage extends StatelessWidget {
             const SizedBox(width: 8),
             _buildQuantityOption(context, '1 kg', false),
             const SizedBox(width: 8),
-            const Text('More'),
             const Icon(Icons.arrow_drop_down, color: Colors.black54, size: 20),
             const Spacer(),
             const Icon(Icons.favorite_border, color: Colors.black54),
@@ -235,21 +234,23 @@ class ProdukDetailPage extends StatelessWidget {
         ),
         child: Row(
           children: [
+            // --- TOMBOL CHAT DIHAPUS ---
+            // Expanded(
+            //   flex: 1,
+            //   child: OutlinedButton(
+            //     onPressed: () {},
+            //     style: OutlinedButton.styleFrom(
+            //       padding: const EdgeInsets.symmetric(vertical: 14),
+            //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            //       side: BorderSide(color: Colors.grey[400]!),
+            //     ),
+            //     child: const Icon(Icons.chat_bubble_outline, color: Colors.black),
+            //   ),
+            // ),
+            // const SizedBox(width: 10), // Spacer chat dihapus
+            
             Expanded(
-              flex: 1,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  side: BorderSide(color: Colors.grey[400]!),
-                ),
-                child: const Icon(Icons.chat_bubble_outline, color: Colors.black),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              flex: 3,
+              flex: 3, // Flex bisa disesuaikan, misal 1
               child: OutlinedButton.icon(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ditambahkan ke keranjang')));
@@ -265,7 +266,7 @@ class ProdukDetailPage extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              flex: 4,
+              flex: 4, // Flex bisa disesuaikan, misal 2
               child: ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(

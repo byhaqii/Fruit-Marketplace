@@ -1,4 +1,3 @@
-// folder lib folder modules folder profile folder pages file account_page.dart
 // lib/profile/pages/account_page.dart (Unified File - rewritten)
 // Pastikan path UserModel sesuai proyekmu.
 import 'package:flutter/material.dart';
@@ -41,12 +40,7 @@ class SettingPage extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
-            _buildSettingTile(
-              context,
-              title: 'Biometric Login',
-              isSwitch: true,
-            ),
-            const SizedBox(height: 16),
+            // OPSI BIOMETRIC LOGIN DIHAPUS
             _buildSettingTile(
               context,
               title: 'Change Password',
@@ -58,17 +52,7 @@ class SettingPage extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 16),
-            _buildSettingTile(
-              context,
-              title: 'Logout Semua Perangkat',
-              trailing: const Icon(Icons.logout, color: Colors.black54),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Logout Semua Perangkat...')),
-                );
-              },
-            ),
+            // OPSI LOGOUT SEMUA PERANGKAT DIHAPUS
           ],
         ),
       ),
@@ -98,7 +82,7 @@ class SettingPage extends StatelessWidget {
             Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             if (isSwitch)
               Switch(
-                value: true,
+                value: true, // Nilai ini perlu state management jika ingin dinamis
                 onChanged: (bool value) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Biometric Login: ${value ? 'On' : 'Off'}')),
