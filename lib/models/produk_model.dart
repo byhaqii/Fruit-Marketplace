@@ -32,6 +32,7 @@ class ProdukModel {
       }
     }
 
+    // Mengembalikan string yang terbalik kembali ke urutan yang benar
     return 'Rp. ${buffer.toString().split('').reversed.join()}';
   }
 

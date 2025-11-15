@@ -108,10 +108,6 @@ class ProdukDetailPage extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        const Text(
-          '500 g (1pcs)',
-          style: TextStyle(color: Colors.grey),
-        ),
       ],
     );
   }
