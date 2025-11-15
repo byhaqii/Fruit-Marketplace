@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('nama_produk');
             $table->text('deskripsi')->nullable();
             $table->decimal('harga', 15, 2);
-            $table->integer('stok');
-            $table->string('foto_produk_path')->nullable();
+            $table->integer('stok')->default(0);
+           $table->string('gambar_url')->nullable(); 
             $table->string('kategori')->nullable()->comment('Hasil Image Classification CV');
             $table->enum('status_jual', ['Tersedia', 'Habis', 'Nonaktif'])->default('Tersedia');
             $table->timestamps();

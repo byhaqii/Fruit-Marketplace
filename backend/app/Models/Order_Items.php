@@ -4,7 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class OrderItem extends Model
+class Order_Items extends Model
+
 {
     // Nama tabel
     protected $table = 'order_items';

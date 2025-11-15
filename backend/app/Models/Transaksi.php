@@ -11,7 +11,7 @@ class Transaksi extends Model
 
     protected $table = 'transaksi';
 
-    // Sesuaikan $fillable dengan migrasi baru Anda
+    // ... $fillable Anda tetap sama ...
     protected $fillable = [
         'user_id',
         'order_id',
@@ -23,6 +23,7 @@ class Transaksi extends Model
         'payment_gateway_ref',
         'alamat_pengiriman',
     ];
+
 
     /**
      * Relasi ke User (pembeli)
@@ -37,6 +38,7 @@ class Transaksi extends Model
      */
     public function items()
     {
-        return $this->hasMany(OrderItem::class);
+        // --- UBAH NAMA CLASS DI SINI ---
+        return $this->hasMany(Order_Items::class);
     }
 }

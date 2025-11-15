@@ -55,6 +55,7 @@ $router->group(['middleware' => ['auth', 'role:admin,penjual']], function () use
     $router->post('/produk', 'ProdukController@store');
     $router->put('/produk/{id}', 'ProdukController@update'); 
     $router->delete('/produk/{id}', 'ProdukController@destroy');
+    $router->put('/transaksi/{id}/update-status', 'TransaksiController@updateStatusBySeller');
 
 });
 
@@ -73,7 +74,10 @@ $router->group(['middleware' => 'auth'], function () use ($router) {
     // Rute Transaksi (Pembeli)
     $router->get('/transaksi', 'TransaksiController@getUserTransactions'); 
     $router->post('/transaksi/checkout', 'TransaksiController@store');      
-    $router->get('/transaksi/{id}', 'TransaksiController@show'); // Rute variabel
+    $router->get('/transaksi/{id}', 'TransaksiController@show');
+     $router->put('/transaksi/{id}/cancel', 'TransaksiController@cancelOrder'); // Pembeli membatalkan
+    $router->put('/transaksi/{id}/terima', 'TransaksiController@markAsReceived'); // Pembeli konfirmasi tiba
+
     
     // Rute Review (Pembeli)
     $router->post('/produk/{id}/reviews', 'ReviewController@store'); // Hanya user login yg bisa post review
