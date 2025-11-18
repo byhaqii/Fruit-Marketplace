@@ -1,3 +1,4 @@
+// file bottombar.dart
 import 'package:flutter/material.dart';
 import '_nav_item.dart'; // Import NavItem
 
@@ -14,8 +15,10 @@ class NavData {
 final List<NavData> navItems = [
   const NavData(icon: Icons.home, label: 'Home', route: '/'),
   const NavData(icon: Icons.shopping_bag, label: 'Marketplace', route: '/produk'),
-  // const NavData(icon: Icons.history, label: 'History', route: '/history'), // DI-COMMENT
-  const NavData(icon: Icons.analytics, label: 'Keuangan', route: '/keuangan'), // DITAMBAHKAN
+  // const NavData(icon: Icons.history, label: 'History', route: '/history'), // DI-COMMENT (ASLI)
+  // const NavData(icon: Icons.analytics, label: 'Keuangan', route: '/keuangan'), // DI-COMMENT (PERMINTAAN SEBELUMNYA)
+  const NavData(icon: Icons.group, label: 'User', route: '/user'), // DITAMBAHKAN TAMPILAN USER
+
   const NavData(icon: Icons.person, label: 'Akun', route: '/akun'),
 ];
 
@@ -35,7 +38,6 @@ class BottomBar extends StatelessWidget {
 
     return BottomAppBar(
       color: Colors.white,
-      // Membuat takik melingkar
       shape: const CircularNotchedRectangle(),
       notchMargin: 6.0,
       padding: EdgeInsets.zero,
@@ -66,7 +68,8 @@ class BottomBar extends StatelessWidget {
             // Spacer kosong untuk menyeimbangkan tombol 'Scan'
             const SizedBox(width: 48),
 
-            // Item 3: Keuangan (Sebelumnya History)
+            // --- PERUBAHAN DI SINI ---
+            // Item 3: User (Menggantikan Keuangan)
             NavItem(
               icon: navItems[2].icon,
               label: navItems[2].label,
@@ -74,6 +77,7 @@ class BottomBar extends StatelessWidget {
               onTap: () => onItemTapped(2),
               activeColor: primaryColor,
             ),
+            // --- BATAS PERUBAHAN ---
 
             // Item 4: Akun
             NavItem(

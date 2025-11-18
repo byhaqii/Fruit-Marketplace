@@ -116,7 +116,7 @@ class NotificationPage extends StatelessWidget {
                   ],
                 ),
               );
-            }).toList(),
+            }),
             const SizedBox(height: 8),
             Text(
               '${notification.time}, ${notification.date}',

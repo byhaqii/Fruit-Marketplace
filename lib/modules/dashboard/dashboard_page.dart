@@ -3,10 +3,16 @@ import 'package:flutter/material.dart';
 import '../../widgets/bottombar.dart';
 import '../marketplace/pages/produk_list_page.dart';
 import '../profile/pages/account_page.dart';
-// import '../history/pages/transaction_history_page.dart'; // DI-COMMENT
-import '../keuangan/pages/keuangan_page.dart'; // DITAMBAHKAN
 import 'dashboard_content_page.dart';
 import '../scan/pages/scan_page.dart';
+
+// --- PERUBAHAN DI SINI ---
+// import '../history/pages/transaction_history_page.dart'; // DI-COMMENT (ASLI)
+// import '../keuangan/pages/keuangan_page.dart'; // DI-COMMENT (PERMINTAAN SEBELUMNYA)
+// Ganti path ini sesuai lokasi file UserListPage Anda
+import '../data/pages/user_page.dart'; // BENAR // DITAMBAHKAN TAMPILAN USER
+// --- BATAS PERUBAHAN ---
+
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -18,7 +24,6 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedIndex = 0;
 
-  // UBAH 1: Hapus 'const' dan buat 'late final'
   late final List<Widget> _pages;
 
   void _onItemTapped(int index) {
@@ -26,16 +31,19 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() => _selectedIndex = index);
   }
 
-  // UBAH 2: Tambahkan initState untuk mendefinisikan _pages
   @override
   void initState() {
     super.initState();
     _pages = [
-      // Kirim fungsi _onItemTapped(1) sebagai callback
       DashboardContentPage(onSeeAllTapped: () => _onItemTapped(1)),
       const ProdukListPage(),
-      // const TransactionHistoryPage(), // DI-COMMENT
-      const KeuanganPage(), // DITAMBAHKAN
+
+      // --- PERUBAHAN DI SINI ---
+      // const TransactionHistoryPage(), // DI-COMMENT (ASLI)
+      // const KeuanganPage(), // DI-COMMENT (PERMINTAAN SEBELUMNYA)
+      const UserListPage(), // DITAMBAHKAN TAMPILAN USER
+      // --- BATAS PERUBAHAN ---
+
       const AccountPage(),
     ];
   }
@@ -59,9 +67,11 @@ class _DashboardPageState extends State<DashboardPage> {
         child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
+      bottomNavigationBar: SafeArea(
+        child: BottomBar(
+          selectedIndex: _selectedIndex,
+          onItemTapped: _onItemTapped,
+        ),
       ),
     );
   }
