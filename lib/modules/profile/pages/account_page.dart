@@ -592,7 +592,7 @@ class AccountPage extends StatelessWidget {
               backgroundColor: Colors.white,
               // 🚨 DUMMY IMAGE DIHAPUS
               // backgroundImage: NetworkImage('https://picsum.photos/200/200'),
-              child: const Icon(Icons.person, size: 50, color: Colors.grey),
+              child: Icon(Icons.person, size: 50, color: Colors.grey),
             ),
           ),
           Positioned(
