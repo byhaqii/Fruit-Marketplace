@@ -1,0 +1,1 @@
+<?php if(extension_loaded('gd')){ echo "GD AKTIF"; } else { echo "GD MATI"; } ?>

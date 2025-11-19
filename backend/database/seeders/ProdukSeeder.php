@@ -3,10 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-// Asumsikan model Produk ada di App\Models\Produk
-// Asumsikan model Warga ada di App\Models\Warga
 use App\Models\Produk;
-use App\Models\Warga;
+use App\Models\User; // Ganti Warga menjadi User
 
 class ProdukSeeder extends Seeder
 {
@@ -17,13 +15,14 @@ class ProdukSeeder extends Seeder
      */
     public function run(): void
     {
-        // Ambil ID Warga Biasa yang menjual
-        $wargaPenjual = Warga::where('nama', 'Warga Biasa')->first();
+        // --- PERUBAHAN LOGIKA SEEDER ---
+        // Ambil User Penjual (dari UserSeeder yang kita buat di langkah sebelumnya)
+        $userPenjual = User::where('role', 'penjual')->first();
 
-        if ($wargaPenjual) {
+        if ($userPenjual) {
             $produkData = [
                 [
-                    'warga_id' => $wargaPenjual->id,
+                    'user_id' => $userPenjual->id, // Ganti warga_id menjadi user_id
                     'nama_produk' => 'Keripik Singkong Pedas',
                     'deskripsi' => 'Keripik singkong buatan rumahan, renyah dan pedas.',
                     'harga' => 12000.00,
@@ -32,7 +31,7 @@ class ProdukSeeder extends Seeder
                     'status_jual' => 'Tersedia',
                 ],
                 [
-                    'warga_id' => $wargaPenjual->id,
+                    'user_id' => $userPenjual->id, // Ganti warga_id menjadi user_id
                     'nama_produk' => 'Sayur Bayam Segar',
                     'deskripsi' => 'Bayam organik dipanen pagi hari dari kebun sendiri.',
                     'harga' => 7500.00,
@@ -40,16 +39,8 @@ class ProdukSeeder extends Seeder
                     'kategori' => 'Sayuran',
                     'status_jual' => 'Tersedia',
                 ],
-                [
-                    'warga_id' => $wargaPenjual->id,
-                    'nama_produk' => 'Jasa Servis Komputer',
-                    'deskripsi' => 'Menerima servis laptop dan komputer, instalasi software dan hardware.',
-                    'harga' => 150000.00,
-                    'stok' => 999, 
-                    'kategori' => 'Jasa',
-                    'status_jual' => 'Tersedia',
-                ],
             ];
+            // --- AKHIR PERUBAHAN ---
 
             foreach ($produkData as $produk) {
                 Produk::firstOrCreate(['nama_produk' => $produk['nama_produk']], $produk);

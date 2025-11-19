@@ -2,27 +2,40 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Transaksi extends Model
 {
+    use HasFactory;
+
     protected $table = 'transaksi';
 
+    // ... $fillable ...
     protected $fillable = [
-        'iuran_id', 'warga_id', 'nominal_bayar', 'metode_pembayaran', 
-        'tanggal_bayar', 'bukti_transfer_path', 'status_verifikasi', 
-        'verified_by_user_id', 'is_anomaly'
+        'user_id',
+        'order_id',
+        'total_harga',
+        'order_status',
+        'payment_method',
+        'payment_status',
+        'bukti_bayar_url',
+        'payment_gateway_ref',
+        'alamat_pengiriman',
     ];
-    
-    // Relasi ke Iuran
-    public function iuran()
+
+
+    public function user()
     {
-        return $this->belongsTo(Iuran::class);
+        return $this->belongsTo(User::class);
     }
 
-    // Relasi ke Warga (pembayar)
-    public function warga()
+    /**
+     * Relasi BARU: Satu transaksi memiliki BANYAK order_items
+     */
+    public function items()
     {
-        return $this->belongsTo(Warga::class);
+        // --- PERBAIKI DI SINI ---
+        return $this->hasMany(OrderItem::class);
     }
 }

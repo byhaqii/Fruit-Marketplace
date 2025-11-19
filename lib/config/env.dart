@@ -1,3 +1,4 @@
 class Env {
-  static const String apiBaseUrl = 'http://192.168.100.10:8081'; 
+  // Ganti dengan URL HTTPS dari Ngrok
+ static const String apiBaseUrl = 'https://stringhalty-hourly-ariella.ngrok-free.dev';
 }

@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Please authenticate to login to Fruitify</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -45,5 +47,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+    <string>Aplikasi membutuhkan akses galeri untuk memilih foto produk.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Aplikasi membutuhkan akses kamera untuk mengambil foto produk.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Aplikasi membutuhkan akses mikrofon.</string>
 </dict>
 </plist>
