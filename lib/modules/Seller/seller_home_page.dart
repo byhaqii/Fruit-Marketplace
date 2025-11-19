@@ -3,12 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // Import Provider (Perhatikan jumlah ../ disesuaikan dengan struktur folder)
-import '../../../providers/auth_provider.dart';
-import '../../../providers/marketplace_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/marketplace_provider.dart';
 
 // Halaman Navigasi
-import '../../marketplace/pages/seller_product_list_page.dart';
-import '../../history/pages/transaction_history_page.dart';
+import 'seller_product_list_page.dart';
+import '../history/pages/transaction_history_page.dart';
 
 class SellerHomePage extends StatefulWidget {
   const SellerHomePage({super.key});

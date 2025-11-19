@@ -234,7 +234,7 @@ class MarketplaceProvider with ChangeNotifier {
     return results.take(10).toList();
   }
 
-  // --- FITUR PENJUAL (LENGKAP) ---
+  // --- FITUR PENJUAL (LENGKAP & FIXED) ---
 
   /// POST /produk (Tambah Produk)
   Future<bool> addProduct({
@@ -265,7 +265,8 @@ class MarketplaceProvider with ChangeNotifier {
     }
   }
 
-  /// PUT /produk/{id} (Edit Produk) - FITUR INI YANG TADI KURANG
+  /// PUT /produk/{id} (Edit Produk)
+  /// PERBAIKAN PENTING: Menggunakan POST dengan _method: PUT agar file terbaca di PHP
   Future<bool> updateProduct({
     required int id,
     required String nama,
@@ -284,6 +285,8 @@ class MarketplaceProvider with ChangeNotifier {
         'harga': harga,
         'stok': stok,
         'kategori': kategori,
+        // PENTING: Method Spoofing agar PHP mengenali ini sebagai PUT
+        '_method': 'PUT', 
       };
 
       if (imagePath != null) {
@@ -293,13 +296,18 @@ class MarketplaceProvider with ChangeNotifier {
 
       FormData formData = FormData.fromMap(dataMap);
 
-      // Menggunakan PUT (sesuai route backend Anda)
-      await apiClient.dio.put('/produk/$id', data: formData, options: options);
+      // PENTING: Gunakan POST, bukan PUT. Backend akan membacanya sebagai PUT karena ada _method
+      // Hapus "data:" parameter named, gunakan positional argument
+      await apiClient.post('/produk/$id', formData, options: options);
       
       await fetchProducts(); 
       return true;
     } catch (e) {
-      print("Gagal update produk: $e");
+      if (e is DioException) {
+         print("Error Update: ${e.response?.data}");
+      } else {
+         print("Gagal update produk: $e");
+      }
       return false;
     }
   }
