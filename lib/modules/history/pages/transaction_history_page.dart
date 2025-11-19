@@ -1,16 +1,17 @@
 // lib/modules/history/pages/transaction_history_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // <-- 1. TAMBAHKAN IMPORT
 import '../../../models/transaksi_model.dart';
+import '../../../providers/marketplace_provider.dart'; // <-- 2. TAMBAHKAN IMPORT
 
 class TransactionHistoryPage extends StatelessWidget {
   const TransactionHistoryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Menghilangkan data dummy. Menggunakan list kosong sebagai ganti
-    // simulasi data yang akan dimuat dari API.
-    final List<TransaksiModel> transactions = [];
+    // 3. HAPUS DATA DUMMY/PLACEHOLDER
+    // final List<TransaksiModel> transactions = [];
 
     return Scaffold(
       body: Column(
@@ -49,17 +50,36 @@ class TransactionHistoryPage extends StatelessWidget {
               ],
             ),
           ),
+          // 4. GUNAKAN CONSUMER UNTUK MENGAMBIL DATA HISTORY
           Expanded(
-            child: transactions.isEmpty
-                ? const Center(child: Text('Tidak ada riwayat transaksi.')) // Tambahkan pesan jika kosong
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: transactions.length,
-                    // Mengoper objek TransaksiModel
-                    itemBuilder: (context, index) {
-                      return _buildTransactionCard(context, transactions[index]);
-                    },
-                  ),
+            child: Consumer<MarketplaceProvider>(
+              builder: (context, provider, child) {
+                
+                // Asumsi: Provider punya List<TransaksiModel> bernama 'transactions'
+                // dan status 'isLoading'
+                final bool isLoading = provider.isLoading;
+                final List<TransaksiModel> transactions = provider.transactions;
+
+                // Tampilkan loading indicator
+                if (isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                // Tampilkan pesan jika kosong
+                if (transactions.isEmpty) {
+                  return const Center(child: Text('Tidak ada riwayat transaksi.'));
+                }
+
+                // Tampilkan ListView jika ada data
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: transactions.length, // <-- Gunakan data provider
+                  itemBuilder: (context, index) {
+                    return _buildTransactionCard(context, transactions[index]); // <-- Gunakan data provider
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -70,7 +90,8 @@ class TransactionHistoryPage extends StatelessWidget {
     // Menggunakan properti isSuccess dari model
     final isSuccess = data.isSuccess;
     final buttonText = isSuccess ? 'Beri Ulasan' : 'Beli Lagi';
-    final buttonColor = isSuccess ? Colors.green : Theme.of(context).colorScheme.primary;
+    final buttonColor =
+        isSuccess ? Colors.green : Theme.of(context).colorScheme.primary;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -106,7 +127,8 @@ class TransactionHistoryPage extends StatelessWidget {
                   Text(
                     // Menggunakan properti title
                     data.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -115,23 +137,30 @@ class TransactionHistoryPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Menggunakan properti date
-                      Text(data.date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(data.date,
+                          style: const TextStyle(color: Colors.grey, fontSize: 12)),
                       // Menggunakan properti weight
-                      Text(data.weight, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(data.weight,
+                          style: const TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                   const SizedBox(height: 4),
                   // Menggunakan properti price
-                  Text(data.price, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  Text(data.price,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Status Tag
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isSuccess ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                          color: isSuccess
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.red.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -147,18 +176,35 @@ class TransactionHistoryPage extends StatelessWidget {
                       // Action Button
                       ElevatedButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            // Menggunakan properti title
-                            SnackBar(content: Text('$buttonText untuk ${data.title}')),
-                          );
+                          if (isSuccess) {
+                            // Navigasi ke Halaman Rating baru
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    RatingPage(transaction: data),
+                              ),
+                            );
+                          } else {
+                            // Logika "Beli Lagi"
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content:
+                                      Text('$buttonText untuk ${data.title}')),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: buttonColor,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
                           elevation: 0,
                         ),
-                        child: Text(buttonText, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                        child: Text(buttonText,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 14)),
                       ),
                     ],
                   ),
@@ -166,6 +212,146 @@ class TransactionHistoryPage extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ==============================
+/// HALAMAN RATING (BARU)
+/// ==============================
+
+class RatingPage extends StatefulWidget {
+  final TransaksiModel transaction;
+
+  const RatingPage({super.key, required this.transaction});
+
+  @override
+  State<RatingPage> createState() => _RatingPageState();
+}
+
+class _RatingPageState extends State<RatingPage> {
+  int _rating = 0; // 0 = no rating, 1-5 = star rating
+  final TextEditingController _reviewController = TextEditingController();
+
+  @override
+  void dispose() {
+    _reviewController.dispose();
+    super.dispose();
+  }
+
+  void _submitReview() {
+    final String reviewText = _reviewController.text;
+
+    // Logika untuk submit review (misal: kirim ke API)
+    // Di sini kita hanya menampilkan SnackBar dan kembali
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            'Ulasan untuk ${widget.transaction.title} terkirim! (Rating: $_rating)'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    // Kembali ke halaman sebelumnya
+    Navigator.of(context).pop();
+  }
+
+  Widget _buildStarRating() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(5, (index) {
+        final int starValue = index + 1;
+        return IconButton(
+          onPressed: () {
+            setState(() {
+              _rating = starValue;
+            });
+          },
+          icon: Icon(
+            _rating >= starValue ? Icons.star : Icons.star_border,
+            color: _rating >= starValue ? Colors.amber[700] : Colors.grey,
+            size: 40,
+          ),
+        );
+      }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Warna hijau dari gambar
+    final Color primaryGreen = Colors.teal[600] ?? Colors.teal;
+    final Color textGreen = Colors.teal[700] ?? Colors.teal;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Rating', style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              'How was the product?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+                color: textGreen,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildStarRating(),
+            const SizedBox(height: 24),
+            TextFormField(
+              controller: _reviewController,
+              maxLines: 5,
+              decoration: InputDecoration(
+                hintText: 'Very good product',
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: primaryGreen, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton(
+          onPressed: _rating == 0
+              ? null
+              : _submitReview, // Disable jika belum ada rating
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryGreen,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: Colors.grey[300],
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: const Text('Submit',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
       ),
     );

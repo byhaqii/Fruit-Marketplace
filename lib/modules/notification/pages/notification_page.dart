@@ -1,0 +1,160 @@
+// lib/modules/notifications/pages/notification_page.dart
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // <-- 1. TAMBAHKAN IMPORT PROVIDER
+import '../../../models/notification_model.dart'; // <-- 2. PERBAIKI PATH IMPORT
+import '../../../providers/notification_provider.dart'; // <-- 3. TAMBAHKAN IMPORT PROVIDER
+
+class NotificationPage extends StatelessWidget {
+  const NotificationPage({super.key});
+
+  // Warna hijau utama dari gambar
+  static const Color primaryGreen = Color.fromARGB(255, 56, 142, 60);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Notifikasi', style: TextStyle(color: Colors.white)),
+        backgroundColor: primaryGreen,
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      // 4. GANTI BODY DENGAN CONSUMER UNTUK MENGAMBIL DATA ASLI
+      body: Consumer<NotificationProvider>(
+        builder: (context, provider, child) {
+          // Asumsi: Provider Anda memiliki List<NotificationModel> bernama 'notifications'
+          // Ganti 'notifications' jika nama propertinya berbeda di provider Anda
+          
+          // final List<NotificationModel> notifications = provider.notifications;
+          // CATATAN: Saya asumsikan nama propertinya 'notifications'.
+          // Jika Anda belum menambahkannya, ini adalah contoh:
+          // Di NotificationProvider:
+          // List<NotificationModel> _notifications = [];
+          // List<NotificationModel> get notifications => _notifications;
+          // ...lalu ada fungsi fetchNotifications()
+          
+          // Untuk menghindari error sementara, kita buat list kosong
+          // Ganti ini dengan data provider Anda:
+          final List<NotificationModel> notifications = []; // <-- Ganti dengan provider.notifications
+
+          // 5. TAMBAHKAN KONDISI JIKA DATA KOSONG
+          if (notifications.isEmpty) {
+            return const Center(
+              child: Text(
+                'Tidak ada notifikasi.',
+                style: TextStyle(color: Colors.grey, fontSize: 16),
+              ),
+            );
+          }
+
+          // 6. GUNAKAN DATA DARI PROVIDER
+          return ListView.builder(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: notifications.length, // <-- Menggunakan data provider
+            itemBuilder: (context, index) {
+              final notification = notifications[index]; // <-- Menggunakan data provider
+              return _buildNotificationCard(notification);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildNotificationCard(NotificationModel notification) {
+    final Color statusColor = notification.isSuccess ? primaryGreen : Colors.red;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: Colors.grey[300]!, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  notification.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent, // Background transparan
+                    borderRadius: BorderRadius.circular(8), // Radius border
+                    border: Border.all(
+                      // Tambahkan border
+                      color: statusColor, // Warna border sesuai status
+                      width: 1.5, // Ketebalan border
+                    ),
+                  ),
+                  child: Text(
+                    notification.isSuccess ? 'Berhasil' : 'Gagal',
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Loop untuk menampilkan setiap item notifikasi
+            ...notification.items.map((item) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        item.name,
+                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        item.weight,
+                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        item.price,
+                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                        textAlign: TextAlign.end,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
+            Text(
+              '${notification.time}, ${notification.date}',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

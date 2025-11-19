@@ -1,11 +1,18 @@
 // lib/modules/dashboard/dashboard_page.dart
-
 import 'package:flutter/material.dart';
 import '../../widgets/bottombar.dart';
 import '../marketplace/pages/produk_list_page.dart';
 import '../profile/pages/account_page.dart';
-// 🌟 IMPORT BARU
-import '../history/pages/transaction_history_page.dart'; 
+import 'dashboard_content_page.dart';
+import '../scan/pages/scan_page.dart';
+
+// --- PERUBAHAN DI SINI ---
+// import '../history/pages/transaction_history_page.dart'; // DI-COMMENT (ASLI)
+// import '../keuangan/pages/keuangan_page.dart'; // DI-COMMENT (PERMINTAAN SEBELUMNYA)
+// Ganti path ini sesuai lokasi file UserListPage Anda
+import '../data/pages/user_page.dart'; // BENAR // DITAMBAHKAN TAMPILAN USER
+// --- BATAS PERUBAHAN ---
+
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -15,18 +22,9 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // 0: Home, 1: Store (Marketplace), 2: Statistic (History), 3: Akun
-  // Mengatur default ke 0 (Home)
-  int _selectedIndex = 0; 
+  int _selectedIndex = 0;
 
-  // Daftar halaman sesuai urutan di BottomBar
-  final List<Widget> _pages = const [
-    Center(child: Text('Halaman Home')), // Index 0
-    ProdukListPage(), // Index 1: Marketplace
-    // 🌟 MENGGANTI INI
-    TransactionHistoryPage(), // Index 2: History/Statistic
-    AccountPage(), // Index 3: Menggunakan AccountPage
-  ];
+  late final List<Widget> _pages;
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
@@ -34,30 +32,46 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _pages = [
+      DashboardContentPage(onSeeAllTapped: () => _onItemTapped(1)),
+      const ProdukListPage(),
+
+      // --- PERUBAHAN DI SINI ---
+      // const TransactionHistoryPage(), // DI-COMMENT (ASLI)
+      // const KeuanganPage(), // DI-COMMENT (PERMINTAAN SEBELUMNYA)
+      const UserListPage(), // DITAMBAHKAN TAMPILAN USER
+      // --- BATAS PERUBAHAN ---
+
+      const AccountPage(),
+    ];
+  }
+
+  @override
   Widget build(BuildContext context) {
     final Color primaryColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
-      // IndexedStack menjaga state tiap halaman saat berpindah
       body: IndexedStack(index: _selectedIndex, children: _pages),
-
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Membuka Fitur Scan...')),
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ScanPage()),
           );
         },
-        // Menggunakan CircleBorder untuk FAB dock yang benar
-        shape: const CircleBorder(), 
+        shape: const CircleBorder(),
         backgroundColor: primaryColor,
         elevation: 4.0,
         child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-      bottomNavigationBar: BottomBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
+      bottomNavigationBar: SafeArea(
+        child: BottomBar(
+          selectedIndex: _selectedIndex,
+          onItemTapped: _onItemTapped,
+        ),
       ),
     );
   }

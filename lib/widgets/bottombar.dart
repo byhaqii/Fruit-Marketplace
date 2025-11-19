@@ -1,3 +1,4 @@
+// file bottombar.dart
 import 'package:flutter/material.dart';
 import '_nav_item.dart'; // Import NavItem
 
@@ -14,8 +15,11 @@ class NavData {
 final List<NavData> navItems = [
   const NavData(icon: Icons.home, label: 'Home', route: '/'),
   const NavData(icon: Icons.shopping_bag, label: 'Marketplace', route: '/produk'),
-  const NavData(icon: Icons.history, label: 'History', route: '/history'), 
-  const NavData(icon: Icons.person, label: 'Akun', route: '/akun'), 
+  // const NavData(icon: Icons.history, label: 'History', route: '/history'), // DI-COMMENT (ASLI)
+  // const NavData(icon: Icons.analytics, label: 'Keuangan', route: '/keuangan'), // DI-COMMENT (PERMINTAAN SEBELUMNYA)
+  const NavData(icon: Icons.group, label: 'User', route: '/user'), // DITAMBAHKAN TAMPILAN USER
+
+  const NavData(icon: Icons.person, label: 'Akun', route: '/akun'),
 ];
 
 class BottomBar extends StatelessWidget {
@@ -34,11 +38,10 @@ class BottomBar extends StatelessWidget {
 
     return BottomAppBar(
       color: Colors.white,
-      // Membuat takik melingkar
       shape: const CircularNotchedRectangle(),
       notchMargin: 6.0,
       padding: EdgeInsets.zero,
-      surfaceTintColor: Colors.white, 
+      surfaceTintColor: Colors.white,
       child: SizedBox(
         height: 60.0,
         child: Row(
@@ -52,7 +55,7 @@ class BottomBar extends StatelessWidget {
               onTap: () => onItemTapped(0),
               activeColor: primaryColor,
             ),
-            
+
             // Item 2: Marketplace
             NavItem(
               icon: navItems[1].icon,
@@ -63,9 +66,10 @@ class BottomBar extends StatelessWidget {
             ),
 
             // Spacer kosong untuk menyeimbangkan tombol 'Scan'
-            const SizedBox(width: 48), 
+            const SizedBox(width: 48),
 
-            // Item 3: Statistic 
+            // --- PERUBAHAN DI SINI ---
+            // Item 3: User (Menggantikan Keuangan)
             NavItem(
               icon: navItems[2].icon,
               label: navItems[2].label,
@@ -73,8 +77,9 @@ class BottomBar extends StatelessWidget {
               onTap: () => onItemTapped(2),
               activeColor: primaryColor,
             ),
-            
-            // Item 4: Akun 
+            // --- BATAS PERUBAHAN ---
+
+            // Item 4: Akun
             NavItem(
               icon: navItems[3].icon,
               label: navItems[3].label,

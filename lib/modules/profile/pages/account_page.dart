@@ -2,6 +2,9 @@
 // Pastikan path UserModel sesuai proyekmu.
 import 'package:flutter/material.dart';
 import '../../../models/user_model.dart';
+import 'package:intl/intl.dart'; // Tambahkan ini untuk format tanggal
+import 'package:provider/provider.dart'; // <-- TAMBAHKAN IMPORT INI
+import '../../../providers/auth_provider.dart'; // <-- TAMBAHKAN IMPORT INI
 
 /// ==============================
 /// 1) SETTING PAGE (Sub-Screen)
@@ -39,12 +42,7 @@ class SettingPage extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
-            _buildSettingTile(
-              context,
-              title: 'Biometric Login',
-              isSwitch: true,
-            ),
-            const SizedBox(height: 16),
+            // OPSI BIOMETRIC LOGIN DIHAPUS
             _buildSettingTile(
               context,
               title: 'Change Password',
@@ -56,17 +54,7 @@ class SettingPage extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 16),
-            _buildSettingTile(
-              context,
-              title: 'Logout Semua Perangkat',
-              trailing: const Icon(Icons.logout, color: Colors.black54),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Logout Semua Perangkat...')),
-                );
-              },
-            ),
+            // OPSI LOGOUT SEMUA PERANGKAT DIHAPUS
           ],
         ),
       ),
@@ -96,7 +84,7 @@ class SettingPage extends StatelessWidget {
             Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             if (isSwitch)
               Switch(
-                value: true,
+                value: true, // Nilai ini perlu state management jika ingin dinamis
                 onChanged: (bool value) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Biometric Login: ${value ? 'On' : 'Off'}')),
@@ -124,9 +112,10 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Dummy user - pastikan UserModel.dummyUser tersedia
-  final UserModel user = UserModel.dummyUser;
+  // 🚨 DUMMY DATA DIHAPUS
+  // final UserModel user = UserModel.simulatedApiUser;
 
+  // Controller sekarang diinisialisasi sebagai 'late'
   late final TextEditingController _fullNameController;
   late final TextEditingController _nikController;
   late final TextEditingController _mobileController;
@@ -135,6 +124,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   late String _selectedGender;
   late String _selectedDateOfBirth;
+  
+  bool _isInitialized = false; // Flag untuk mencegah init berulang
 
   // Constants (sinkron dengan AccountPage)
   static const Color primaryGreen = Color.fromARGB(255, 56, 142, 60);
@@ -145,14 +136,49 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    _fullNameController = TextEditingController(text: user.name);
-    _nikController = TextEditingController(text: user.nik);
-    _mobileController = TextEditingController(text: user.mobileNumber);
-    _emailController = TextEditingController(text: user.email);
-    _addressController = TextEditingController(text: user.address);
+    // Inisialisasi dikosongkan, dipindah ke didChangeDependencies
+    // untuk memastikan data provider tersedia
+  }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // Hanya inisialisasi satu kali
+    if (!_isInitialized) {
+      // ❗️ PERBAIKAN: Ambil data user dari AuthProvider
+      // Asumsi: AuthProvider memiliki properti 'user' bertipe UserModel
+      final authProvider = Provider.of<AuthProvider>(context);
+      
+      // Jika user tidak ada (misal provider belum siap), beri nilai default
+      // Idealnya, halaman ini tidak bisa diakses jika user null
+      final UserModel? user = authProvider.user; 
+      // ☝️ CATATAN: Anda perlu menambahkan properti 'user' (UserModel)
+      //    di AuthProvider Anda yang datanya di-set saat login.
 
-    _selectedGender = user.gender;
-    _selectedDateOfBirth = user.dob;
+      _fullNameController = TextEditingController(text: user?.name ?? '');
+      _nikController = TextEditingController(text: user?.nik ?? '');
+      _mobileController = TextEditingController(text: user?.mobileNumber ?? '');
+      _emailController = TextEditingController(text: user?.email ?? '');
+      _addressController = TextEditingController(text: user?.address ?? '');
+
+      _selectedGender = user?.gender ?? 'Laki-laki';
+      final dob = user?.dob ?? '';
+
+      // Format tanggal dari YYYY-MM-DD ke "DD Bulan YYYY" untuk tampilan
+      try {
+        final dateTime = DateTime.parse(dob);
+        _selectedDateOfBirth = DateFormat('d MMMM yyyy', 'id_ID').format(dateTime); 
+      } catch (_) {
+        _selectedDateOfBirth = dob; // fallback
+      }
+      
+      if (_selectedDateOfBirth == dob) {
+        _selectedDateOfBirth = _formatDateForDisplay(dob);
+      }
+      
+      _isInitialized = true;
+    }
   }
 
   @override
@@ -165,11 +191,23 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  // Helper untuk format tanggal dari YYYY-MM-DD ke 'DD Bulan YYYY'
+  String _formatDateForDisplay(String dateString) {
+    if (dateString.isEmpty) return 'Pilih Tanggal';
+    try {
+      final dateTime = DateTime.parse(dateString);
+      return "${dateTime.day} ${_monthName(dateTime.month)} ${dateTime.year}";
+    } catch (_) {
+      return dateString;
+    }
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     DateTime initialDate;
     try {
-      // Coba parse tanggal dari user.dob (basic)
-      initialDate = DateTime.parse(user.dob.replaceAll(RegExp(r'[a-zA-Z]'), '').trim());
+      // Ambil tanggal terakhir dari state
+      final currentDobString = DateFormat('d MMMM yyyy', 'id_ID').parse(_selectedDateOfBirth);
+      initialDate = currentDobString;
     } catch (_) {
       initialDate = DateTime(2000);
     }
@@ -183,26 +221,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (picked != null) {
       setState(() {
-        _selectedDateOfBirth =
-            "${picked.day} ${_monthName(picked.month)} ${picked.year}";
+        // Update tampilan dengan format lokal (intl)
+        _selectedDateOfBirth = DateFormat('d MMMM yyyy', 'id_ID').format(picked);
       });
     }
   }
 
+  // Fungsi _monthName tidak lagi diperlukan jika 'intl' sudah di-init
   String _monthName(int m) {
     const months = [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember'
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
     return months[m - 1];
   }
@@ -225,7 +254,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 CircleAvatar(
                   radius: _avatarRadius,
                   backgroundColor: Colors.white,
-                  backgroundImage: const NetworkImage('https://picsum.photos/200/200'),
+                  // 🚨 DUMMY IMAGE DIHAPUS
+                  // backgroundImage: const NetworkImage('https://picsum.photos/200/200'),
+                  child: const Icon(Icons.person, size: 50, color: Colors.grey),
                 ),
                 Positioned(
                   bottom: 0,
@@ -247,6 +278,11 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
+    
+    // Jika state belum siap (misal provider telat), tampilkan loading
+    if (!_isInitialized) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -308,6 +344,7 @@ class _ProfilePageState extends State<ProfilePage> {
             EdgeInsets.fromLTRB(16.0, 8.0, 16.0, MediaQuery.of(context).padding.bottom + 8.0),
         child: ElevatedButton(
           onPressed: () {
+            // TODO: Tambahkan logika untuk UPDATE user via API
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profil berhasil disimpan!')),
             );
@@ -386,6 +423,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildGenderSelection(Color primaryColor) {
+    // Mapping agar sesuai dengan data seeder: 'Laki-laki' dan 'Perempuan'
+    const List<String> genderOptions = ['Laki-laki', 'Perempuan'];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -395,9 +435,9 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         Row(
           children: [
-            Expanded(child: _buildGenderOption('Male', primaryColor)),
+            Expanded(child: _buildGenderOption(genderOptions[0], primaryColor)),
             const SizedBox(width: 16),
-            Expanded(child: _buildGenderOption('Female', primaryColor)),
+            Expanded(child: _buildGenderOption(genderOptions[1], primaryColor)),
           ],
         ),
       ],
@@ -448,7 +488,36 @@ class AccountPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final UserModel user = UserModel.dummyUser;
+    // ❗️ PERBAIKAN: Ambil AuthProvider
+    final authProvider = Provider.of<AuthProvider>(context);
+    // 🚨 DUMMY DATA DIHAPUS
+    // final UserModel user = UserModel.simulatedApiUser;
+
+    // ❗️ PERBAIKAN: Ambil user dari provider
+    // Asumsi: AuthProvider memiliki properti 'user' bertipe UserModel
+    final UserModel? user = authProvider.user; 
+    
+    // Jika user null (belum login/data belum load), tampilkan UI minimal
+    if (user == null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("Data user tidak ditemukan."),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                child: const Text("Logout"),
+                onPressed: () {
+                  // Tetap berikan opsi logout
+                  Provider.of<AuthProvider>(context, listen: false).logout();
+                },
+              )
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -492,7 +561,7 @@ class AccountPage extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 16),
-                  _buildLogoutTile(context),
+                  _buildLogoutTile(context, authProvider), // Kirim provider
                   const SizedBox(height: 50),
                 ],
               ),
@@ -521,7 +590,9 @@ class AccountPage extends StatelessWidget {
             child: const CircleAvatar(
               radius: _avatarRadius,
               backgroundColor: Colors.white,
-              backgroundImage: NetworkImage('https://picsum.photos/200/200'),
+              // 🚨 DUMMY IMAGE DIHAPUS
+              // backgroundImage: NetworkImage('https://picsum.photos/200/200'),
+              child: Icon(Icons.person, size: 50, color: Colors.grey),
             ),
           ),
           Positioned(
@@ -592,7 +663,8 @@ class AccountPage extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutTile(BuildContext context) {
+  // ❗️ PERBAIKAN: Terima AuthProvider untuk logout
+  Widget _buildLogoutTile(BuildContext context, AuthProvider authProvider) {
     return Container(
       margin: const EdgeInsets.only(top: 10),
       child: Material(
@@ -601,9 +673,13 @@ class AccountPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         child: InkWell(
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Logging out...')),
-            );
+            // ❗️ PERBAIKAN: Panggil fungsi logout dari provider
+            authProvider.logout();
+            
+            // SnackBar bisa ditampilkan di sini, TAPI
+            // AuthCheck akan otomatis mem-build ulang dan memindahkan
+            // user ke halaman Login, jadi SnackBar mungkin tidak terlihat.
+            // Biarkan AuthProvider yang menangani notifikasi jika perlu.
           },
           borderRadius: BorderRadius.circular(15),
           child: const Padding(

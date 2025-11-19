@@ -6,7 +6,7 @@ import '../modules/auth/pages/register_page.dart';
 import '../modules/auth/auth_check.dart';
 import '../modules/keuangan/pages/iuran_page.dart';
 import '../modules/marketplace/pages/produk_list_page.dart';
-import '../modules/notification/notification_page.dart';
+import '../modules/notification/pages/notification_page.dart';
 import '../modules/warga/pages/warga_list_page.dart';
 import '../modules/keuangan/pages/laporan_page.dart';
 
