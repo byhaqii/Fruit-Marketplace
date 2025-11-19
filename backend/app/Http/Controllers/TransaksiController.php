@@ -3,45 +3,41 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaksi;
-use App\Models\OrderItem; 
-use App\Models\Produk; 
+use App\Models\OrderItem;
+use App\Models\Produk;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse; 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use SimpleSoftwareIO\QrCode\Facades\QrCode; 
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Str;
 
 class TransaksiController extends Controller
 {
-    // ... method index() ...
     public function index()
     {
         $transaksi = Transaksi::with('user', 'items', 'items.produk')
-                        ->latest()
-                        ->get();
+            ->latest()
+            ->get();
         return response()->json($transaksi);
     }
 
-    // ... method getUserTransactions() ...
     public function getUserTransactions()
     {
         $userId = Auth::id();
         $transaksi = Transaksi::where('user_id', $userId)
-                        ->with('items', 'items.produk') 
-                        ->latest()
-                        ->get();
+            ->with('items', 'items.produk')
+            ->latest()
+            ->get();
         return response()->json($transaksi);
     }
 
-    
     public function store(Request $request)
     {
- 
         $validator = Validator::make($request->all(), [
             'total_harga'       => 'required|numeric|min:0',
-            'payment_method'    => 'required|string', 
+            'payment_method'    => 'required|string',
             'alamat_pengiriman' => 'required|string',
             'items'             => 'required|array|min:1',
             'items.*.produk_id' => 'required|integer|exists:produk,id',
@@ -57,9 +53,9 @@ class TransaksiController extends Controller
         try {
             $transaksi = Transaksi::create([
                 'user_id'           => Auth::id(),
-                'order_id'          => 'INV-' . strtoupper(Str::random(8)), 
+                'order_id'          => 'INV-' . strtoupper(Str::random(8)),
                 'total_harga'       => $request->total_harga,
-                'order_status'      => 'menunggu konfirmasi',
+                'order_status'      => 'menunggu konfirmasi', // Default awal
                 'payment_method'    => $request->payment_method,
                 'payment_status'    => 'pending',
                 'alamat_pengiriman' => $request->alamat_pengiriman,
@@ -74,38 +70,29 @@ class TransaksiController extends Controller
                 ]);
             }
 
-           $qrText = "Order ID: " . $transaksi->order_id . "\nTotal Bayar: Rp " . $transaksi->total_harga;
-
-            $qrCodeImage = QrCode::driver('gd')
-                                ->format('png')
-                                 ->size(250)
-                                 ->generate($qrText);
-            
-            $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeImage);
+            // QR Code dinonaktifkan sementara untuk mencegah error 500
+            $qrCodeBase64 = null;
 
             DB::commit();
 
             return response()->json([
                 'message' => 'Transaksi berhasil dibuat, silakan lakukan pembayaran.',
-                'data' => $transaksi->load('items'), 
+                'data' => $transaksi->load('items'),
                 'payment_qr_code' => $qrCodeBase64
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'message' => 'Gagal membuat transaksi, terjadi kesalahan server.',
-                'error' => $e->getMessage(), 
-                'file'  => $e->getFile(),    
-                'line'  => $e->getLine() 
+                'error' => $e->getMessage(),
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine()
             ], 500);
         }
     }
 
-    
     public function show($id)
     {
-        // ... (Kode show Anda yang sudah ada) ...
         $transaksi = Transaksi::with('user', 'items', 'items.produk')->find($id);
         if (!$transaksi) {
             return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
@@ -116,8 +103,6 @@ class TransaksiController extends Controller
         return response()->json($transaksi);
     }
 
-
-   
     public function updateStatusBySeller(Request $request, $id): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -128,11 +113,9 @@ class TransaksiController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        
         /** @var \App\Models\Transaksi $transaksi */
         $transaksi = Transaksi::with('items.produk')->find($id);
-        // ---------------------------------
-        
+
         if (!$transaksi) {
             return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
         }
@@ -141,12 +124,10 @@ class TransaksiController extends Controller
         $user = Auth::user();
         $newStatus = $request->status;
 
-       
         if ($user->role !== 'admin') {
             $isSellerOfThisOrder = false;
-            
-       
-            /** @var \App\Models\Order_Items $item */
+
+            // Cek apakah user ini adalah penjual salah satu item di order
             foreach ($transaksi->items as $item) {
                 if ($item->produk && $item->produk->user_id == $user->id) {
                     $isSellerOfThisOrder = true;
@@ -158,7 +139,7 @@ class TransaksiController extends Controller
             }
         }
 
-        
+        // Validasi urutan status
         if ($newStatus === 'Diproses' && $transaksi->order_status !== 'menunggu konfirmasi') {
             return response()->json(['message' => 'Pesanan tidak bisa diproses karena status saat ini adalah ' . $transaksi->order_status], 422);
         }
@@ -176,21 +157,45 @@ class TransaksiController extends Controller
         ]);
     }
 
-   
     public function cancelOrder(Request $request, $id): JsonResponse
     {
         /** @var \App\Models\Transaksi $transaksi */
-        $transaksi = Transaksi::find($id);
+        // Kita perlu load items.produk untuk mengecek kepemilikan penjual
+        $transaksi = Transaksi::with('items.produk')->find($id);
+
         if (!$transaksi) {
             return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
         }
 
-        if ($transaksi->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Anda tidak memiliki hak akses untuk transaksi ini'], 403);
+        $user = Auth::user();
+        $isAllowed = false;
+
+        // 1. Cek apakah yang login adalah PEMBELI (Pembuat Pesanan)
+        if ($transaksi->user_id === $user->id) {
+            $isAllowed = true;
+        }
+        // 2. Cek apakah yang login adalah ADMIN
+        elseif ($user->role === 'admin') {
+            $isAllowed = true;
+        }
+        // 3. Cek apakah yang login adalah PENJUAL dari produk di pesanan ini
+        else {
+            foreach ($transaksi->items as $item) {
+                if ($item->produk && $item->produk->user_id == $user->id) {
+                    $isAllowed = true;
+                    break;
+                }
+            }
         }
 
+        
+        if (!$isAllowed) {
+            return response()->json(['message' => 'Anda tidak memiliki hak akses untuk membatalkan transaksi ini'], 403);
+        }
+
+        
         if ($transaksi->order_status !== 'menunggu konfirmasi') {
-            return response()->json(['message' => 'Pesanan tidak dapat dibatalkan karena sudah diproses oleh penjual.'], 422);
+            return response()->json(['message' => 'Pesanan tidak dapat dibatalkan karena status saat ini: ' . $transaksi->order_status], 422);
         }
 
         $transaksi->order_status = 'Cancel';
@@ -202,7 +207,6 @@ class TransaksiController extends Controller
         ]);
     }
 
-   
     public function markAsReceived(Request $request, $id): JsonResponse
     {
         /** @var \App\Models\Transaksi $transaksi */
@@ -219,7 +223,7 @@ class TransaksiController extends Controller
             return response()->json(['message' => 'Pesanan tidak dapat diterima karena statusnya masih ' . $transaksi->order_status], 422);
         }
 
-        $transaksi->order_status = 'Tiba di tujuan';
+        $transaksi->order_status = 'Tiba di tujuan'; // Sesuai Migration baru
         $transaksi->payment_status = 'paid';
         $transaksi->save();
 

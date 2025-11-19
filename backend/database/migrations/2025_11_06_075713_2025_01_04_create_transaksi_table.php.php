@@ -27,10 +27,10 @@ return new class extends Migration
             // Status PESANAN (logistik)
             $table->enum('order_status', [
                 'menunggu konfirmasi', 
-                'di proses', 
-                'dikirim', 
-                'tiba di tujuan', 
-                'cancel',
+                'Diproses', 
+                'Dikirim', 
+                'Tiba di tujuan', 
+                'Cancel',
                 'pending' // (Sebaiknya pending tetap ada sebagai fallback)
             ])->default('menunggu konfirmasi'); // misal: pending, processing, shipped, completed, cancelled
             
