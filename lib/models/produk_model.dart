@@ -1,12 +1,12 @@
 // lib/models/produk_model.dart
+import '../config/env.dart'; // <--- 1. JANGAN LUPA IMPORT INI UNTUK BASE URL
 
 class ProdukModel {
-  // Kita gunakan tipe data yang sesuai dengan database Laravel
-  final int id;           
-  final int userId;       
+  final int id;
+  final int userId;
   final String namaProduk;
   final String deskripsi;
-  final int harga;        
+  final int harga;
   final int stok;
   final String imageUrl;
   final String kategori;
@@ -24,11 +24,10 @@ class ProdukModel {
     required this.statusJual,
   });
 
-  // Getter untuk kompatibilitas dengan kode UI lama (agar tidak perlu ubah semua UI)
+  // Getter kompatibilitas
   String get title => namaProduk;
   int get price => harga;
 
-  // Helper format Rupiah
   String get formattedPrice {
     final s = harga.toString();
     final buffer = StringBuffer();
@@ -41,12 +40,11 @@ class ProdukModel {
         count = 0;
       }
     }
-    return 'Rp. ${buffer.toString().split('').reversed.join()}';
+    return 'Rp ${buffer.toString().split('').reversed.join()}';
   }
 
   factory ProdukModel.fromJson(Map<String, dynamic> json) {
-    // --- FUNGSI PENYELAMAT (ANTI-ERROR) ---
-    // Fungsi ini memaksa data apapun menjadi Integer yang aman
+    // --- HELPERS ---
     int parseInt(dynamic val) {
       if (val == null) return 0;
       if (val is int) return val;
@@ -55,47 +53,58 @@ class ProdukModel {
       return 0;
     }
 
-    // Fungsi ini memaksa data apapun menjadi String yang aman
     String parseString(dynamic val, {String defaultValue = '-'}) {
       if (val == null) return defaultValue;
       return val.toString();
     }
 
+    // --- LOGIKA GAMBAR PINTAR ---
+    String getValidImageUrl(dynamic val) {
+      if (val == null || val.toString().isEmpty) {
+        // Gambar default jika null
+        return 'https://via.placeholder.com/150'; 
+      }
+      String imgString = val.toString();
+      
+      // Jika sudah ada 'http', berarti itu link lengkap (misal dari internet)
+      if (imgString.startsWith('http')) {
+        return imgString;
+      } 
+      
+      // Jika belum ada http, berarti itu nama file dari database lokal.
+      // Kita gabungkan dengan Base URL server + folder tempat simpan gambar.
+      // Sesuaikan '/storage/' dengan folder public di Laravel Anda.
+      // Contoh hasil: http://192.168.1.5:8081/storage/apel.jpg
+      return '${Env.apiBaseUrl}/storage/$imgString'; 
+    }
+
     return ProdukModel(
-      // Gunakan helper di sini untuk mencegah crash 'int is not subtype of String'
       id: parseInt(json['id']),
       userId: parseInt(json['user_id']),
-      
-      // Mapping nama field dari database (snake_case) ke model (camelCase)
       namaProduk: parseString(json['nama_produk'], defaultValue: 'Tanpa Nama'),
       deskripsi: parseString(json['deskripsi'], defaultValue: '-'),
-      
       harga: parseInt(json['harga']),
       stok: parseInt(json['stok']),
       
-      imageUrl: (json['gambar_url'] != null && json['gambar_url'].toString().isNotEmpty)
-          ? json['gambar_url'].toString()
-          : 'https://via.placeholder.com/150',
-          
+      // Panggil fungsi gambar pintar di sini
+      imageUrl: getValidImageUrl(json['gambar_url']),
+      
       kategori: parseString(json['kategori'], defaultValue: 'Umum'),
       statusJual: parseString(json['status_jual'], defaultValue: 'Tersedia'),
     );
   }
 
-  // Helper untuk kompatibilitas jika ada kode lama yang memanggil fromMap
   factory ProdukModel.fromMap(Map<String, dynamic> map) => ProdukModel.fromJson(map);
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'user_id': userId,
-      'nama_produk': namaProduk,
-      'deskripsi': deskripsi,
-      'harga': harga,
-      'stok': stok,
-      'gambar_url': imageUrl,
-      'kategori': kategori,
-      'status_jual': statusJual,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'user_id': userId,
+    'nama_produk': namaProduk,
+    'deskripsi': deskripsi,
+    'harga': harga,
+    'stok': stok,
+    'gambar_url': imageUrl,
+    'kategori': kategori,
+    'status_jual': statusJual,
+  };
 }

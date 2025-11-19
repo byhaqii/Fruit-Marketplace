@@ -5,15 +5,15 @@ import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
 
 // Pages
-import 'dashboard_content_page.dart'; // Home Pembeli
-import 'pages/admin_home_page.dart'; // Home Admin (BARU)
-import 'pages/seller_home_page.dart'; // Home Penjual (BARU)
+import 'pages/buyer_home_page.dart'; 
+import 'pages/admin_home_page.dart'; 
+import 'pages/seller_home_page.dart'; 
 
 import '../marketplace/pages/produk_list_page.dart';
 import '../history/pages/transaction_history_page.dart';
 import '../profile/pages/account_page.dart';
-import '../data/pages/user_page.dart'; // Halaman User (Admin)
-import '../scan/pages/scan_page.dart'; // Scan QR
+import '../data/pages/user_page.dart'; 
+import '../scan/pages/scan_page.dart'; 
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -24,17 +24,8 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedIndex = 0;
-
-  // List halaman dinamis
   List<Widget> _pages = [];
-  // List menu navigasi dinamis
   List<BottomNavigationBarItem> _navItems = [];
-
-  @override
-  void initState() {
-    super.initState();
-    // Inisialisasi awal (akan di-update di didChangeDependencies/build)
-  }
 
   // Fungsi untuk mengubah tab
   void _onItemTapped(int index) {
@@ -43,15 +34,14 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  // Fungsi untuk menyusun menu berdasarkan Role
   void _setupMenuByRole(String? role) {
     if (role == 'admin') {
-      // === MENU ADMIN ===
+      // MENU ADMIN
       _pages = [
-        const AdminHomePage(), // Dashboard Admin
-        const UserListPage(), // Manajemen User
-        const ProdukListPage(), // Manajemen Semua Produk
-        const AccountPage(), // Profil
+        const AdminHomePage(),
+        const UserListPage(),
+        const ProdukListPage(),
+        const AccountPage(),
       ];
       _navItems = const [
         BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Admin'),
@@ -60,12 +50,12 @@ class _DashboardPageState extends State<DashboardPage> {
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Akun'),
       ];
     } else if (role == 'penjual') {
-      // === MENU PENJUAL ===
+      // MENU PENJUAL
       _pages = [
-        const SellerHomePage(), // Dashboard Penjual
-        const ProdukListPage(), // Produk Saya
-        const TransactionHistoryPage(), // Pesanan Masuk (Perlu penyesuaian filter nanti)
-        const AccountPage(), // Profil
+        const SellerHomePage(),
+        const ProdukListPage(),
+        const TransactionHistoryPage(),
+        const AccountPage(),
       ];
       _navItems = const [
         BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Toko'),
@@ -74,12 +64,17 @@ class _DashboardPageState extends State<DashboardPage> {
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Akun'),
       ];
     } else {
-      // === MENU PEMBELI (Default) ===
+      // MENU PEMBELI
       _pages = [
-        DashboardContentPage(onSeeAllTapped: () => _onItemTapped(1)), // Home
-        const ProdukListPage(), // Belanja
-        const TransactionHistoryPage(), // Riwayat
-        const AccountPage(), // Profil
+        // --- DISINI PERUBAHANNYA ---
+        // Kita kirim fungsi untuk pindah ke index 1 (Shop)
+        BuyerHomePage(
+          onGoToShop: () => _onItemTapped(1), 
+        ),
+        // ---------------------------
+        const ProdukListPage(), 
+        const TransactionHistoryPage(), 
+        const AccountPage(), 
       ];
       _navItems = const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
@@ -92,14 +87,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Ambil role dari Provider
     final authProvider = Provider.of<AuthProvider>(context);
     final role = authProvider.userRole;
     
-    // Setup menu berdasarkan role saat ini
     _setupMenuByRole(role);
 
-    // Pastikan index tidak out of range jika role berubah
     if (_selectedIndex >= _pages.length) {
       _selectedIndex = 0;
     }
@@ -112,7 +104,6 @@ class _DashboardPageState extends State<DashboardPage> {
         children: _pages,
       ),
       
-      // Floating Action Button Khusus
       floatingActionButton: (role == 'pembeli' || role == null) 
           ? FloatingActionButton(
               onPressed: () {
@@ -126,7 +117,7 @@ class _DashboardPageState extends State<DashboardPage> {
               elevation: 4.0,
               child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
             )
-          : null, // Admin/Penjual mungkin tidak butuh tombol scan di tengah
+          : null, 
       
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       

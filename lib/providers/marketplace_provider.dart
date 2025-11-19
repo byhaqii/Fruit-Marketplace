@@ -1,7 +1,7 @@
 // lib/providers/marketplace_provider.dart
 
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart'; // Import Dio untuk handling request
+import 'package:dio/dio.dart'; 
 import '../core/network/api_client.dart';
 import '../models/produk_model.dart';
 import '../models/transaksi_model.dart';
@@ -11,7 +11,6 @@ class MarketplaceProvider with ChangeNotifier {
 
   // --- STATE ---
   List<ProdukModel> _products = [];
-  // UBAH: Key menggunakan int karena ID produk dari database adalah integer
   Map<int, int> _cartItems = {}; 
   List<TransaksiModel> _transactions = [];
   bool _isLoading = false;
@@ -27,32 +26,31 @@ class MarketplaceProvider with ChangeNotifier {
   List<ProdukModel> get products => _products;
   List<TransaksiModel> get transactions => _transactions;
 
-  /// Mengembalikan daftar PRODUK UNIK yang ada di keranjang
+  // Mengembalikan daftar PRODUK UNIK yang ada di keranjang
   List<ProdukModel> get cartItems {
     return _cartItems.keys.map((productId) {
       return _products.firstWhere(
         (p) => p.id == productId,
-        // Fallback dummy jika produk tidak ditemukan (safety)
         orElse: () => const ProdukModel(
             id: -1, userId: 0, namaProduk: 'Unknown', deskripsi: '', 
             harga: 0, stok: 0, imageUrl: '', kategori: '', statusJual: ''),
       );
-    }).where((p) => p.id != -1).toList(); // Filter valid products only
+    }).where((p) => p.id != -1).toList(); 
   }
 
-  /// Mengembalikan JUMLAH total item
+  // Mengembalikan JUMLAH total item
   int get cartItemCount {
     if (_cartItems.isEmpty) return 0;
     return _cartItems.values.fold(0, (sum, quantity) => sum + quantity);
   }
 
-  /// Menghitung total biaya
+  // Menghitung total biaya
   int get totalCost {
     int total = 0;
     _cartItems.forEach((productId, quantity) {
       try {
         final product = _products.firstWhere((p) => p.id == productId);
-        total += product.harga * quantity; // Gunakan field 'harga' dari ProdukModel
+        total += product.harga * quantity; 
       } catch (e) {
         print("Error: Produk ID $productId tidak ditemukan di list lokal.");
       }
@@ -60,7 +58,7 @@ class MarketplaceProvider with ChangeNotifier {
     return total;
   }
 
-  /// Helper format rupiah
+  // Helper format rupiah
   String get formattedTotalCost {
     if (totalCost == 0) return 'Rp 0';
     final s = totalCost.toString();
@@ -115,11 +113,11 @@ class MarketplaceProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // --- API CALLS ---
+  // --- API CALLS UMUM ---
 
   Future<void> fetchAllData() async {
     _isLoading = true;
-    notifyListeners(); // Update UI state loading
+    notifyListeners(); 
 
     await Future.wait([
       fetchProducts(),
@@ -133,7 +131,7 @@ class MarketplaceProvider with ChangeNotifier {
   /// GET /produk
   Future<void> fetchProducts() async {
     try {
-      final resp = await apiClient.get('/produk'); // Sesuai route Laravel
+      final resp = await apiClient.get('/produk'); 
       if (resp is List) {
         _products = resp
             .map((json) => ProdukModel.fromJson(json as Map<String, dynamic>))
@@ -147,7 +145,7 @@ class MarketplaceProvider with ChangeNotifier {
   /// GET /transaksi (History)
   Future<void> fetchTransactions() async {
     try {
-      final resp = await apiClient.get('/transaksi'); // Sesuai route Laravel
+      final resp = await apiClient.get('/transaksi'); 
       if (resp is List) {
         _transactions = resp
             .map((json) => TransaksiModel.fromJson(json as Map<String, dynamic>))
@@ -158,10 +156,11 @@ class MarketplaceProvider with ChangeNotifier {
     }
   }
 
+  // --- FITUR PEMBELI ---
+
   /// POST /transaksi/checkout
   Future<bool> checkout(String alamat, String paymentMethod) async {
     try {
-      // Siapkan data items sesuai format yang diminta Backend Laravel
       List<Map<String, dynamic>> itemsPayload = [];
       _cartItems.forEach((id, qty) {
         final product = _products.firstWhere((p) => p.id == id);
@@ -181,7 +180,6 @@ class MarketplaceProvider with ChangeNotifier {
 
       await apiClient.post('/transaksi/checkout', payload);
       
-      // Jika sukses, bersihkan keranjang dan refresh data transaksi
       clearCart();
       await fetchTransactions();
       return true;
@@ -195,13 +193,10 @@ class MarketplaceProvider with ChangeNotifier {
   /// PUT /transaksi/{id}/cancel
   Future<bool> cancelOrder(int id) async {
     try {
-      // Akses DIO langsung atau gunakan helper jika ada
-      // Karena ApiClient.put belum ada di file yang Anda kirim, 
-      // kita pakai dio instance dari apiClient
       final options = await apiClient.optionsWithAuth();
       await apiClient.dio.put('/transaksi/$id/cancel', options: options);
       
-      await fetchTransactions(); // Refresh data
+      await fetchTransactions(); 
       return true;
     } catch (e) {
       print("Error canceling order: $e");
@@ -215,11 +210,137 @@ class MarketplaceProvider with ChangeNotifier {
       final options = await apiClient.optionsWithAuth();
       await apiClient.dio.put('/transaksi/$id/terima', options: options);
       
-      await fetchTransactions(); // Refresh data
+      await fetchTransactions(); 
       return true;
     } catch (e) {
       print("Error completing order: $e");
       return false;
     }
+  }
+
+  /// Getter untuk fitur "Beli Lagi"
+  List<ProdukModel> get buyAgainList {
+    final Set<int> addedIds = {};
+    final List<ProdukModel> results = [];
+
+    for (var trans in _transactions) {
+      for (var item in trans.items) {
+        if (!addedIds.contains(item.id)) {
+          addedIds.add(item.id);
+          results.add(item);
+        }
+      }
+    }
+    return results.take(10).toList();
+  }
+
+  // --- FITUR PENJUAL (LENGKAP) ---
+
+  /// POST /produk (Tambah Produk)
+  Future<bool> addProduct({
+    required String nama,
+    required String deskripsi,
+    required int harga,
+    required int stok,
+    required String kategori,
+    required String imagePath,
+  }) async {
+    try {
+      String fileName = imagePath.split('/').last;
+      FormData formData = FormData.fromMap({
+        'nama_produk': nama,
+        'deskripsi': deskripsi,
+        'harga': harga,
+        'stok': stok,
+        'kategori': kategori,
+        'image': await MultipartFile.fromFile(imagePath, filename: fileName),
+      });
+
+      await apiClient.post('/produk', formData);
+      await fetchProducts(); 
+      return true;
+    } catch (e) {
+      print("Gagal tambah produk: $e");
+      return false;
+    }
+  }
+
+  /// PUT /produk/{id} (Edit Produk) - FITUR INI YANG TADI KURANG
+  Future<bool> updateProduct({
+    required int id,
+    required String nama,
+    required String deskripsi,
+    required int harga,
+    required int stok,
+    required String kategori,
+    String? imagePath, 
+  }) async {
+    try {
+      final options = await apiClient.optionsWithAuth();
+      
+      Map<String, dynamic> dataMap = {
+        'nama_produk': nama,
+        'deskripsi': deskripsi,
+        'harga': harga,
+        'stok': stok,
+        'kategori': kategori,
+      };
+
+      if (imagePath != null) {
+        String fileName = imagePath.split('/').last;
+        dataMap['image'] = await MultipartFile.fromFile(imagePath, filename: fileName);
+      }
+
+      FormData formData = FormData.fromMap(dataMap);
+
+      // Menggunakan PUT (sesuai route backend Anda)
+      await apiClient.dio.put('/produk/$id', data: formData, options: options);
+      
+      await fetchProducts(); 
+      return true;
+    } catch (e) {
+      print("Gagal update produk: $e");
+      return false;
+    }
+  }
+
+  /// DELETE /produk/{id} (Hapus Produk)
+  Future<bool> deleteProduct(int id) async {
+    try {
+      final options = await apiClient.optionsWithAuth();
+      await apiClient.dio.delete('/produk/$id', options: options);
+      
+      _products.removeWhere((p) => p.id == id);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      print("Gagal hapus produk: $e");
+      return false;
+    }
+  }
+
+  /// PUT /transaksi/{id}/update-status (Penjual Update Status)
+  Future<bool> updateOrderStatus(int id, String status) async {
+    try {
+      final options = await apiClient.optionsWithAuth();
+      await apiClient.dio.put(
+        '/transaksi/$id/update-status', 
+        data: {'status': status}, 
+        options: options
+      );
+      
+      await fetchTransactions(); 
+      return true;
+    } catch (e) {
+      print("Gagal update status pesanan: $e");
+      return false;
+    }
+  }
+
+  /// Get Pesanan Masuk (Yang belum selesai)
+  List<TransaksiModel> get incomingOrders {
+    return _transactions.where((t) => 
+      t.status != 'Selesai' && t.status != 'Cancel' && t.status != 'Tiba di tujuan'
+    ).toList();
   }
 }
