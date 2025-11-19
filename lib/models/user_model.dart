@@ -41,17 +41,4 @@ class UserModel {
     'mobile_number': mobileNumber,
     'alamat': address, // Perubahan ke 'alamat'
   };
-
-  static UserModel get simulatedApiUser {
-    return const UserModel(
-      id: '1', // user_id dari seeder
-      name: 'Warga Biasa',
-      email: 'warga@jawarapintar.com',
-      nik: '3201010101000001',
-      dob: '1990-01-01', // Format YYYY-MM-DD
-      gender: 'Laki-laki',
-      mobileNumber: '0812-3456-7890', // Nomor acak/simulasi
-      address: 'Jalan Kebahagiaan No. 1',
-    );
-  }
 }

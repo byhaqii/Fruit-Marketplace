@@ -1,6 +1,8 @@
 // lib/modules/notifications/pages/notification_page.dart
 import 'package:flutter/material.dart';
-import '../../../../models/notification_model.dart'; // <-- PASTIKAN PATH INI SESUAI
+import 'package:provider/provider.dart'; // <-- 1. TAMBAHKAN IMPORT PROVIDER
+import '../../../models/notification_model.dart'; // <-- 2. PERBAIKI PATH IMPORT
+import '../../../providers/notification_provider.dart'; // <-- 3. TAMBAHKAN IMPORT PROVIDER
 
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
@@ -22,12 +24,43 @@ class NotificationPage extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: NotificationModel.dummyNotifications.length,
-        itemBuilder: (context, index) {
-          final notification = NotificationModel.dummyNotifications[index];
-          return _buildNotificationCard(notification);
+      // 4. GANTI BODY DENGAN CONSUMER UNTUK MENGAMBIL DATA ASLI
+      body: Consumer<NotificationProvider>(
+        builder: (context, provider, child) {
+          // Asumsi: Provider Anda memiliki List<NotificationModel> bernama 'notifications'
+          // Ganti 'notifications' jika nama propertinya berbeda di provider Anda
+          
+          // final List<NotificationModel> notifications = provider.notifications;
+          // CATATAN: Saya asumsikan nama propertinya 'notifications'.
+          // Jika Anda belum menambahkannya, ini adalah contoh:
+          // Di NotificationProvider:
+          // List<NotificationModel> _notifications = [];
+          // List<NotificationModel> get notifications => _notifications;
+          // ...lalu ada fungsi fetchNotifications()
+          
+          // Untuk menghindari error sementara, kita buat list kosong
+          // Ganti ini dengan data provider Anda:
+          final List<NotificationModel> notifications = []; // <-- Ganti dengan provider.notifications
+
+          // 5. TAMBAHKAN KONDISI JIKA DATA KOSONG
+          if (notifications.isEmpty) {
+            return const Center(
+              child: Text(
+                'Tidak ada notifikasi.',
+                style: TextStyle(color: Colors.grey, fontSize: 16),
+              ),
+            );
+          }
+
+          // 6. GUNAKAN DATA DARI PROVIDER
+          return ListView.builder(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: notifications.length, // <-- Menggunakan data provider
+            itemBuilder: (context, index) {
+              final notification = notifications[index]; // <-- Menggunakan data provider
+              return _buildNotificationCard(notification);
+            },
+          );
         },
       ),
     );
@@ -35,8 +68,6 @@ class NotificationPage extends StatelessWidget {
 
   Widget _buildNotificationCard(NotificationModel notification) {
     final Color statusColor = notification.isSuccess ? primaryGreen : Colors.red;
-    // Hapus statusBackgroundColor karena tidak diperlukan lagi
-    // final Color statusBackgroundColor = notification.isSuccess ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -59,16 +90,15 @@ class NotificationPage extends StatelessWidget {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  // --- PERUBAHAN DI SINI ---
                   decoration: BoxDecoration(
                     color: Colors.transparent, // Background transparan
                     borderRadius: BorderRadius.circular(8), // Radius border
-                    border: Border.all( // Tambahkan border
+                    border: Border.all(
+                      // Tambahkan border
                       color: statusColor, // Warna border sesuai status
                       width: 1.5, // Ketebalan border
                     ),
                   ),
-                  // --- AKHIR PERUBAHAN ---
                   child: Text(
                     notification.isSuccess ? 'Berhasil' : 'Gagal',
                     style: TextStyle(

@@ -7,12 +7,8 @@ class ProdukDetailPage extends StatelessWidget {
 
   const ProdukDetailPage({super.key, required this.produk});
 
-  // ... (Methods _buildProductInfo, _buildQuantityOption, _buildInfoSection, _buildReviewSection, _buildBottomActionButtons DITAMPILKAN DI BAWAH)
-
   @override
   Widget build(BuildContext context) {
-    // Hapus deklarasi dummyDescription yang tidak terpakai
-
     return Scaffold(
       appBar: AppBar(
         title: Text(produk.title, style: const TextStyle(color: Colors.black)),
@@ -22,7 +18,9 @@ class ProdukDetailPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),
-            onPressed: () {},
+            onPressed: () {
+              // TODO: Navigasi ke keranjang
+            },
           ),
         ],
       ),
@@ -59,11 +57,12 @@ class ProdukDetailPage extends StatelessWidget {
                       const SizedBox(height: 20),
                       const Divider(height: 1, color: Colors.black12),
                       const SizedBox(height: 16),
-                      _buildInfoSection('Informasi Produk', produk.description), // Menggunakan deskripsi dari model
+                      _buildInfoSection('Informasi Produk',
+                          produk.description), // Menggunakan deskripsi dari model
                       const SizedBox(height: 16),
                       const Divider(height: 1, color: Colors.black12),
                       const SizedBox(height: 16),
-                      _buildReviewSection(context),
+                      _buildReviewSection(context), // <-- Panggil versi bersih
                     ],
                   ),
                 ),
@@ -97,9 +96,9 @@ class ProdukDetailPage extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            _buildQuantityOption(context, '500 g', true),
+            _buildQuantityOption(context, '500 g', true), // Placeholder UI
             const SizedBox(width: 8),
-            _buildQuantityOption(context, '1 kg', false),
+            _buildQuantityOption(context, '1 kg', false), // Placeholder UI
             const SizedBox(width: 8),
             const Icon(Icons.arrow_drop_down, color: Colors.black54, size: 20),
             const Spacer(),
@@ -111,7 +110,8 @@ class ProdukDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildQuantityOption(BuildContext context, String text, bool isSelected) {
+  Widget _buildQuantityOption(
+      BuildContext context, String text, bool isSelected) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -156,6 +156,7 @@ class ProdukDetailPage extends StatelessWidget {
     );
   }
 
+  // --- PERBAIKAN: HAPUS DATA DUMMY REVIEW ---
   Widget _buildReviewSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,54 +166,37 @@ class ProdukDetailPage extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Text('4.9', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                // Data dummy rating
+                const Text('4.9',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(width: 4),
                 Icon(Icons.star, color: Colors.amber[700], size: 20),
                 const SizedBox(width: 4),
-                const Text('Penilaian Produk (5.2RB)', style: TextStyle(color: Colors.grey)),
+                const Text('Penilaian Produk (5.2RB)',
+                    style: TextStyle(color: Colors.grey)),
               ],
             ),
-            const Text('View All >', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+            const Text('View All >',
+                style:
+                    TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
           ],
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Container(width: 80, height: 40, color: Colors.grey[200]),
-            const SizedBox(width: 8),
-            Container(width: 80, height: 40, color: Colors.grey[200]),
-            const SizedBox(width: 8),
-            Container(width: 80, height: 40, color: Colors.grey[200]),
-          ],
-        ),
-        const SizedBox(height: 16),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const CircleAvatar(
-            backgroundColor: Colors.grey,
-            child: Icon(Icons.person, color: Colors.white),
+        // Hapus data dummy review
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 20.0),
+            child: Text(
+              'Belum ada ulasan untuk produk ini.',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
-          title: const Text('Fahreiza Taura TI - 3I', style: TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [Icon(Icons.star, color: Colors.amber[700], size: 16)]),
-              const SizedBox(height: 4),
-              const Text(
-                'Buah ta kontol cak. Suah rasane koyok memek goblog ketepak nambu gcxkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk sanco kkkkkkkkkkkkkkkk...',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const Text(
-                'More ⌵',
-                style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-            ],
-          ),
-        ),
+        )
       ],
     );
   }
+  // --- AKHIR PERBAIKAN ---
 
   Widget _buildBottomActionButtons(BuildContext context) {
     return Positioned(
@@ -234,32 +218,21 @@ class ProdukDetailPage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // --- TOMBOL CHAT DIHAPUS ---
-            // Expanded(
-            //   flex: 1,
-            //   child: OutlinedButton(
-            //     onPressed: () {},
-            //     style: OutlinedButton.styleFrom(
-            //       padding: const EdgeInsets.symmetric(vertical: 14),
-            //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            //       side: BorderSide(color: Colors.grey[400]!),
-            //     ),
-            //     child: const Icon(Icons.chat_bubble_outline, color: Colors.black),
-            //   ),
-            // ),
-            // const SizedBox(width: 10), // Spacer chat dihapus
-            
             Expanded(
               flex: 3, // Flex bisa disesuaikan, misal 1
               child: OutlinedButton.icon(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ditambahkan ke keranjang')));
+                  // TODO: Panggil provider untuk tambah ke keranjang
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Ditambahkan ke keranjang')));
                 },
                 icon: const Icon(Icons.add, color: Colors.green),
-                label: const Text('Keranjang', style: TextStyle(color: Colors.green)),
+                label:
+                    const Text('Keranjang', style: TextStyle(color: Colors.green)),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                   side: const BorderSide(color: Colors.green),
                 ),
               ),
@@ -268,15 +241,19 @@ class ProdukDetailPage extends StatelessWidget {
             Expanded(
               flex: 4, // Flex bisa disesuaikan, misal 2
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  // TODO: Logika Beli Langsung
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 child: const Text(
                   'Beli Langsung',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
             ),

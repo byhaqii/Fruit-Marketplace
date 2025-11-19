@@ -1,7 +1,10 @@
 // lib/modules/marketplace/page/produk_cart_page.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // <-- 1. TAMBAHKAN IMPORT
 import '../../../models/produk_model.dart';
-// Untuk efek blur di OrderAcceptedScreen
+import '../../../models/user_model.dart'; // <-- 2. TAMBAHKAN IMPORT
+import '../../../providers/marketplace_provider.dart'; // <-- 3. TAMBAHKAN IMPORT
+import '../../../providers/auth_provider.dart'; // <-- 4. TAMBAHKAN IMPORT
 
 // Warna utama dari gambar
 const Color kPrimaryColor = Color(0xFF1E605A);
@@ -12,157 +15,173 @@ const Color kAppBackgroundColor = Color(0xFFF7F7F7);
 /// SCREEN 1: My Cart (Keranjang Saya)
 /// ==============================
 class CartScreen extends StatelessWidget {
-  final List<ProdukModel> cartItems;
+  // 5. HAPUS 'cartItems' DARI CONSTRUCTOR
+  const CartScreen({super.key});
 
-  const CartScreen({required this.cartItems, super.key});
-
-  // Hitung total harga
-  int get totalCost => cartItems.fold(0, (sum, item) => sum + item.price);
-
-  // Format total harga
-  String get formattedTotalCost {
-    if (cartItems.isEmpty) return 'Rp. 0,-';
-    final s = totalCost.toString();
-    final buffer = StringBuffer();
-    int count = 0;
-    for (int i = s.length - 1; i >= 0; i--) {
-      buffer.write(s[i]);
-      count++;
-      if (count == 3 && i != 0) {
-        buffer.write('.');
-        count = 0;
-      }
-    }
-    return 'Rp. ${buffer.toString().split('').reversed.join()},-';
-  }
+  // 6. PINDAHKAN LOGIKA INI KE DALAM BUILD METHOD ATAU PROVIDER
+  // (Kita akan buat ulang di dalam Consumer)
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white, // Latar body putih (Sesuai Gambar 1)
-      appBar: AppBar(
-        backgroundColor: kPrimaryColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.shopping_bag_outlined, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(
-              'Keranjang Saya (${cartItems.length})',
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0), // Padding di luar kartu
-        child: Container(
-          // Ini adalah SATU KARTU UTAMA
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F9F9), // Warna dari screenshot
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ListView.separated(
-            padding: EdgeInsets.zero, // Hapus padding default ListView
-            shrinkWrap: true, // Penting untuk membatasi tinggi ListView
-            physics:
-                const NeverScrollableScrollPhysics(), // Menonaktifkan scroll ListView ini
-            itemCount: cartItems.length,
-            itemBuilder: (context, index) {
-              final item = cartItems[index];
-              return CartItem(
-                produk: item,
-              );
-            },
-            separatorBuilder: (context, index) {
-              return Divider(
-                height: 1,
-                thickness: 1,
-                color: Colors.grey[200], // Garis pemisah abu-abu muda
-                indent: 16, // Beri jarak di kiri
-                endIndent: 16, // Beri jarak di kanan
-              );
-            },
-          ),
-        ),
-      ),
+    // 7. GUNAKAN CONSUMER UNTUK MENDAPATKAN DATA KERANJANG
+    return Consumer<MarketplaceProvider>(
+      builder: (context, provider, child) {
+        // Ambil data dari provider
+        final List<ProdukModel> cartItems = provider.cartItems;
 
-      // --- PERBAIKAN BOTTOM OVERFLOW (CartScreen) ---
-      // Mengganti BottomAppBar dengan Container untuk kontrol penuh
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+        // --- Logika yang dipindahkan ---
+        final int totalCost =
+            cartItems.fold(0, (sum, item) => sum + item.price);
+        String formattedTotalCost;
+        if (cartItems.isEmpty) {
+          formattedTotalCost = 'Rp. 0,-';
+        } else {
+          final s = totalCost.toString();
+          final buffer = StringBuffer();
+          int count = 0;
+          for (int i = s.length - 1; i >= 0; i--) {
+            buffer.write(s[i]);
+            count++;
+            if (count == 3 && i != 0) {
+              buffer.write('.');
+              count = 0;
+            }
+          }
+          formattedTotalCost =
+              'Rp. ${buffer.toString().split('').reversed.join()},-';
+        }
+        // --- Akhir logika ---
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: kPrimaryColor,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
             ),
-          ],
-        ),
-        // 1. Padding untuk Safe Area (lekukan bawah layar)
-        child: Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
-          // 2. Padding untuk konten di dalamnya
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
+            title: Row(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Total :',
-                        style: TextStyle(fontSize: 16, color: Colors.grey)),
-                    Text(
-                      formattedTotalCost,
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CheckoutScreen(
-                          totalCost: formattedTotalCost,
-                          cartItems: cartItems,
-                        ),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimaryColor,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 30, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text(
-                    'Pay Now',
-                    style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold),
-                  ),
+                const Icon(Icons.shopping_bag_outlined, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(
+                  'Keranjang Saya (${cartItems.length})', // <-- Gunakan data provider
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
           ),
-        ),
-      ),
-      // --- AKHIR PERBAIKAN ---
+          // 8. TAMBAHKAN KONDISI JIKA KERANJANG KOSONG
+          body: cartItems.isEmpty
+              ? const Center(
+                  child: Text(
+                    'Keranjang Anda masih kosong.',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F9F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ListView.separated(
+                      padding: EdgeInsets.zero,
+                      itemCount: cartItems.length, // <-- Gunakan data provider
+                      itemBuilder: (context, index) {
+                        final item = cartItems[index]; // <-- Gunakan data provider
+                        return CartItem(
+                          produk: item,
+                        );
+                      },
+                      separatorBuilder: (context, index) {
+                        return Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Colors.grey[200],
+                          indent: 16,
+                          endIndent: 16,
+                        );
+                      },
+                      // Hapus shrinkWrap dan physics, biarkan ListView scrollable
+                    ),
+                  ),
+                ),
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding:
+                  EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Total :',
+                            style: TextStyle(fontSize: 16, color: Colors.grey)),
+                        Text(
+                          formattedTotalCost, // <-- Gunakan data provider
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    ElevatedButton(
+                      // 9. Nonaktifkan tombol jika keranjang kosong
+                      onPressed: cartItems.isEmpty
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CheckoutScreen(
+                                    totalCost: formattedTotalCost,
+                                    cartItems: cartItems, // <-- Gunakan data provider
+                                  ),
+                                ),
+                              );
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryColor,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 30, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Pay Now',
+                        style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -172,7 +191,8 @@ class CartScreen extends StatelessWidget {
 /// ==============================
 class CartItem extends StatelessWidget {
   final ProdukModel produk;
-  final int quantity = 1; // Placeholder, idealnya dari state
+  // 10. HAPUS PLACEHOLDER (logika kuantitas harus ditangani provider)
+  // final int quantity = 1;
 
   const CartItem({
     required this.produk,
@@ -181,11 +201,14 @@ class CartItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 11. AMBIL KUANTITAS DARI PROVIDER
+    final quantity =
+        Provider.of<MarketplaceProvider>(context).getQuantity(produk);
+
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: Row(
         children: [
-          // Gambar
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.network(
@@ -201,7 +224,6 @@ class CartItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Detail Item
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,12 +236,19 @@ class CartItem extends StatelessWidget {
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    Icon(Icons.close, size: 20, color: Colors.grey[400]),
+                    // 12. Tombol Hapus (dari provider)
+                    IconButton(
+                      icon: Icon(Icons.close, size: 20, color: Colors.grey[400]),
+                      onPressed: () {
+                        Provider.of<MarketplaceProvider>(context, listen: false)
+                            .removeFromCart(produk);
+                      },
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Fresh Banana India\n0,5 kg (Pcs)',
+                  'Fresh Banana India\n0,5 kg (Pcs)', // Ini placeholder UI
                   style: TextStyle(color: Colors.grey, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
@@ -231,7 +260,8 @@ class CartItem extends StatelessWidget {
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    _buildQuantitySelector(),
+                    // 13. Hubungkan tombol kuantitas ke provider
+                    _buildQuantitySelector(context, produk, quantity),
                   ],
                 ),
               ],
@@ -242,20 +272,23 @@ class CartItem extends StatelessWidget {
     );
   }
 
-  // Widget untuk tombol +/-
-  Widget _buildQuantitySelector() {
+  // 14. Modifikasi _buildQuantitySelector
+  Widget _buildQuantitySelector(
+      BuildContext context, ProdukModel produk, int quantity) {
+    final provider = Provider.of<MarketplaceProvider>(context, listen: false);
+
     return Row(
       children: [
         _buildQuantityButton(Icons.remove, onPressed: () {
-          // TODO: Logika mengurangi qty
+          provider.decrementQuantity(produk); // <-- Panggil provider
         }),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Text(quantity.toString(),
+          child: Text(quantity.toString(), // <-- Gunakan data provider
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
         _buildQuantityButton(Icons.add, isAdd: true, onPressed: () {
-          // TODO: Logika menambah qty
+          provider.incrementQuantity(produk); // <-- Panggil provider
         }),
       ],
     );
@@ -302,9 +335,6 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  // --- PERUBAHAN DI SINI ---
-  // Ubah nilai awal menjadi null agar tidak ada yang terpilih.
-  // Tipe datanya diubah menjadi String? (nullable).
   String? _selectedPaymentMethod;
 
   @override
@@ -325,10 +355,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Kartu-kartu konten
-            _buildAddressCard(context),
-            _buildPaymentCard(), // Sekarang memanggil method di dalam State
-            _buildItemsCard(), // Sekarang memanggil method di dalam State
+            _buildAddressCard(context), // <-- Kirim context
+            _buildPaymentCard(),
+            _buildItemsCard(),
           ],
         ),
       ),
@@ -377,6 +406,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // Card Alamat
   Widget _buildAddressCard(BuildContext context) {
+    // 15. AMBIL DATA USER DARI AUTHPROVIDER
+    final UserModel? user = Provider.of<AuthProvider>(context).user;
+    // Format alamat (jika ada)
+    final String address = user?.address ?? 'Alamat belum diatur.';
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Container(
@@ -413,9 +447,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Jl. Soekarno Hatta No.9\nRt 44/ Rw 10\nKel. Jatimulyo\nKec. Lowokwaru\nKOTA MALANG\nJAWA TIMUR\n65141\n081336347990',
-              style: TextStyle(color: Colors.black54, height: 1.5),
+            // 16. HAPUS ALAMAT DUMMY DAN GANTI DENGAN DATA PROVIDER
+            Text(
+              address,
+              style: const TextStyle(color: Colors.black54, height: 1.5),
             ),
           ],
         ),
@@ -423,7 +458,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Card Metode Pembayaran
+  // Card Metode Pembayaran (Tidak berubah, sudah OK)
   Widget _buildPaymentCard() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
@@ -455,11 +490,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ],
             ),
             Radio<String>(
-              value: 'QRIS', // Nilai untuk tombol ini adalah 'QRIS'
-              groupValue:
-                  _selectedPaymentMethod, // Nilai grup diambil dari state (null)
+              value: 'QRIS',
+              groupValue: _selectedPaymentMethod,
               onChanged: (String? value) {
-                // Saat ditekan, perbarui state
                 if (value != null) {
                   setState(() {
                     _selectedPaymentMethod = value;
@@ -474,7 +507,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Card Rangkuman Item
+  // Card Rangkuman Item (Tidak berubah, sudah OK)
   Widget _buildItemsCard() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
@@ -486,7 +519,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         child: Column(
           children: [
-            // Daftar item (ambil 3 pertama)
             ...widget.cartItems.take(3).map((item) => Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: Row(
@@ -518,8 +550,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Text(widget.totalCost,
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             ),
           ],
@@ -530,7 +562,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 }
 
 /// ==============================
-/// SCREEN 3: Address Form Page
+/// SCREEN 3: Address Form Page (Tidak ada data dummy)
 /// ==============================
 class AddressFormPage extends StatefulWidget {
   const AddressFormPage({super.key});
@@ -548,6 +580,21 @@ class _AddressFormPageState extends State<AddressFormPage> {
   final _kotaController = TextEditingController();
   final _kodePosController = TextEditingController();
   final _noHpController = TextEditingController();
+
+  // 17. AMBIL DATA USER SAAT INIT (Untuk mengisi form)
+  @override
+  void initState() {
+    super.initState();
+    final UserModel? user =
+        Provider.of<AuthProvider>(context, listen: false).user;
+    if (user != null) {
+      _alamatController.text = user.address;
+      _noHpController.text = user.mobileNumber;
+      // TODO: Anda perlu mem-parsing 'alamat' untuk mengisi field lain
+      // (misal _rtRwController, _kelurahanController, dll)
+      // Ini adalah contoh sederhana:
+    }
+  }
 
   @override
   void dispose() {
@@ -619,7 +666,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: Logika simpan alamat
+                      // TODO: Logika simpan alamat (kirim ke AuthProvider/API)
                       Navigator.pop(context); // Kembali ke halaman checkout
                     },
                     style: ElevatedButton.styleFrom(
@@ -671,7 +718,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
 }
 
 /// ==============================
-/// SCREEN 4: Order Accepted
+/// SCREEN 4: Order Accepted (Tidak ada data dummy)
 /// ==============================
 class OrderAcceptedScreen extends StatelessWidget {
   const OrderAcceptedScreen({super.key});

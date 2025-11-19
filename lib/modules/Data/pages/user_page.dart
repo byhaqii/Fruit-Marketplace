@@ -1,9 +1,10 @@
-// lib/pages/user_page.dart
+// lib/modules/Data/pages/user_page.dart
 // Berisi UserListPage dan UserDetailPage
 
 import 'package:flutter/material.dart';
-// Sesuaikan path ini dengan lokasi file model Anda yang sudah paten
-import '/../models/user_model.dart'; 
+import 'package:provider/provider.dart'; // <-- 1. TAMBAHKAN IMPORT
+import '../../../models/user_model.dart'; // <-- 2. PERBAIKI PATH
+import '../../../providers/warga_provider.dart'; // <-- 3. TAMBAHKAN IMPORT
 
 //======================================================================
 // Halaman Daftar Pengguna (List Page)
@@ -16,14 +17,17 @@ class UserListPage extends StatefulWidget {
 }
 
 class _UserListPageState extends State<UserListPage> {
-  // Buat daftar dummy users untuk ditampilkan
-  final List<UserModel> users = List.generate(
-    8,
-    (index) => UserModel.simulatedApiUser, // Menggunakan data simulasi
-  );
+  // 4. HAPUS DAFTAR DUMMY
+  // final List<UserModel> users = List.generate(
+  //   8,
+  //   (index) => UserModel.simulatedApiUser, // Menggunakan data simulasi
+  // );
 
   final Color primaryColor = const Color(0xFF3B8A7D);
-
+  
+  // 5. PINDAHKAN APPBAR KE BUILD METHOD
+  //    agar 'automaticallyImplyLeading' berfungsi dengan benar di dalam TabBarView
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,6 +40,8 @@ class _UserListPageState extends State<UserListPage> {
           'User Management',
           style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
         ),
+        // Hapus tombol 'back' jika ini adalah halaman utama di tab
+        automaticallyImplyLeading: false, 
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -54,6 +60,7 @@ class _UserListPageState extends State<UserListPage> {
               ),
               onPressed: () {
                 // Aksi untuk menambah user baru
+                // TODO: Navigasi ke halaman form tambah user
               },
             ),
             const SizedBox(height: 16),
@@ -75,20 +82,40 @@ class _UserListPageState extends State<UserListPage> {
             ),
             const SizedBox(height: 16),
 
-            // Daftar User
+            // 6. GANTI DAFTAR USER DENGAN CONSUMER
             Expanded(
-              child: ListView.builder(
-                itemCount: users.length,
-                itemBuilder: (context, index) {
-                  final user = users[index];
-                  return _buildUserCard(context, user);
+              child: Consumer<WargaProvider>(
+                builder: (context, provider, child) {
+                  
+                  // Tampilkan loading
+                  if (provider.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  // Ambil data dari provider
+                  // (Pastikan WargaProvider memiliki getter 'wargaList')
+                  final List<UserModel> users = provider.wargaList;
+
+                  // Tampilkan pesan jika kosong
+                  if (users.isEmpty) {
+                    return const Center(
+                        child: Text('Tidak ada data warga/user.'));
+                  }
+
+                  // Tampilkan ListView
+                  return ListView.builder(
+                    itemCount: users.length,
+                    itemBuilder: (context, index) {
+                      final user = users[index];
+                      return _buildUserCard(context, user);
+                    },
+                  );
                 },
               ),
             ),
           ],
         ),
       ),
-      // Bottom bar & FAB tidak ada di sini (karena sudah ada di Dashboard)
     );
   }
 
@@ -118,7 +145,6 @@ class _UserListPageState extends State<UserListPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    // Langsung panggil UserDetailPage
                     builder: (context) => UserDetailPage(user: user),
                   ),
                 );
@@ -128,6 +154,7 @@ class _UserListPageState extends State<UserListPage> {
               icon: Icon(Icons.delete, color: Colors.red.shade700),
               onPressed: () {
                 // Aksi untuk hapus user
+                // TODO: Panggil provider.deleteWarga(user.id)
               },
             ),
           ],
@@ -152,7 +179,7 @@ class UserDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Back'),
+        title: const Text('Edit User'), // Judul lebih deskriptif
         backgroundColor: Colors.white,
         elevation: 0,
       ),
@@ -181,7 +208,7 @@ class UserDetailPage extends StatelessWidget {
       ),
       // Tombol Save di bagian bawah
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).padding.bottom + 16),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: primaryColor,
@@ -192,6 +219,7 @@ class UserDetailPage extends StatelessWidget {
           ),
           onPressed: () {
             // Aksi untuk menyimpan data
+            // TODO: Panggil provider.updateWarga(user)
             Navigator.pop(context); // Kembali ke halaman list
           },
           child: const Text('Save', style: TextStyle(color: Colors.white, fontSize: 16)),

@@ -1,10 +1,16 @@
 // lib/modules/dashboard/dashboard_content_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../models/user_model.dart'; 
+import 'package:provider/provider.dart'; // <-- 1. TAMBAHKAN IMPORT
+import '../../../models/user_model.dart';
+import '../../../models/produk_model.dart'; // <-- 2. TAMBAHKAN IMPORT
+import '../../../models/transaksi_model.dart'; // <-- 3. TAMBAHKAN IMPORT
 import '../marketplace/pages/produk_list_page.dart';
 import '../marketplace/pages/produk_detail_page.dart';
 import '../notification/pages/notification_page.dart';
+import '../../../providers/auth_provider.dart'; // <-- 4. TAMBAHKAN IMPORT
+import '../../../providers/notification_provider.dart'; // <-- 5. TAMBAHKAN IMPORT
+import '../../../providers/marketplace_provider.dart'; // <-- 6. TAMBAHKAN IMPORT
 
 class DashboardContentPage extends StatelessWidget {
   final VoidCallback onSeeAllTapped;
@@ -24,7 +30,10 @@ class DashboardContentPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final UserModel user = UserModel.simulatedApiUser;
+    // 7. HAPUS DUMMY USER
+    // final UserModel user = UserModel.simulatedApiUser;
+    // 8. AMBIL USER ASLI DARI AUTHPROVIDER
+    final UserModel? user = Provider.of<AuthProvider>(context).user;
 
     return Scaffold(
       backgroundColor: kPrimaryColor,
@@ -34,7 +43,7 @@ class DashboardContentPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- BAGIAN 1: KARTU PUTIH STATIS (Welcome) ---
-            _buildWelcomeCard(context, user), // Perlu context untuk navigasi
+            _buildWelcomeCard(context, user), // <-- Kirim user asli
 
             // --- BAGIAN 2: KONTEN SCROLLABLE (Analytics + Sisa) ---
             Expanded(
@@ -56,12 +65,12 @@ class DashboardContentPage extends StatelessWidget {
                     context,
                     title: 'Recommended',
                     actionText: 'See All',
-                    onTapAction: onSeeAllTapped, // Kirim callback-nya ke sini
+                    onTapAction: onSeeAllTapped,
                   ),
                   const SizedBox(height: 12),
                   _buildFilterChips(),
                   const SizedBox(height: 16),
-                  _buildRecommendedGrid(context),
+                  _buildRecommendedGrid(context), // <-- Panggil versi baru
                   const SizedBox(height: 24),
 
                   // Bagian "Order Again"
@@ -69,11 +78,11 @@ class DashboardContentPage extends StatelessWidget {
                     context,
                     title: 'Order Again',
                     actionText: 'Show All',
-                    onTapAction: null, // "Order Again" tidak melakukan apa-apa
+                    onTapAction:
+                        null, // TODO: Navigasi ke Halaman History
                   ),
                   const SizedBox(height: 16),
-                  _buildOrderAgainList(),
-
+                  _buildOrderAgainList(context), // <-- Panggil versi baru
                   const SizedBox(height: 90),
                 ],
               ),
@@ -85,7 +94,8 @@ class DashboardContentPage extends StatelessWidget {
   }
 
   // --- WIDGET KARTU 1 (STATIS: Welcome) ---
-  Widget _buildWelcomeCard(BuildContext context, UserModel user) {
+  // 9. Ubah parameter untuk menerima UserModel nullable
+  Widget _buildWelcomeCard(BuildContext context, UserModel? user) {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 8.0),
@@ -96,7 +106,8 @@ class DashboardContentPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Welcome, ${user.name}',
+                // 10. Gunakan data user asli (dengan fallback)
+                'Welcome, ${user?.name ?? 'Warga'}',
                 style: const TextStyle(
                   color: kPrimaryColor,
                   fontSize: 26,
@@ -113,73 +124,84 @@ class DashboardContentPage extends StatelessWidget {
               ),
             ],
           ),
-          // --- PERUBAHAN DI SINI ---
           Row(
             children: [
               _buildNotificationButton(context), // Tombol Notifikasi
-              const SizedBox(width: 12), // Jarak antara ikon dan avatar
-              const CircleAvatar(
+              const SizedBox(width: 12),
+              // 11. HAPUS DUMMY IMAGE AVATAR
+              CircleAvatar(
                 radius: 24,
-                backgroundColor: Colors.white,
-                backgroundImage: NetworkImage('https://picsum.photos/200/200'),
+                backgroundColor: Colors.grey[200],
+                // backgroundImage: NetworkImage('https://picsum.photos/200/200'),
+                // Ganti dengan Icon jika tidak ada foto profil
+                child: const Icon(Icons.person, color: kPrimaryColor),
               ),
             ],
           ),
-          // --- AKHIR PERUBAHAN ---
         ],
       ),
     );
   }
 
-  // --- WIDGET BARU UNTUK TOMBOL NOTIFIKASI ---
+  // --- WIDGET TOMBOL NOTIFIKASI ---
   Widget _buildNotificationButton(BuildContext context) {
-    return IconButton(
-      icon: Stack(
-        clipBehavior: Clip.none, // Agar badge bisa keluar dari batas ikon
-        children: [
-          Icon(
-            Icons.notifications_outlined,
-            color: Colors.grey[700], // Sesuai gambar
-            size: 28,
-          ),
-          Positioned(
-            top: -4,
-            right: -4,
-            child: Container(
-              padding: const EdgeInsets.all(2), // Padding untuk lingkaran
-              decoration: BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
+    // 12. GUNAKAN CONSUMER UNTUK COUNT NOTIFIKASI
+    return Consumer<NotificationProvider>(
+      builder: (context, provider, child) {
+        // Asumsi: Provider punya List<NotificationModel> 'notifications'
+        final int notificationCount = provider.notifications.length;
+
+        return IconButton(
+          icon: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                Icons.notifications_outlined,
+                color: Colors.grey[700],
+                size: 28,
               ),
-              constraints: const BoxConstraints(
-                minWidth: 18,
-                minHeight: 18,
-              ),
-              child: const Text(
-                '4', // Hardcoded "4" sesuai gambar
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+              // 13. Tampilkan badge HANYA JIKA ada notifikasi
+              if (notificationCount > 0)
+                Positioned(
+                  top: -4,
+                  right: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Text(
+                      // 14. HAPUS DUMMY "4"
+                      notificationCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ),
+            ],
           ),
-        ],
-      ),
-      onPressed: () {
-        // Navigasi ke Halaman Notifikasi
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const NotificationPage()),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationPage()),
+            );
+          },
         );
       },
     );
   }
 
-  // --- WIDGET KARTU 2 (SCROLLABLE: Analytics) ---
+  // --- WIDGET KARTU 2 (Analytics - Tidak ada data dummy) ---
   Widget _buildAnalyticsCard() {
     return Container(
       decoration: const BoxDecoration(
@@ -233,7 +255,7 @@ class DashboardContentPage extends StatelessWidget {
     );
   }
 
-  // --- WIDGET BUILDER LAINNYA ---
+  // (Widget helper _buildAnalyticsItem tidak berubah)
   Widget _buildAnalyticsItem(String title, Color color) {
     return Container(
       width: 105,
@@ -254,6 +276,8 @@ class DashboardContentPage extends StatelessWidget {
     );
   }
 
+  // (Widget helper _buildBannerSection, _buildBannerIndicator, _buildSectionHeader, _buildFilterChips, _buildChip tidak berubah)
+  // ... (Kode widget helper ini sama seperti di file asli Anda) ...
   Widget _buildBannerSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -361,18 +385,14 @@ class DashboardContentPage extends StatelessWidget {
     );
   }
 
-  // --- 3. UBAH FUNGSI INI ---
   Widget _buildSectionHeader(
     BuildContext context, {
     required String title,
     required String actionText,
-    VoidCallback? onTapAction, // Parameter callback opsional
+    VoidCallback? onTapAction,
   }) {
     Widget actionWidget;
-
-    // Jika onTapAction DIBERIKAN (yaitu untuk "Recommended")
     if (onTapAction != null) {
-      // Gunakan TextButton untuk mendapatkan perubahan kursor di web
       actionWidget = TextButton(
         onPressed: onTapAction,
         style: TextButton.styleFrom(
@@ -387,7 +407,6 @@ class DashboardContentPage extends StatelessWidget {
         ),
       );
     } else {
-      // Jika tidak, tampilkan sebagai teks biasa (untuk "Order Again")
       actionWidget = Text(
         actionText,
         style: const TextStyle(color: Colors.white70, fontSize: 14),
@@ -407,13 +426,11 @@ class DashboardContentPage extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          actionWidget, // Tampilkan widget (TextButton atau Text)
+          actionWidget,
         ],
       ),
     );
   }
-
-  // --- Sisa fungsi tidak berubah ---
 
   Widget _buildFilterChips() {
     return SizedBox(
@@ -423,6 +440,7 @@ class DashboardContentPage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         children: [
           _buildChip('All', isSelected: true),
+          // Anda bisa menambahkan chip lain di sini
         ],
       ),
     );
@@ -446,30 +464,44 @@ class DashboardContentPage extends StatelessWidget {
       ),
     );
   }
+  // --- Akhir dari widget helper yang tidak berubah ---
 
+
+  // 15. PERBAIKI _buildRecommendedGrid
   Widget _buildRecommendedGrid(BuildContext context) {
-    final productsToShow = kDummyProducts.take(4).toList();
-    return GridView.builder(
-      itemCount: productsToShow.length,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.67,
-      ),
-      itemBuilder: (context, index) {
-        final produk = productsToShow[index];
-        return ProdukCard(
-          produk: produk,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ProdukDetailPage(produk: produk),
-              ),
+    return Consumer<MarketplaceProvider>(
+      builder: (context, provider, child) {
+        // Ambil 4 produk pertama dari provider
+        final productsToShow = provider.products.take(4).toList();
+
+        if (productsToShow.isEmpty) {
+          // Tidak perlu tampilkan apa-apa jika tidak ada produk
+          return const SizedBox.shrink(); 
+        }
+
+        return GridView.builder(
+          itemCount: productsToShow.length,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.67,
+          ),
+          itemBuilder: (context, index) {
+            final produk = productsToShow[index];
+            return ProdukCard(
+              produk: produk,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProdukDetailPage(produk: produk),
+                  ),
+                );
+              },
             );
           },
         );
@@ -477,27 +509,42 @@ class DashboardContentPage extends StatelessWidget {
     );
   }
 
-  Widget _buildOrderAgainList() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        children: [
-          _buildOrderAgainCard(
-            totalProduk: 2,
-            totalHarga: "20.000,-",
+  // 16. PERBAIKI _buildOrderAgainList
+  Widget _buildOrderAgainList(BuildContext context) {
+    return Consumer<MarketplaceProvider>(
+      builder: (context, provider, child) {
+        // Asumsi: "Order Again" adalah 2 transaksi terakhir
+        final transactionsToShow = provider.transactions.take(2).toList();
+
+        if (transactionsToShow.isEmpty) {
+          return const Center(
+            child: Text(
+              'Belum ada riwayat pesanan.',
+              style: TextStyle(color: Colors.white70),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          // Gunakan ListView.builder
+          child: ListView.separated(
+            itemCount: transactionsToShow.length,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              // 17. KIRIM TransaksiModel ke _buildOrderAgainCard
+              return _buildOrderAgainCard(transactionsToShow[index]);
+            },
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
           ),
-          const SizedBox(height: 16),
-          _buildOrderAgainCard(
-            totalProduk: 1,
-            totalHarga: "10.000,-",
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildOrderAgainCard(
-      {required int totalProduk, required String totalHarga}) {
+  // 18. UBAH PARAMETER _buildOrderAgainCard
+  Widget _buildOrderAgainCard(TransaksiModel transaction) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -515,17 +562,11 @@ class DashboardContentPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(10),
-                ),
-                child: Image.asset(
-                  'assets/banana.png', // Placeholder
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                          child:
-                              Icon(Icons.broken_image, color: Colors.grey)),
-                    );
-                  },
+                  // 19. Gunakan gambar dari TransaksiModel
+                  image: DecorationImage(
+                    image: NetworkImage(transaction.imageUrl),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -533,22 +574,25 @@ class DashboardContentPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Organic Bananas',
-                      style: TextStyle(
+                    // 20. Gunakan data dari TransaksiModel
+                    Text(
+                      transaction.title,
+                      style: const TextStyle(
                         color: Colors.black,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      'Fresh Banana India\n0,5 kg (Pcs)',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    Text(
+                      '${transaction.weight} (${transaction.date})', // <-- Data dinamis
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Total $totalProduk Produk: Rp. $totalHarga',
+                      'Total: ${transaction.price}', // <-- Data dinamis
                       style: const TextStyle(
                         color: Colors.black,
                         fontSize: 12,
@@ -568,7 +612,9 @@ class DashboardContentPage extends StatelessWidget {
               const Icon(Icons.arrow_drop_down, color: Colors.grey, size: 20),
               const Spacer(),
               OutlinedButton(
-                onPressed: () {},
+                onPressed: () {
+                  // TODO: Navigasi ke Halaman Rating
+                },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   shape: RoundedRectangleBorder(
@@ -581,7 +627,9 @@ class DashboardContentPage extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  // TODO: Logika Beli Lagi
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryColor,
                   padding: const EdgeInsets.symmetric(horizontal: 24),

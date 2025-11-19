@@ -1,6 +1,8 @@
 // lib/modules/keuangan/pages/keuangan_page.dart
 import 'package:flutter/material.dart';
-import '../../../models/keuangan_model.dart'; // Import KeuanganModel
+import 'package:provider/provider.dart'; // <-- 1. TAMBAHKAN IMPORT
+import '../../../models/keuangan_model.dart';
+import '../../../providers/keuangan_provider.dart'; // <-- 2. TAMBAHKAN IMPORT
 
 class KeuanganPage extends StatelessWidget {
   const KeuanganPage({super.key});
@@ -22,26 +24,19 @@ class KeuanganPage extends StatelessWidget {
     return AppBar(
       title: const Text(
         'Keuangan',
-        // --- PERUBAHAN ---
-        // Style teks diubah menjadi hijau (kPrimaryColor)
         style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
       ),
-      // --- PERUBAHAN ---
-      // AppBar berwarna PUTIH
       backgroundColor: Colors.white,
       elevation: 0,
       centerTitle: true,
-      // --- PERUBAHAN ---
-      // Tombol 'back' (leading) dihapus
       automaticallyImplyLeading: false,
     );
   }
 
   Widget _buildBody(BuildContext context) {
     return Container(
-      // Container utama body yang berwarna putih (ini "card" yang Anda maksud)
       width: double.infinity,
-      height: double.infinity, // Memastikan mengisi sisa area body
+      height: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.white, // Bagian body ini berwarna putih
         borderRadius: BorderRadius.only(
@@ -49,14 +44,14 @@ class KeuanganPage extends StatelessWidget {
           topRight: Radius.circular(30),
         ),
       ),
-      child: SingleChildScrollView( // Konten di dalam card putih bisa di-scroll
+      child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildBalanceSection(),
+            _buildBalanceSection(), // <-- Panggil versi baru
             _buildChartPlaceholder(),
-            _buildExpensesList(),
-            const SizedBox(height: 20), // Memberi jarak di bagian bawah
+            _buildExpensesList(), // <-- Panggil versi baru
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -71,21 +66,28 @@ class KeuanganPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Column(
+          // 3. GUNAKAN CONSUMER UNTUK DATA DINAMIS
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 "Current Balance",
                 style: TextStyle(color: Colors.grey, fontSize: 14),
               ),
-              SizedBox(height: 4),
-              Text(
-                "Rp. 3.589.000,-",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+              const SizedBox(height: 4),
+              Consumer<KeuanganProvider>(
+                builder: (context, provider, child) {
+                  // Asumsi: Provider punya getter 'formattedBalance'
+                  final String balance = provider.formattedBalance;
+                  return Text(
+                    balance, // <-- 4. HAPUS DUMMY DATA
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -139,8 +141,8 @@ class KeuanganPage extends StatelessWidget {
 
   // Bagian "Expenses List"
   Widget _buildExpensesList() {
-    // Ambil data dari model yang diimpor
-    final List<KeuanganModel> expenses = KeuanganModel.dummyExpenses;
+    // 5. HAPUS DUMMY DATA
+    // final List<KeuanganModel> expenses = KeuanganModel.dummyExpenses;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -152,13 +154,34 @@ class KeuanganPage extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          // Menggunakan ListView.builder untuk membuat list dari dummy data
-          ListView.builder(
-            itemCount: expenses.length, // Gunakan data dari model
-            shrinkWrap: true, // Penting agar ListView di dalam Column
-            physics: const NeverScrollableScrollPhysics(), // Agar scroll utama yg bekerja
-            itemBuilder: (context, index) {
-              return _buildExpenseItem(expenses[index]); // Gunakan data dari model
+          // 6. GUNAKAN CONSUMER UNTUK LIST DINAMIS
+          Consumer<KeuanganProvider>(
+            builder: (context, provider, child) {
+              // Asumsi: Provider punya getter 'expenses'
+              final List<KeuanganModel> expenses = provider.expenses;
+
+              // 7. TAMPILKAN PESAN JIKA KOSONG
+              if (expenses.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 32.0),
+                    child: Text(
+                      'Tidak ada pengeluaran.',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                );
+              }
+
+              // 8. TAMPILKAN LISTVIEW JIKA ADA DATA
+              return ListView.builder(
+                itemCount: expenses.length, // <-- Gunakan data provider
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  return _buildExpenseItem(expenses[index]); // <-- Gunakan data provider
+                },
+              );
             },
           ),
         ],
@@ -166,7 +189,7 @@ class KeuanganPage extends StatelessWidget {
     );
   }
 
-  // Widget untuk satu item di "Expenses List"
+  // Widget untuk satu item di "Expenses List" (Tidak berubah)
   Widget _buildExpenseItem(KeuanganModel item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

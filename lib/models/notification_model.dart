@@ -14,47 +14,6 @@ class NotificationModel {
     required this.items,
     required this.isSuccess,
   });
-
-  // Dummy data untuk demonstrasi
-  static List<NotificationModel> dummyNotifications = [
-    NotificationModel(
-      title: 'Pembelian Buah',
-      time: '11:00',
-      date: '13 Nov 2025',
-      items: [
-        NotificationItem(name: 'Banana Tionghoa', weight: '0,5 Kg (Pcs)', price: 'Rp. 35.000,-'),
-      ],
-      isSuccess: true,
-    ),
-    NotificationModel(
-      title: 'Pembelian Buah',
-      time: '11:00',
-      date: '13 Nov 2025',
-      items: [
-        NotificationItem(name: 'Banana Tionghoa', weight: '0,5 Kg (Pcs)', price: 'Rp. 35.000,-'),
-        NotificationItem(name: 'Pakistan Apple', weight: '0,5 Kg (Pcs)', price: 'Rp. 55.000,-'),
-      ],
-      isSuccess: false,
-    ),
-    NotificationModel(
-      title: 'Pembelian Buah',
-      time: '11:00',
-      date: '13 Nov 2025',
-      items: [
-        NotificationItem(name: 'Banana Tionghoa', weight: '0,5 Kg (Pcs)', price: 'Rp. 35.000,-'),
-      ],
-      isSuccess: true,
-    ),
-    NotificationModel(
-      title: 'Pembelian Buah',
-      time: '11:00',
-      date: '13 Nov 2025',
-      items: [
-        NotificationItem(name: 'Banana Tionghoa', weight: '0,5 Kg (Pcs)', price: 'Rp. 35.000,-'),
-      ],
-      isSuccess: true,
-    ),
-  ];
 }
 
 class NotificationItem {
