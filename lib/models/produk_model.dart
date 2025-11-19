@@ -1,28 +1,38 @@
 // lib/models/produk_model.dart
 
 class ProdukModel {
-  final String id;
-  final String title;
-  final String description;
-  final int price; // Harga dalam rupiah (contoh: 50000)
+  // Kita gunakan tipe data yang sesuai dengan database Laravel
+  final int id;           
+  final int userId;       
+  final String namaProduk;
+  final String deskripsi;
+  final int harga;        
+  final int stok;
   final String imageUrl;
-  final String category; // Kategori produk
+  final String kategori;
+  final String statusJual;
 
   const ProdukModel({
     required this.id,
-    required this.title,
-    required this.description,
-    required this.price,
+    required this.userId,
+    required this.namaProduk,
+    required this.deskripsi,
+    required this.harga,
+    required this.stok,
     required this.imageUrl,
-    required this.category,
+    required this.kategori,
+    required this.statusJual,
   });
 
-  /// Mengembalikan harga dalam format "Rp. 50.000"
+  // Getter untuk kompatibilitas dengan kode UI lama (agar tidak perlu ubah semua UI)
+  String get title => namaProduk;
+  int get price => harga;
+
+  // Helper format Rupiah
   String get formattedPrice {
-    final s = price.toString();
+    final s = harga.toString();
     final buffer = StringBuffer();
     int count = 0;
-
     for (int i = s.length - 1; i >= 0; i--) {
       buffer.write(s[i]);
       count++;
@@ -31,32 +41,61 @@ class ProdukModel {
         count = 0;
       }
     }
-
-    // Mengembalikan string yang terbalik kembali ke urutan yang benar
     return 'Rp. ${buffer.toString().split('').reversed.join()}';
   }
 
-  /// Factory method opsional: mempermudah parsing dari Map (misal dari JSON)
-  factory ProdukModel.fromMap(Map<String, dynamic> map) {
+  factory ProdukModel.fromJson(Map<String, dynamic> json) {
+    // --- FUNGSI PENYELAMAT (ANTI-ERROR) ---
+    // Fungsi ini memaksa data apapun menjadi Integer yang aman
+    int parseInt(dynamic val) {
+      if (val == null) return 0;
+      if (val is int) return val;
+      if (val is double) return val.toInt();
+      if (val is String) return int.tryParse(val) ?? 0;
+      return 0;
+    }
+
+    // Fungsi ini memaksa data apapun menjadi String yang aman
+    String parseString(dynamic val, {String defaultValue = '-'}) {
+      if (val == null) return defaultValue;
+      return val.toString();
+    }
+
     return ProdukModel(
-      id: map['id'] ?? '',
-      title: map['title'] ?? '',
-      description: map['description'] ?? '',
-      price: map['price'] ?? 0,
-      imageUrl: map['imageUrl'] ?? '',
-      category: map['category'] ?? '',
+      // Gunakan helper di sini untuk mencegah crash 'int is not subtype of String'
+      id: parseInt(json['id']),
+      userId: parseInt(json['user_id']),
+      
+      // Mapping nama field dari database (snake_case) ke model (camelCase)
+      namaProduk: parseString(json['nama_produk'], defaultValue: 'Tanpa Nama'),
+      deskripsi: parseString(json['deskripsi'], defaultValue: '-'),
+      
+      harga: parseInt(json['harga']),
+      stok: parseInt(json['stok']),
+      
+      imageUrl: (json['gambar_url'] != null && json['gambar_url'].toString().isNotEmpty)
+          ? json['gambar_url'].toString()
+          : 'https://via.placeholder.com/150',
+          
+      kategori: parseString(json['kategori'], defaultValue: 'Umum'),
+      statusJual: parseString(json['status_jual'], defaultValue: 'Tersedia'),
     );
   }
 
-  /// Mengubah kembali ke Map (berguna untuk simpan ke database / API)
-  Map<String, dynamic> toMap() {
+  // Helper untuk kompatibilitas jika ada kode lama yang memanggil fromMap
+  factory ProdukModel.fromMap(Map<String, dynamic> map) => ProdukModel.fromJson(map);
+
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'title': title,
-      'description': description,
-      'price': price,
-      'imageUrl': imageUrl,
-      'category': category,
+      'user_id': userId,
+      'nama_produk': namaProduk,
+      'deskripsi': deskripsi,
+      'harga': harga,
+      'stok': stok,
+      'gambar_url': imageUrl,
+      'kategori': kategori,
+      'status_jual': statusJual,
     };
   }
 }

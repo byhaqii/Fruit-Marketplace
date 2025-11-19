@@ -1,10 +1,11 @@
-// lib/modules/marketplace/page/produk_cart_page.dart
+// lib/modules/marketplace/pages/produk_cart_page.dart
+
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // <-- 1. TAMBAHKAN IMPORT
+import 'package:provider/provider.dart';
 import '../../../models/produk_model.dart';
-import '../../../models/user_model.dart'; // <-- 2. TAMBAHKAN IMPORT
-import '../../../providers/marketplace_provider.dart'; // <-- 3. TAMBAHKAN IMPORT
-import '../../../providers/auth_provider.dart'; // <-- 4. TAMBAHKAN IMPORT
+import '../../../models/user_model.dart';
+import '../../../providers/marketplace_provider.dart';
+import '../../../providers/auth_provider.dart';
 
 // Warna utama dari gambar
 const Color kPrimaryColor = Color(0xFF1E605A);
@@ -14,43 +15,18 @@ const Color kAppBackgroundColor = Color(0xFFF7F7F7);
 /// ==============================
 /// SCREEN 1: My Cart (Keranjang Saya)
 /// ==============================
-class CartScreen extends StatelessWidget {
-  // 5. HAPUS 'cartItems' DARI CONSTRUCTOR
-  const CartScreen({super.key});
-
-  // 6. PINDAHKAN LOGIKA INI KE DALAM BUILD METHOD ATAU PROVIDER
-  // (Kita akan buat ulang di dalam Consumer)
+class ProdukCartPage extends StatelessWidget {
+  const ProdukCartPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 7. GUNAKAN CONSUMER UNTUK MENDAPATKAN DATA KERANJANG
     return Consumer<MarketplaceProvider>(
       builder: (context, provider, child) {
-        // Ambil data dari provider
+        // Ambil data cartItems dari provider
         final List<ProdukModel> cartItems = provider.cartItems;
 
-        // --- Logika yang dipindahkan ---
-        final int totalCost =
-            cartItems.fold(0, (sum, item) => sum + item.price);
-        String formattedTotalCost;
-        if (cartItems.isEmpty) {
-          formattedTotalCost = 'Rp. 0,-';
-        } else {
-          final s = totalCost.toString();
-          final buffer = StringBuffer();
-          int count = 0;
-          for (int i = s.length - 1; i >= 0; i--) {
-            buffer.write(s[i]);
-            count++;
-            if (count == 3 && i != 0) {
-              buffer.write('.');
-              count = 0;
-            }
-          }
-          formattedTotalCost =
-              'Rp. ${buffer.toString().split('').reversed.join()},-';
-        }
-        // --- Akhir logika ---
+        // Ambil total cost yang sudah diformat dari provider
+        final String formattedTotalCost = provider.formattedTotalCost;
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -66,14 +42,13 @@ class CartScreen extends StatelessWidget {
                 const Icon(Icons.shopping_bag_outlined, color: Colors.white),
                 const SizedBox(width: 8),
                 Text(
-                  'Keranjang Saya (${cartItems.length})', // <-- Gunakan data provider
+                  'Keranjang Saya (${provider.cartItemCount})', // Gunakan cartItemCount dari provider
                   style: const TextStyle(
                       color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
           ),
-          // 8. TAMBAHKAN KONDISI JIKA KERANJANG KOSONG
           body: cartItems.isEmpty
               ? const Center(
                   child: Text(
@@ -90,9 +65,9 @@ class CartScreen extends StatelessWidget {
                     ),
                     child: ListView.separated(
                       padding: EdgeInsets.zero,
-                      itemCount: cartItems.length, // <-- Gunakan data provider
+                      itemCount: cartItems.length,
                       itemBuilder: (context, index) {
-                        final item = cartItems[index]; // <-- Gunakan data provider
+                        final item = cartItems[index];
                         return CartItem(
                           produk: item,
                         );
@@ -106,7 +81,6 @@ class CartScreen extends StatelessWidget {
                           endIndent: 16,
                         );
                       },
-                      // Hapus shrinkWrap dan physics, biarkan ListView scrollable
                     ),
                   ),
                 ),
@@ -122,8 +96,8 @@ class CartScreen extends StatelessWidget {
               ],
             ),
             child: Padding(
-              padding:
-                  EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).padding.bottom),
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -138,14 +112,13 @@ class CartScreen extends StatelessWidget {
                         const Text('Total :',
                             style: TextStyle(fontSize: 16, color: Colors.grey)),
                         Text(
-                          formattedTotalCost, // <-- Gunakan data provider
+                          formattedTotalCost,
                           style: const TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                     ElevatedButton(
-                      // 9. Nonaktifkan tombol jika keranjang kosong
                       onPressed: cartItems.isEmpty
                           ? null
                           : () {
@@ -154,7 +127,7 @@ class CartScreen extends StatelessWidget {
                                 MaterialPageRoute(
                                   builder: (context) => CheckoutScreen(
                                     totalCost: formattedTotalCost,
-                                    cartItems: cartItems, // <-- Gunakan data provider
+                                    cartItems: cartItems,
                                   ),
                                 ),
                               );
@@ -191,8 +164,6 @@ class CartScreen extends StatelessWidget {
 /// ==============================
 class CartItem extends StatelessWidget {
   final ProdukModel produk;
-  // 10. HAPUS PLACEHOLDER (logika kuantitas harus ditangani provider)
-  // final int quantity = 1;
 
   const CartItem({
     required this.produk,
@@ -201,9 +172,8 @@ class CartItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 11. AMBIL KUANTITAS DARI PROVIDER
-    final quantity =
-        Provider.of<MarketplaceProvider>(context).getQuantity(produk);
+    final provider = Provider.of<MarketplaceProvider>(context);
+    final quantity = provider.getQuantity(produk);
 
     return Padding(
       padding: const EdgeInsets.all(12.0),
@@ -231,36 +201,38 @@ class CartItem extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      produk.title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
+                    // PERBAIKAN: Gunakan 'namaProduk' bukan 'title'
+                    Flexible(
+                      child: Text(
+                        produk.namaProduk,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    // 12. Tombol Hapus (dari provider)
                     IconButton(
                       icon: Icon(Icons.close, size: 20, color: Colors.grey[400]),
                       onPressed: () {
-                        Provider.of<MarketplaceProvider>(context, listen: false)
-                            .removeFromCart(produk);
+                        provider.removeFromCart(produk);
                       },
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Fresh Banana India\n0,5 kg (Pcs)', // Ini placeholder UI
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                Text(
+                  produk.kategori.isNotEmpty ? produk.kategori : 'Umum',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // PERBAIKAN: Gunakan 'formattedPrice'
                     Text(
                       produk.formattedPrice,
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    // 13. Hubungkan tombol kuantitas ke provider
                     _buildQuantitySelector(context, produk, quantity),
                   ],
                 ),
@@ -272,7 +244,6 @@ class CartItem extends StatelessWidget {
     );
   }
 
-  // 14. Modifikasi _buildQuantitySelector
   Widget _buildQuantitySelector(
       BuildContext context, ProdukModel produk, int quantity) {
     final provider = Provider.of<MarketplaceProvider>(context, listen: false);
@@ -280,15 +251,15 @@ class CartItem extends StatelessWidget {
     return Row(
       children: [
         _buildQuantityButton(Icons.remove, onPressed: () {
-          provider.decrementQuantity(produk); // <-- Panggil provider
+          provider.decrementQuantity(produk);
         }),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Text(quantity.toString(), // <-- Gunakan data provider
+          child: Text(quantity.toString(),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
         _buildQuantityButton(Icons.add, isAdd: true, onPressed: () {
-          provider.incrementQuantity(produk); // <-- Panggil provider
+          provider.incrementQuantity(produk);
         }),
       ],
     );
@@ -335,29 +306,46 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  String? _selectedPaymentMethod;
+  String? _selectedPaymentMethod = 'QRIS'; // Default payment method
+  // Controller alamat
+  final _alamatController = TextEditingController();
+  
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill alamat dari user data jika ada
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
+    if(user != null) {
+        _alamatController.text = user.address;
+    }
+  }
+
+  @override
+  void dispose() {
+    _alamatController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kAppBackgroundColor,
       appBar: AppBar(
-        backgroundColor: kPrimaryColor, // AppBar tetap hijau
+        backgroundColor: kPrimaryColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Checkout',
-            style:
-                TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildAddressCard(context), // <-- Kirim context
+            _buildAddressCard(context),
             _buildPaymentCard(),
-            _buildItemsCard(),
+            _buildItemsCard(context), // Pass context to access provider
           ],
         ),
       ),
@@ -378,25 +366,52 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const OrderAcceptedScreen()));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryColor,
-                padding: const EdgeInsets.symmetric(
-                    vertical: 16), // Padding internal tombol
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Place Order',
-                  style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold)),
+            child: Consumer<MarketplaceProvider>(
+              builder: (context, provider, child) {
+                return ElevatedButton(
+                  onPressed: provider.isLoading ? null : () async {
+                    // VALIDASI ALAMAT
+                    if (_alamatController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Mohon isi alamat pengiriman'))
+                        );
+                        return;
+                    }
+
+                    // PROSES CHECKOUT KE BACKEND
+                    bool success = await provider.checkout(
+                        _alamatController.text, 
+                        _selectedPaymentMethod ?? 'Manual'
+                    );
+
+                    if (success && context.mounted) {
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const OrderAcceptedScreen()));
+                    } else if (context.mounted) {
+                         ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Checkout Gagal, coba lagi.'))
+                        );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: provider.isLoading 
+                    ? const SizedBox(
+                        height: 20, width: 20, 
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Place Order',
+                      style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold)),
+                );
+              }
             ),
           ),
         ),
@@ -404,19 +419,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Card Alamat
   Widget _buildAddressCard(BuildContext context) {
-    // 15. AMBIL DATA USER DARI AUTHPROVIDER
-    final UserModel? user = Provider.of<AuthProvider>(context).user;
-    // Format alamat (jika ada)
-    final String address = user?.address ?? 'Alamat belum diatur.';
-
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: Colors.white, // Kartu putih
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -437,19 +446,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, color: kPrimaryColor),
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    // Navigasi ke form edit alamat, dan tunggu hasilnya
+                    final newAddress = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const AddressFormPage()));
+                            builder: (context) => AddressFormPage(initialAddress: _alamatController.text)));
+                    
+                    if (newAddress != null && newAddress is String) {
+                        setState(() {
+                            _alamatController.text = newAddress;
+                        });
+                    }
                   },
                 )
               ],
             ),
             const SizedBox(height: 8),
-            // 16. HAPUS ALAMAT DUMMY DAN GANTI DENGAN DATA PROVIDER
             Text(
-              address,
+              _alamatController.text.isEmpty ? 'Alamat belum diatur' : _alamatController.text,
               style: const TextStyle(color: Colors.black54, height: 1.5),
             ),
           ],
@@ -458,7 +473,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Card Metode Pembayaran (Tidak berubah, sudah OK)
   Widget _buildPaymentCard() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
@@ -507,8 +521,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Card Rangkuman Item (Tidak berubah, sudah OK)
-  Widget _buildItemsCard() {
+  Widget _buildItemsCard(BuildContext context) {
+    // Ambil provider untuk mendapatkan quantity
+    final provider = Provider.of<MarketplaceProvider>(context, listen: false);
+    
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
       child: Container(
@@ -519,24 +535,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         child: Column(
           children: [
-            ...widget.cartItems.take(3).map((item) => Padding(
+            ...widget.cartItems.map((item) => Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(item.title,
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w500)),
-                          const Text('0,5 Kg (Pcs)',
-                              style:
-                                  TextStyle(fontSize: 12, color: Colors.grey)),
-                        ],
+                      Expanded( // Gunakan Expanded agar text tidak overflow
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item.namaProduk, // Gunakan namaProduk
+                                style: const TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis,),
+                            Text(item.kategori.isNotEmpty ? item.kategori : 'Umum',
+                                style:
+                                    const TextStyle(fontSize: 12, color: Colors.grey)),
+                          ],
+                        ),
                       ),
-                      const Text('1x',
-                          style: TextStyle(
+                      Text('${provider.getQuantity(item)}x', // Ambil quantity real
+                          style: const TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w500)),
                     ],
                   ),
@@ -562,17 +580,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 }
 
 /// ==============================
-/// SCREEN 3: Address Form Page (Tidak ada data dummy)
+/// SCREEN 3: Address Form Page
 /// ==============================
 class AddressFormPage extends StatefulWidget {
-  const AddressFormPage({super.key});
+  final String? initialAddress;
+  const AddressFormPage({super.key, this.initialAddress});
 
   @override
   State<AddressFormPage> createState() => _AddressFormPageState();
 }
 
 class _AddressFormPageState extends State<AddressFormPage> {
-  // Controllers untuk form
   final _alamatController = TextEditingController();
   final _rtRwController = TextEditingController();
   final _kelurahanController = TextEditingController();
@@ -581,18 +599,17 @@ class _AddressFormPageState extends State<AddressFormPage> {
   final _kodePosController = TextEditingController();
   final _noHpController = TextEditingController();
 
-  // 17. AMBIL DATA USER SAAT INIT (Untuk mengisi form)
   @override
   void initState() {
     super.initState();
-    final UserModel? user =
-        Provider.of<AuthProvider>(context, listen: false).user;
+    if (widget.initialAddress != null) {
+        _alamatController.text = widget.initialAddress!;
+    }
+    
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
     if (user != null) {
-      _alamatController.text = user.address;
-      _noHpController.text = user.mobileNumber;
-      // TODO: Anda perlu mem-parsing 'alamat' untuk mengisi field lain
-      // (misal _rtRwController, _kelurahanController, dll)
-      // Ini adalah contoh sederhana:
+       if(_alamatController.text.isEmpty) _alamatController.text = user.address;
+       _noHpController.text = user.mobileNumber;
     }
   }
 
@@ -613,13 +630,13 @@ class _AddressFormPageState extends State<AddressFormPage> {
     return Scaffold(
       backgroundColor: kAppBackgroundColor,
       appBar: AppBar(
-        backgroundColor: kPrimaryColor, // AppBar tetap hijau
+        backgroundColor: kPrimaryColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Address', // Judul diubah
+        title: const Text('Address',
             style:
                 TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
@@ -629,7 +646,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
             margin: const EdgeInsets.all(16.0),
             padding: const EdgeInsets.all(20.0),
             decoration: BoxDecoration(
-              color: Colors.white, // Kartu tetap putih
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -646,7 +663,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                _buildTextField(_alamatController, 'Alamat'),
+                _buildTextField(_alamatController, 'Alamat Lengkap'),
                 const SizedBox(height: 16),
                 _buildTextField(_rtRwController, 'Rt/Rw'),
                 const SizedBox(height: 16),
@@ -666,8 +683,8 @@ class _AddressFormPageState extends State<AddressFormPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: Logika simpan alamat (kirim ke AuthProvider/API)
-                      Navigator.pop(context); // Kembali ke halaman checkout
+                      // Kembalikan alamat yang sudah diisi ke halaman sebelumnya
+                      Navigator.pop(context, _alamatController.text);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kPrimaryColor,
@@ -690,7 +707,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
     );
   }
 
-  // Helper widget untuk text field
   Widget _buildTextField(TextEditingController controller, String label,
       {TextInputType? keyboardType}) {
     return TextField(
@@ -718,7 +734,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
 }
 
 /// ==============================
-/// SCREEN 4: Order Accepted (Tidak ada data dummy)
+/// SCREEN 4: Order Accepted
 /// ==============================
 class OrderAcceptedScreen extends StatelessWidget {
   const OrderAcceptedScreen({super.key});
@@ -727,13 +743,12 @@ class OrderAcceptedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        // Gradient background
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
               Colors.white,
-              const Color(0xFFF7F7F7),
-            ], // Latar putih gading
+              Color(0xFFF7F7F7),
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -743,7 +758,6 @@ class OrderAcceptedScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              // Lingkaran Ceklis (Sudah sesuai)
               Container(
                 width: 160,
                 height: 160,
@@ -765,7 +779,6 @@ class OrderAcceptedScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 50),
-              // Teks (Sudah sesuai)
               const Text(
                 'Your Order has been\naccepted',
                 textAlign: TextAlign.center,
@@ -784,14 +797,14 @@ class OrderAcceptedScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              // Tombol (Sudah sesuai)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40.0),
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: Navigasi ke halaman Lacak Pesanan
+                       // Reset ke dashboard
+                       Navigator.of(context).popUntil((route) => route.isFirst);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kPrimaryColor,
@@ -799,25 +812,12 @@ class OrderAcceptedScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text('Track Order',
+                    child: const Text('Back to Home',
                         style: TextStyle(
                             fontSize: 18,
                             color: Colors.white,
                             fontWeight: FontWeight.bold)),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.popUntil(context, (route) => route.isFirst);
-                },
-                child: const Text(
-                  'Back to home',
-                  style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: 40),

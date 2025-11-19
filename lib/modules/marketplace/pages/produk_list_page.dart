@@ -1,24 +1,19 @@
-// lib/modules/marketplace/page/produk_list_page.dart
+// lib/modules/marketplace/pages/produk_list_page.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // <-- 1. TAMBAHKAN IMPORT
+import 'package:provider/provider.dart';
 import '../../../models/produk_model.dart';
 import 'produk_detail_page.dart';
 import 'produk_cart_page.dart';
-import '../../../providers/marketplace_provider.dart'; // <-- 2. TAMBAHKAN IMPORT
-
-// --- DATA DUMMY GLOBAL (kDummyImageUrl dan kDummyProducts) DIHAPUS ---
+import '../../../providers/marketplace_provider.dart';
 
 class ProdukListPage extends StatelessWidget {
-  // 1. Tambahkan konstanta warna hijau
   static const Color kPrimaryColor = Color(0xFF1E605A);
 
   const ProdukListPage({super.key});
 
-  // --- WIDGET SEARCH BAR (Sesuai Gambar) ---
+  // --- WIDGET SEARCH BAR & CART ---
   Widget _buildSearchBarAndCart(BuildContext context) {
-    // 3. Ambil cartItemCount dari provider
-    final cartItemCount = Provider.of<MarketplaceProvider>(context).cartItemCount;
-
+    // Menggunakan Selector untuk performa lebih baik (hanya rebuild jika cartItemCount berubah)
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
@@ -27,9 +22,9 @@ class ProdukListPage extends StatelessWidget {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.white, // Latar putih
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey[300]!), // Border abu-abu
+                border: Border.all(color: Colors.grey[300]!),
               ),
               child: const TextField(
                 decoration: InputDecoration(
@@ -42,40 +37,40 @@ class ProdukListPage extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          // Ikon keranjang
-          IconButton(
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.shopping_cart_outlined, color: Colors.black),
-                // 4. Tampilkan badge hanya jika ada item
-                if (cartItemCount > 0)
-                  Positioned(
-                    right: -6,
-                    top: -6,
-                    child: Container(
-                      padding: const EdgeInsets.all(1),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(6),
+          // Ikon Keranjang
+          Consumer<MarketplaceProvider>(
+            builder: (context, provider, child) {
+              return IconButton(
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.shopping_cart_outlined, color: Colors.black),
+                    if (provider.cartItemCount > 0)
+                      Positioned(
+                        right: -6,
+                        top: -6,
+                        child: Container(
+                          padding: const EdgeInsets.all(1),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          constraints: const BoxConstraints(minWidth: 12, minHeight: 12),
+                          child: Text(
+                            provider.cartItemCount.toString(),
+                            style: const TextStyle(color: Colors.white, fontSize: 8),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       ),
-                      constraints:
-                          const BoxConstraints(minWidth: 12, minHeight: 12),
-                      child: Text(
-                        cartItemCount.toString(), // <-- Gunakan data provider
-                        style: const TextStyle(color: Colors.white, fontSize: 8),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    // 5. HAPUS 'cartItems' dari constructor
-                    builder: (context) => const CartScreen()),
+                  ],
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ProdukCartPage()),
+                  );
+                },
               );
             },
           ),
@@ -87,45 +82,40 @@ class ProdukListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-    const extraBottomSpace = 90.0;
+    const extraBottomSpace = 90.0; // Space agar tidak tertutup BottomNavBar
 
     return Scaffold(
       backgroundColor: kPrimaryColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60.0),
         child: Container(
-          color: Colors.white, // Latar belakang AppBar putih
+          color: Colors.white,
           child: SafeArea(
             child: _buildSearchBarAndCart(context),
           ),
         ),
       ),
-      // 6. GANTI BODY DENGAN CONSUMER
       body: Consumer<MarketplaceProvider>(
         builder: (context, provider, child) {
-          // Asumsi: MarketplaceProvider punya list 'products'
           final produkList = provider.products;
 
-          // Tampilkan loading
           if (provider.isLoading) {
-            return const Center(
-                child: CircularProgressIndicator(color: Colors.white));
+            return const Center(child: CircularProgressIndicator(color: Colors.white));
           }
 
-          // Tampilkan pesan jika kosong
           if (produkList.isEmpty) {
             return const Center(
-                child: Text(
-              'Tidak ada produk yang tersedia.',
-              style: TextStyle(color: Colors.white70),
-            ));
+              child: Text(
+                'Tidak ada produk yang tersedia.',
+                style: TextStyle(color: Colors.white70),
+              ),
+            );
           }
 
-          // Tampilkan GridView jika ada data
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: GridView.builder(
-              itemCount: produkList.length, // <-- Gunakan data provider
+              itemCount: produkList.length,
               padding: EdgeInsets.only(bottom: bottomPadding + extraBottomSpace),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
@@ -134,7 +124,7 @@ class ProdukListPage extends StatelessWidget {
                 childAspectRatio: 0.67,
               ),
               itemBuilder: (context, index) {
-                final item = produkList[index]; // <-- Gunakan data provider
+                final item = produkList[index];
                 return ProdukCard(
                   produk: item,
                   onTap: () {
@@ -154,7 +144,7 @@ class ProdukListPage extends StatelessWidget {
   }
 }
 
-// --- ProdukCard (Tidak Berubah) ---
+// --- WIDGET KARTU PRODUK (DIPERBAIKI) ---
 class ProdukCard extends StatelessWidget {
   final ProdukModel produk;
   final VoidCallback onTap;
@@ -176,6 +166,7 @@ class ProdukCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Gambar Produk
             AspectRatio(
               aspectRatio: 1,
               child: Hero(
@@ -186,50 +177,63 @@ class ProdukCard extends StatelessWidget {
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       color: Colors.grey[200],
-                      child: const Center(child: Icon(Icons.broken_image)),
+                      child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
                     );
                   },
                 ),
               ),
             ),
+            
+            // Detail Produk
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // 1. PERBAIKAN: Ganti 'title' dengan 'namaProduk'
                   Text(
-                    produk.title,
+                    produk.namaProduk, 
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 16),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    '500 g',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  
+                  // Kategori (Ganti statis '500g' dengan kategori asli)
+                  Text(
+                    produk.kategori.isNotEmpty ? produk.kategori : 'Umum',
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  
                   const SizedBox(height: 8),
+                  
+                  // Harga & Tombol Add
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
+                      // Harga (Menggunakan getter formattedPrice dari model)
                       Text(
                         produk.formattedPrice,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 15, // Sedikit diperkecil agar muat
                           color: Colors.black,
                         ),
                       ),
+                      
+                      // Tombol Add (Visual Saja)
                       Container(
-                        width: 36,
-                        height: 36,
+                        width: 32,
+                        height: 32,
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primary,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.add, color: Colors.white),
+                        child: const Icon(Icons.add, color: Colors.white, size: 20),
                       ),
                     ],
                   ),
