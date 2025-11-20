@@ -7,7 +7,10 @@ import '../../../providers/auth_provider.dart';
 // Pages
 import 'pages/buyer_home_page.dart'; 
 import 'pages/admin_home_page.dart'; 
-import 'pages/seller_home_page.dart'; 
+
+import '../Seller/seller_home_page.dart'; 
+import '../Seller/seller_product_list_page.dart';
+import '../Seller/seller_order_page.dart';
 
 import '../marketplace/pages/produk_list_page.dart';
 import '../history/pages/transaction_history_page.dart';
@@ -53,8 +56,8 @@ class _DashboardPageState extends State<DashboardPage> {
       // MENU PENJUAL
       _pages = [
         const SellerHomePage(),
-        const ProdukListPage(),
-        const TransactionHistoryPage(),
+        const SellerProductListPage(),
+        const SellerOrderPage(),
         const AccountPage(),
       ];
       _navItems = const [

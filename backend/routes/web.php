@@ -55,6 +55,7 @@ $router->group(['middleware' => ['auth', 'role:admin,penjual']], function () use
     $router->post('/produk', 'ProdukController@store');
     $router->put('/produk/{id}', 'ProdukController@update'); 
     $router->delete('/produk/{id}', 'ProdukController@destroy');
+    $router->get('/transaksi/masuk', 'TransaksiController@getSellerTransactions');
     $router->put('/transaksi/{id}/update-status', 'TransaksiController@updateStatusBySeller');
 
 });
