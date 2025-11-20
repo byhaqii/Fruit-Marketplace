@@ -79,6 +79,11 @@ class _ScanPageState extends State<ScanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // PERBAIKAN DISINI:
+      // resizeToAvoidBottomInset: false mencegah layout berubah ukuran (naik)
+      // saat keyboard muncul (misalnya saat fitur search aktif).
+      resizeToAvoidBottomInset: false,
+      
       extendBodyBehindAppBar: true,
       appBar: _buildTransparentAppBar(),
       body: FutureBuilder<void>(
