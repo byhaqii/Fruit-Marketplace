@@ -1,159 +1,126 @@
-// lib/modules/notifications/pages/notification_page.dart
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // <-- 1. TAMBAHKAN IMPORT PROVIDER
-import '../../../models/notification_model.dart'; // <-- 2. PERBAIKI PATH IMPORT
-import '../../../providers/notification_provider.dart'; // <-- 3. TAMBAHKAN IMPORT PROVIDER
+// lib/modules/notification/pages/notification_page.dart
 
-class NotificationPage extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/notification_provider.dart';
+import '../../../models/notification_model.dart';
+
+class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
 
-  // Warna hijau utama dari gambar
-  static const Color primaryGreen = Color.fromARGB(255, 56, 142, 60);
+  @override
+  State<NotificationPage> createState() => _NotificationPageState();
+}
+
+class _NotificationPageState extends State<NotificationPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Ambil notifikasi saat halaman dibuka
+    Future.microtask(() => 
+      Provider.of<NotificationProvider>(context, listen: false).fetchNotifications()
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    const Color primaryColor = Color(0xFF2D7F6A);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifikasi', style: TextStyle(color: Colors.white)),
-        backgroundColor: primaryGreen,
+        title: const Text(
+          "Notifikasi",
+          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: primaryColor,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.done_all),
+            tooltip: "Tandai semua dibaca",
+            onPressed: () {
+              Provider.of<NotificationProvider>(context, listen: false).markAllAsRead();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Semua notifikasi ditandai sudah dibaca"))
+              );
+            },
+          )
+        ],
       ),
-      // 4. GANTI BODY DENGAN CONSUMER UNTUK MENGAMBIL DATA ASLI
       body: Consumer<NotificationProvider>(
         builder: (context, provider, child) {
-          // Asumsi: Provider Anda memiliki List<NotificationModel> bernama 'notifications'
-          // Ganti 'notifications' jika nama propertinya berbeda di provider Anda
-          
-          // final List<NotificationModel> notifications = provider.notifications;
-          // CATATAN: Saya asumsikan nama propertinya 'notifications'.
-          // Jika Anda belum menambahkannya, ini adalah contoh:
-          // Di NotificationProvider:
-          // List<NotificationModel> _notifications = [];
-          // List<NotificationModel> get notifications => _notifications;
-          // ...lalu ada fungsi fetchNotifications()
-          
-          // Untuk menghindari error sementara, kita buat list kosong
-          // Ganti ini dengan data provider Anda:
-          final List<NotificationModel> notifications = []; // <-- Ganti dengan provider.notifications
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator(color: primaryColor));
+          }
 
-          // 5. TAMBAHKAN KONDISI JIKA DATA KOSONG
-          if (notifications.isEmpty) {
-            return const Center(
-              child: Text(
-                'Tidak ada notifikasi.',
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+          if (provider.notifications.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.notifications_off_outlined, size: 60, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text("Belum ada notifikasi baru", style: TextStyle(color: Colors.grey)),
+                ],
               ),
             );
           }
 
-          // 6. GUNAKAN DATA DARI PROVIDER
-          return ListView.builder(
-            padding: const EdgeInsets.all(16.0),
-            itemCount: notifications.length, // <-- Menggunakan data provider
-            itemBuilder: (context, index) {
-              final notification = notifications[index]; // <-- Menggunakan data provider
-              return _buildNotificationCard(notification);
-            },
+          return RefreshIndicator(
+            onRefresh: () => provider.fetchNotifications(),
+            color: primaryColor,
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: provider.notifications.length,
+              separatorBuilder: (context, index) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final notif = provider.notifications[index];
+                return _buildNotificationItem(context, notif);
+              },
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _buildNotificationCard(NotificationModel notification) {
-    final Color statusColor = notification.isSuccess ? primaryGreen : Colors.red;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: Colors.grey[300]!, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
+  Widget _buildNotificationItem(BuildContext context, NotificationModel notif) {
+    return Container(
+      color: notif.isRead ? Colors.transparent : const Color(0xFFE0F2F1), // Hijau muda jika belum dibaca
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: const Color(0xFF2D7F6A).withOpacity(0.1),
+          child: Icon(
+            notif.type == 'order' ? Icons.shopping_bag : Icons.info,
+            color: const Color(0xFF2D7F6A),
+          ),
+        ),
+        title: Text(
+          notif.title,
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: notif.isRead ? FontWeight.normal : FontWeight.bold,
+          ),
+        ),
+        subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  notification.title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent, // Background transparan
-                    borderRadius: BorderRadius.circular(8), // Radius border
-                    border: Border.all(
-                      // Tambahkan border
-                      color: statusColor, // Warna border sesuai status
-                      width: 1.5, // Ketebalan border
-                    ),
-                  ),
-                  child: Text(
-                    notification.isSuccess ? 'Berhasil' : 'Gagal',
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // Loop untuk menampilkan setiap item notifikasi
-            ...notification.items.map((item) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 4.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        item.name,
-                        style: const TextStyle(fontSize: 14, color: Colors.black87),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        item.weight,
-                        style: const TextStyle(fontSize: 14, color: Colors.black87),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        item.price,
-                        style: const TextStyle(fontSize: 14, color: Colors.black87),
-                        textAlign: TextAlign.end,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
+            Text(notif.body, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12)),
+            const SizedBox(height: 4),
             Text(
-              '${notification.time}, ${notification.date}',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              notif.date, // Pastikan model punya field date/time
+              style: TextStyle(fontSize: 10, color: Colors.grey[600]),
             ),
           ],
         ),
+        onTap: () {
+          // Tandai sudah dibaca
+          // Provider.of<NotificationProvider>(context, listen: false).markAsRead(notif.id);
+          
+          // Navigasi jika perlu (misal ke detail pesanan)
+        },
       ),
     );
   }

@@ -1,229 +1,221 @@
 // lib/modules/keuangan/pages/keuangan_page.dart
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // <-- 1. TAMBAHKAN IMPORT
-import '../../../models/keuangan_model.dart';
-import '../../../providers/keuangan_provider.dart'; // <-- 2. TAMBAHKAN IMPORT
 
-class KeuanganPage extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../models/keuangan_model.dart';
+import '../../../providers/keuangan_provider.dart';
+
+class KeuanganPage extends StatefulWidget {
   const KeuanganPage({super.key});
 
-  // Warna utama dari gambar
-  static const Color kPrimaryColor = Color(0xFF1E605A); // Warna hijau tua
-  static const Color kItemBgColor = Color(0xFFF5F5F5); // Warna abu-abu background item
+  @override
+  State<KeuanganPage> createState() => _KeuanganPageState();
+}
+
+class _KeuanganPageState extends State<KeuanganPage> {
+  // Warna tema halaman ini
+  static const Color kPrimaryColor = Color(0xFF1E605A); 
+  static const Color kItemBgColor = Color(0xFFF8F9FA);
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresh data saat halaman dibuka
+    Future.microtask(() => 
+      Provider.of<KeuanganProvider>(context, listen: false).fetchKeuanganData()
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kPrimaryColor, // Background keseluruhan scaffold adalah HIJAU
-      appBar: _buildAppBar(context),
-      body: _buildBody(context),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      title: const Text(
-        'Keuangan',
-        style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
+      backgroundColor: kPrimaryColor,
+      appBar: AppBar(
+        title: const Text('Keuangan', style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: kPrimaryColor),
       ),
-      backgroundColor: Colors.white,
-      elevation: 0,
-      centerTitle: true,
-      automaticallyImplyLeading: false,
+      body: Container(
+        margin: const EdgeInsets.only(top: 10), // Sedikit margin atas
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        child: Consumer<KeuanganProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoading) {
+              return const Center(child: CircularProgressIndicator(color: kPrimaryColor));
+            }
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. BAGIAN SALDO
+                  _buildBalanceSection(provider.formattedBalance),
+                  
+                  // 2. CHART (Visualisasi Sederhana)
+                  _buildChartPlaceholder(),
+                  
+                  const SizedBox(height: 20),
+
+                  // 3. DAFTAR TRANSAKSI
+                  const Text(
+                    "Riwayat Transaksi",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 15),
+                  
+                  if (provider.expenses.isEmpty)
+                    _buildEmptyState()
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: provider.expenses.length,
+                      itemBuilder: (context, index) {
+                        return _buildExpenseItem(provider.expenses[index]);
+                      },
+                    ),
+                  
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 
-  Widget _buildBody(BuildContext context) {
+  Widget _buildBalanceSection(String balance) {
     return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white, // Bagian body ini berwarna putih
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))
+        ],
+        border: Border.all(color: Colors.grey.shade200),
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildBalanceSection(), // <-- Panggil versi baru
-            _buildChartPlaceholder(),
-            _buildExpensesList(), // <-- Panggil versi baru
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Bagian "Current Balance" dan dropdown "Month"
-  Widget _buildBalanceSection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 3. GUNAKAN CONSUMER UNTUK DATA DINAMIS
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Current Balance",
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+              Row(
+                children: [
+                  const Icon(Icons.account_balance_wallet_outlined, color: Colors.grey, size: 18),
+                  const SizedBox(width: 5),
+                  Text("Total Saldo", style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+                ],
               ),
-              const SizedBox(height: 4),
-              Consumer<KeuanganProvider>(
-                builder: (context, provider, child) {
-                  // Asumsi: Provider punya getter 'formattedBalance'
-                  final String balance = provider.formattedBalance;
-                  return Text(
-                    balance, // <-- 4. HAPUS DUMMY DATA
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  );
-                },
+              const SizedBox(height: 8),
+              Text(
+                balance,
+                style: const TextStyle(color: Colors.black, fontSize: 26, fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: kPrimaryColor.withOpacity(0.5)),
+          // Tombol Top Up Kecil
+          InkWell(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Fitur Top Up Segera Hadir")));
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: kPrimaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.add, color: kPrimaryColor),
             ),
-            child: const Row(
-              children: [
-                Text(
-                  "Month",
-                  style: TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(width: 4),
-                Icon(Icons.arrow_drop_down, color: kPrimaryColor, size: 20),
-              ],
-            ),
-          ),
+          )
         ],
       ),
     );
   }
 
-  // Placeholder untuk Donut Chart
   Widget _buildChartPlaceholder() {
     return Container(
-      height: 200,
-      margin: const EdgeInsets.symmetric(vertical: 20),
-      child: Center(
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            CircleAvatar(
-              radius: 80,
-              backgroundColor: Colors.grey[200], // Lingkaran luar abu-abu
-            ),
-            const CircleAvatar(
-              radius: 65,
-              backgroundColor: Colors.white, // Lingkaran dalam putih (efek donut)
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Bagian "Expenses List"
-  Widget _buildExpensesList() {
-    // 5. HAPUS DUMMY DATA
-    // final List<KeuanganModel> expenses = KeuanganModel.dummyExpenses;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      height: 180,
+      margin: const EdgeInsets.symmetric(vertical: 25),
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          const Text(
-            "Expenses List",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          // Lingkaran Luar (Background)
+          SizedBox(
+            width: 150, height: 150,
+            child: CircularProgressIndicator(
+              value: 1.0,
+              strokeWidth: 12,
+              color: Colors.grey[100],
+            ),
           ),
-          const SizedBox(height: 16),
-          // 6. GUNAKAN CONSUMER UNTUK LIST DINAMIS
-          Consumer<KeuanganProvider>(
-            builder: (context, provider, child) {
-              // Asumsi: Provider punya getter 'expenses'
-              final List<KeuanganModel> expenses = provider.expenses;
-
-              // 7. TAMPILKAN PESAN JIKA KOSONG
-              if (expenses.isEmpty) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 32.0),
-                    child: Text(
-                      'Tidak ada pengeluaran.',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                );
-              }
-
-              // 8. TAMPILKAN LISTVIEW JIKA ADA DATA
-              return ListView.builder(
-                itemCount: expenses.length, // <-- Gunakan data provider
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemBuilder: (context, index) {
-                  return _buildExpenseItem(expenses[index]); // <-- Gunakan data provider
-                },
-              );
-            },
+          // Lingkaran Data (Persentase - Simulasi)
+          SizedBox(
+            width: 150, height: 150,
+            child: const CircularProgressIndicator(
+              value: 0.75, // 75%
+              strokeWidth: 12,
+              color: kPrimaryColor,
+              backgroundColor: Colors.transparent,
+            ),
           ),
+          // Teks Tengah
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text("75%", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: kPrimaryColor)),
+              Text("Pengeluaran", style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          )
         ],
       ),
     );
   }
 
-  // Widget untuk satu item di "Expenses List" (Tidak berubah)
   Widget _buildExpenseItem(KeuanganModel item) {
+    // Menentukan warna nominal (Hijau jika +, Merah/Hitam jika -)
+    final bool isIncome = item.amount.contains('+');
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: kItemBgColor, // Background abu-abu
+        color: kItemBgColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              item.imageAsset,
-              width: 50,
-              height: 50,
-              fit: BoxFit.cover,
-              // Error builder jika asset tidak ditemukan
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: 50,
-                height: 50,
-                color: Colors.grey[300],
-                child: const Icon(Icons.image_not_supported, color: Colors.grey),
-              ),
+          // Icon Box
+          Container(
+            width: 50, height: 50,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            // Menggunakan Icon bawaan sebagai fallback jika gambar aset tidak ada
+            child: Icon(
+              item.amount.contains('+') ? Icons.arrow_downward : Icons.arrow_upward,
+              color: item.amount.contains('+') ? Colors.green : Colors.orange,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 15),
+          
+          // Detail Transaksi
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -233,11 +225,32 @@ class KeuanganPage extends StatelessWidget {
               ],
             ),
           ),
+          
+          // Nominal
           Text(
             item.amount,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(
+              fontWeight: FontWeight.bold, 
+              fontSize: 15,
+              color: isIncome ? Colors.green : Colors.black87
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32.0),
+        child: Column(
+          children: const [
+            Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey),
+            SizedBox(height: 10),
+            Text('Belum ada riwayat transaksi.', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
       ),
     );
   }

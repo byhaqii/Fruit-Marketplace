@@ -1,16 +1,18 @@
+// lib/providers/keuangan_provider.dart
+
 import 'package:flutter/material.dart';
-import '../models/keuangan_model.dart'; // <-- 1. Import model
-import '../core/network/api_client.dart'; // <-- 2. Import ApiClient
+import '../models/keuangan_model.dart';
+import '../core/network/api_client.dart';
 
 class KeuanganProvider with ChangeNotifier {
   final ApiClient apiClient;
 
   // --- STATE ---
   bool _isLoading = false;
-  String _formattedBalance = "Rp 0,-"; // Default balance
+  String _formattedBalance = "Rp 0,-"; 
   List<KeuanganModel> _expenses = [];
 
-  // --- GETTERS (Untuk dibaca oleh UI) ---
+  // --- GETTERS ---
   bool get isLoading => _isLoading;
   String get formattedBalance => _formattedBalance;
   List<KeuanganModel> get expenses => _expenses;
@@ -18,7 +20,6 @@ class KeuanganProvider with ChangeNotifier {
   // --- CONSTRUCTOR ---
   KeuanganProvider({ApiClient? apiClient})
       : apiClient = apiClient ?? ApiClient() {
-    // Panggil fungsi untuk mengambil data saat provider pertama kali dibuat
     fetchKeuanganData();
   }
 
@@ -27,39 +28,44 @@ class KeuanganProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // --- DI APLIKASI NYATA ---
-    // Di sinilah Anda akan memanggil API client Anda
-    // try {
-    //   // 1. Ambil Saldo
-    //   final balanceData = await apiClient.get('/keuangan/balance');
-    //   // Asumsi API mengembalikan: {"balance": 3589000, "formatted": "Rp. 3.589.000,-"}
-    //   _formattedBalance = balanceData['formatted'] ?? "Rp 0,-";
-    //
-    //   // 2. Ambil Daftar Pengeluaran
-    //   final expensesData = await apiClient.get('/keuangan/expenses'); // Ini adalah List
-    //
-    //   // Cek jika data adalah list sebelum di-map
-    //   if (expensesData is List) {
-    //     _expenses = expensesData
-    //         .map((json) => KeuanganModel.fromJson(json as Map<String, dynamic>))
-    //         .toList();
-    //   } else {
-    //     _expenses = [];
-    //   }
-    //
-    // } catch (e) {
-    //   print('Error fetching keuangan data: $e');
-    //   _formattedBalance = "Rp 0,-";
-    //   _expenses = [];
-    // }
-    // -------------------------
+    // Simulasi Delay Network
+    await Future.delayed(const Duration(seconds: 1));
 
-    // Karena kita sudah menghapus data dummy dan belum terhubung ke API,
-    // kita akan atur sebagai list kosong.
-    _formattedBalance = "Rp 0,-"; // Default saat tidak ada data
-    _expenses = []; // Default saat tidak ada data
+    try {
+      // --- DATA DUMMY (Ganti dengan API call nanti) ---
+      _formattedBalance = "Rp 3.589.000,-";
+      
+      _expenses = [
+        const KeuanganModel(
+          id: 1,
+          title: "Beli Pupuk Organik",
+          transactions: "Toko Tani Jaya",
+          amount: "-Rp 150.000",
+          imageAsset: "assets/icons/shopping-bag.png", // Pastikan aset ini ada/ganti Icon
+        ),
+        const KeuanganModel(
+          id: 2,
+          title: "Top Up E-Wallet",
+          transactions: "Transfer Bank BCA",
+          amount: "+Rp 500.000",
+          imageAsset: "assets/icons/wallet.png",
+        ),
+        const KeuanganModel(
+          id: 3,
+          title: "Bayar Listrik",
+          transactions: "Token Listrik",
+          amount: "-Rp 200.000",
+          imageAsset: "assets/icons/bill.png",
+        ),
+      ];
+
+    } catch (e) {
+      debugPrint('Error fetching keuangan: $e');
+      _formattedBalance = "Rp 0,-";
+      _expenses = [];
+    }
 
     _isLoading = false;
-    notifyListeners(); // Beri tahu UI bahwa loading selesai
+    notifyListeners();
   }
 }

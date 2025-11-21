@@ -18,68 +18,98 @@ $router->get('/', function () use ($router) {
 });
 
 // ==========================================================
-// RUTE PUBLIK (Bisa diakses siapa saja, tidak perlu token)
+// 1. RUTE PUBLIK (Tanpa Token)
 // ==========================================================
 $router->post('/auth/login', 'AuthController@login');
 $router->post('/auth/register', 'AuthController@register');
 
+// Produk & Review bisa dilihat publik (tapi beli/review butuh login)
 $router->get('/produk', 'ProdukController@index');
 $router->get('/produk/{id}', 'ProdukController@show');
-$router->get('/produk/{id}/reviews', 'ReviewController@index'); // Menampilkan review itu publik
+$router->get('/produk/{id}/reviews', 'ReviewController@index');
 
 
 // ==========================================================
-// RUTE ADMIN (Harus login + role 'admin')
-// DIPINDAHKAN KE ATAS AGAR /transaksi/all DIDETEKSI DULUAN
+// 2. RUTE ADMIN (Role: admin)
 // ==========================================================
 $router->group(['middleware' => ['auth', 'role:admin']], function () use ($router) {
     
-    // Manajemen Pengguna (Admin)
+    // Manajemen User
     $router->get('/users', 'UserController@index');
     $router->get('/users/{id}', 'UserController@show');
     $router->post('/users', 'UserController@store');
-    $router->put('/users/{id}', 'UserController@update'); 
+    $router->put('/users/{id}', 'UserController@update');
     $router->delete('/users/{id}', 'UserController@destroy');
 
-    // Rute Laporan Transaksi (Admin)
-    $router->get('/transaksi/all', 'TransaksiController@index'); // Rute statis
+    // Laporan Semua Transaksi
+    $router->get('/transaksi/all', 'TransaksiController@index');
 });
 
 
 // ==========================================================
-// RUTE PENJUAL (Harus login + role 'admin' ATAU 'penjual')
+// 3. RUTE PENJUAL (Role: admin, penjual)
 // ==========================================================
 $router->group(['middleware' => ['auth', 'role:admin,penjual']], function () use ($router) {
-    
-    // Manajemen Produk (Admin / Penjual)
+
+    // Manajemen Produk (CRUD)
     $router->post('/produk', 'ProdukController@store');
-    $router->put('/produk/{id}', 'ProdukController@update'); 
+    $router->put('/produk/{id}', 'ProdukController@update');
     $router->delete('/produk/{id}', 'ProdukController@destroy');
+    
+    // Manajemen Pesanan Masuk
+    // PENTING: Fungsi ini harus ada di TransaksiController
     $router->get('/transaksi/masuk', 'TransaksiController@getSellerTransactions');
     $router->put('/transaksi/{id}/update-status', 'TransaksiController@updateStatusBySeller');
-
 });
 
 
 // ==========================================================
-// RUTE TERAUTENTIKASI (PEMBELI, PENJUAL, ADMIN)
+// 4. RUTE TERAUTENTIKASI UMUM (Semua Role)
 // ==========================================================
 $router->group(['middleware' => 'auth'], function () use ($router) {
-    
+
     $router->post('/auth/logout', 'AuthController@logout');
-    
-    // Mengarah ke ProfileController baru
+    $router->get('/notifications', 'NotificationController@index');
+    $router->post('/notifications/read-all', 'NotificationController@markAllRead');
+
+    // Profil Pengguna
     $router->get('/profile', 'ProfileController@show');
-    $router->put('/profile', 'ProfileController@update'); // Rute untuk update profile
+    $router->put('/profile', 'ProfileController@update');
 
-    // Rute Transaksi (Pembeli)
-    $router->get('/transaksi', 'TransaksiController@getUserTransactions'); 
-    $router->post('/transaksi/checkout', 'TransaksiController@store');      
+    // Transaksi (Sisi Pembeli)
+    $router->get('/transaksi', 'TransaksiController@getUserTransactions');
+    $router->post('/transaksi/checkout', 'TransaksiController@store');
     $router->get('/transaksi/{id}', 'TransaksiController@show');
-     $router->put('/transaksi/{id}/cancel', 'TransaksiController@cancelOrder'); // Pembeli membatalkan
-    $router->put('/transaksi/{id}/terima', 'TransaksiController@markAsReceived'); // Pembeli konfirmasi tiba
-
     
-    // Rute Review (Pembeli)
-    $router->post('/produk/{id}/reviews', 'ReviewController@store'); // Hanya user login yg bisa post review
+    // Aksi Pembeli pada Pesanan
+    $router->put('/transaksi/{id}/cancel', 'TransaksiController@cancelOrder');
+    $router->put('/transaksi/{id}/terima', 'TransaksiController@markAsReceived');
+
+    // Review Produk
+    $router->post('/produk/{id}/reviews', 'ReviewController@store');
+});
+
+
+// ==========================================================
+// 5. HELPER ROUTES (Akses Gambar Storage)
+// Berguna jika server tidak otomatis serving folder public
+// ==========================================================
+$router->get('/storage/{filename}', function ($filename) {
+    $path = base_path('public/storage/' . $filename);
+    if (!file_exists($path)) {
+        return response()->json(['message' => 'Image not found'], 404);
+    }
+    $file = file_get_contents($path);
+    $type = mime_content_type($path);
+    return response($file, 200)->header("Content-Type", $type);
+});
+
+$router->get('/storage/profiles/{filename}', function ($filename) {
+    $path = base_path('public/storage/profiles/' . $filename);
+    if (!file_exists($path)) {
+        return response()->json(['message' => 'Image not found'], 404);
+    }
+    $file = file_get_contents($path);
+    $type = mime_content_type($path);
+    return response($file, 200)->header("Content-Type", $type);
 });

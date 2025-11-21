@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\OrderItem;
 
 class Transaksi extends Model
 {
@@ -11,7 +12,6 @@ class Transaksi extends Model
 
     protected $table = 'transaksi';
 
-    // ... $fillable ...
     protected $fillable = [
         'user_id',
         'order_id',
@@ -24,18 +24,17 @@ class Transaksi extends Model
         'alamat_pengiriman',
     ];
 
-
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
     /**
-     * Relasi BARU: Satu transaksi memiliki BANYAK order_items
+     * Relasi: Satu transaksi memiliki BANYAK order_items
+     * RENAME from items() to orderItems() to avoid conflict with Collection::$items
      */
-    public function items()
+    public function orderItems()
     {
-        // --- PERBAIKI DI SINI ---
-        return $this->hasMany(OrderItem::class);
+        return $this->hasMany(OrderItem::class, 'transaksi_id');
     }
 }

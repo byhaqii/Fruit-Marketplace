@@ -4,7 +4,6 @@ import '../modules/dashboard/dashboard_page.dart';
 import '../modules/auth/pages/login_page.dart';
 import '../modules/auth/pages/register_page.dart';
 import '../modules/auth/auth_check.dart';
-import '../modules/keuangan/pages/iuran_page.dart';
 import '../modules/marketplace/pages/produk_list_page.dart';
 import '../modules/notification/pages/notification_page.dart';
 import '../modules/warga/pages/warga_list_page.dart';
@@ -22,7 +21,6 @@ class Routes {
     // Core Modules (Hanya diakses melalui BottomNav)
     '/': (context) => const DashboardPage(),
     '/warga': (context) => const WargaListPage(),
-    '/iuran': (context) => const IuranPage(),
     '/laporan': (context) => const LaporanPage(),
     '/produk': (context) => const ProdukListPage(),
     '/notifications': (context) => const NotificationPage(),

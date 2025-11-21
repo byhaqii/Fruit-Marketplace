@@ -1,4 +1,4 @@
-// lib/modules/marketplace/pages/product_form_page.dart
+// lib/modules/Seller/product_form_page.dart
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -28,7 +28,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
   String? _selectedImagePath;
   final ImagePicker _picker = ImagePicker();
 
-  // --- STYLE CONSTANTS (Sesuai Request Warna) ---
+  // --- STYLE CONSTANTS ---
   static const Color primaryGreen = Color(0xFF2D7F6A); // Warna Utama
   static const Color secondaryGreen = Color(0xFF1E5A4A); // Warna Teks Aksen
   static const Color bgInput = Color.fromRGBO(45, 127, 106, 0.08); // Background Input Halus
@@ -58,6 +58,16 @@ class _ProductFormPageState extends State<ProductFormPage> {
     _priceController = TextEditingController(text: widget.produk?.harga.toString() ?? '');
     _stockController = TextEditingController(text: widget.produk?.stok.toString() ?? '');
     _categoryController = TextEditingController(text: widget.produk?.kategori ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    _priceController.dispose();
+    _stockController.dispose();
+    _categoryController.dispose();
+    super.dispose();
   }
 
   // --- LOGIC ---
@@ -97,12 +107,18 @@ class _ProductFormPageState extends State<ProductFormPage> {
   }
 
   Future<void> _processImage(ImageSource source) async {
-    final XFile? picked = await _picker.pickImage(source: source, imageQuality: 80);
-    if (picked != null) setState(() => _selectedImagePath = picked.path);
+    try {
+      final XFile? picked = await _picker.pickImage(source: source, imageQuality: 80);
+      if (picked != null) setState(() => _selectedImagePath = picked.path);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Gagal mengambil gambar")));
+    }
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    
+    // Validasi Kategori Manual (karena pakai controller sendiri di luar form input kadang)
     if (_categoryController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kategori wajib diisi")));
         return;
@@ -110,47 +126,70 @@ class _ProductFormPageState extends State<ProductFormPage> {
 
     final provider = Provider.of<MarketplaceProvider>(context, listen: false);
     final isEdit = widget.produk != null;
-    bool success;
+    bool success = false;
 
-    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator(color: primaryGreen)));
+    // Tampilkan Loading
+    showDialog(
+      context: context, 
+      barrierDismissible: false, 
+      builder: (_) => const Center(child: CircularProgressIndicator(color: primaryGreen))
+    );
 
     try {
+      // FIX: Bersihkan format angka (hapus titik/koma) sebelum parsing agar tidak return 0
+      final int cleanPrice = int.parse(_priceController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+      final int cleanStock = int.parse(_stockController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+
       if (isEdit) {
         success = await provider.updateProduct(
           id: widget.produk!.id,
           nama: _nameController.text,
           deskripsi: _descController.text,
-          harga: int.tryParse(_priceController.text) ?? 0,
-          stok: int.tryParse(_stockController.text) ?? 0,
+          harga: cleanPrice, 
+          stok: cleanStock,
           kategori: _categoryController.text,
           imagePath: _selectedImagePath,
         );
       } else {
         if (_selectedImagePath == null) {
-          Navigator.pop(context);
+          Navigator.pop(context); // Tutup loading
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Wajib upload foto produk")));
           return;
         }
         success = await provider.addProduct(
           nama: _nameController.text,
           deskripsi: _descController.text,
-          harga: int.tryParse(_priceController.text) ?? 0,
-          stok: int.tryParse(_stockController.text) ?? 0,
+          harga: cleanPrice,
+          stok: cleanStock,
           kategori: _categoryController.text,
           imagePath: _selectedImagePath!,
         );
       }
 
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context); // Tutup Loading
+
       if (success && mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context); // Kembali ke list
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(isEdit ? "Produk Diupdate" : "Produk Ditambah"),
           backgroundColor: primaryGreen,
         ));
+      } else if (mounted) {
+        // Feedback jika operasi gagal dari provider (misal return false)
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Gagal menyimpan produk. Coba lagi."),
+          backgroundColor: Colors.red,
+        ));
       }
     } catch (e) {
-      if (mounted) Navigator.pop(context);
+      // FIX: Menangani error system/network (tidak silent fail)
+      if (mounted) {
+        Navigator.pop(context); // Tutup Loading
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Terjadi kesalahan: $e"),
+          backgroundColor: Colors.redAccent,
+        ));
+      }
     }
   }
 
@@ -212,7 +251,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: primaryGreen, width: 1.5), // Solid border rapi
+                          border: Border.all(color: primaryGreen, width: 1.5), 
                           boxShadow: [BoxShadow(color: primaryGreen.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 4))]
                         ),
                         child: _selectedImagePath != null
@@ -267,6 +306,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                     hintStyle: hintStyle,
                     contentPadding: const EdgeInsets.only(bottom: 8),
                   ),
+                  validator: (v) => v!.isEmpty ? "Wajib diisi" : null,
                 ),
               ),
               const SizedBox(height: 16),
@@ -286,6 +326,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                     hintStyle: hintStyle,
                     contentPadding: const EdgeInsets.only(bottom: 8),
                   ),
+                  validator: (v) => v!.isEmpty ? "Deskripsi wajib diisi" : null,
                 ),
               ),
               const SizedBox(height: 16),
@@ -399,6 +440,16 @@ class _ProductFormPageState extends State<ProductFormPage> {
                       hintStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Colors.grey),
                       contentPadding: EdgeInsets.zero,
                     ),
+                    // FIX: Menambahkan Validator Angka
+                    validator: (value) {
+                      if (isReadOnly) return null;
+                      if (value == null || value.isEmpty) return "Wajib";
+                      // Cek apakah isinya angka murni (setelah dibersihkan)
+                      if ((isNumber || isCurrency) && int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), '')) == null) {
+                        return "Angka!";
+                      }
+                      return null;
+                    },
                   ),
                 ),
               ],

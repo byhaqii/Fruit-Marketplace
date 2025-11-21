@@ -10,52 +10,61 @@ use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
-    /**
-     * Mendapatkan data user yang sedang login (profil mereka).
-     * Middleware 'auth' sudah menangani otentikasi.
-     * GET /profile
-     */
     public function show(Request $request): JsonResponse
     {
-        // Karena rute ini dilindungi oleh middleware 'auth',
-        // kita bisa langsung mengambil user yang sedang login.
-        $user = Auth::user(); 
-        
+        $user = Auth::user();
+        // Tambahkan full URL untuk avatar agar Frontend tinggal pakai
+        if ($user->avatar) {
+            $user->avatar_url = url('storage/profiles/' . $user->avatar);
+        }
         return response()->json($user);
     }
 
-    /**
-     * Memperbarui profil user yang sedang login.
-     * PUT /profile
-     */
     public function update(Request $request): JsonResponse
     {
-        /** @var 
-         * \App\Models\User $user 
-         * */ 
-        //
-        $user = Auth::user(); // Ambil user yang sedang login
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
 
-        // Validasi
         $validator = Validator::make($request->all(), [
-            'name' => 'string|max:255',
-            'email' => 'string|email|unique:users,email,' . $user->id,
-            'alamat' => 'string|nullable'
+            'name'   => 'string|max:255',
+            'email'  => 'string|email|unique:users,email,' . $user->id,
+            'alamat' => 'string|nullable',
+            'image'  => 'nullable|image|max:2048', 
         ]);
 
         if ($validator->fails()) {
             return response()->json(['message' => 'Input tidak valid', 'errors' => $validator->errors()], 422);
         }
 
-        // Update data user
         $user->fill($request->only(['name', 'email', 'alamat']));
 
-        // Jika user juga mengirim password baru, hash dan update
         if ($request->has('password') && $request->password) {
             $user->password = Hash::make($request->password);
         }
 
+        // LOGIKA UPLOAD & SIMPAN PATH
+        if ($request->hasFile('image')) {
+            // Hapus foto lama
+            if ($user->avatar && file_exists(base_path('public/storage/profiles/' . $user->avatar))) {
+               unlink(base_path('public/storage/profiles/' . $user->avatar));
+            }
+
+            $file = $request->file('image');
+            // Nama file unik
+            $filename = 'profile_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            
+            $file->move(base_path('public/storage/profiles'), $filename);
+            
+            // SIMPAN NAMA FILE SAJA KE DATABASE
+            $user->avatar = $filename; 
+        }
+
         $user->save();
+
+        // Return data user terbaru + URL avatar
+        if ($user->avatar) {
+            $user->avatar_url = url('storage/profiles/' . $user->avatar);
+        }
 
         return response()->json([
             'message' => 'Profil berhasil diperbarui',

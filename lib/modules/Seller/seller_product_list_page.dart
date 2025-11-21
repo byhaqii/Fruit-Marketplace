@@ -1,4 +1,4 @@
-// lib/modules/marketplace/pages/seller_product_list_page.dart
+// lib/modules/Seller/seller_product_list_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -14,21 +14,38 @@ class SellerProductListPage extends StatefulWidget {
 }
 
 class _SellerProductListPageState extends State<SellerProductListPage> {
+  // --- STATE PENCARIAN ---
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = "";
+
+  // --- KATEGORI STATUS FILTER ---
+  // Menambahkan "Semua" di awal agar defaultnya tampil semua
   final List<String> _statusCategories = [
-    "Aktif", "Stok Rendah", "Nonaktif", "Dalam pengecekan", "Gagal", "Diblokir", "Draft"
+    "Semua", 
+    "Aktif", 
+    "Stok Rendah", 
+    "Tidak Tersedia", // Mengganti 'Nonaktif' agar sesuai logic umum
   ];
+  
   int _selectedStatusIndex = 0;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFF2D7F6A);
 
     return Scaffold(
-      backgroundColor: primaryColor, // Background Hijau Utama
+      backgroundColor: primaryColor, 
       body: SafeArea(
         child: Column(
           children: [
-            // 1. HEADER (Tetap Putih & Bersih)
+            // 1. HEADER
             Container(
               padding: const EdgeInsets.symmetric(vertical: 15),
               decoration: const BoxDecoration(
@@ -44,31 +61,73 @@ class _SellerProductListPageState extends State<SellerProductListPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          "Product Saya",
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22,
-                            color: primaryColor,
-                          ),
+                        // LOGIKA JUDUL / SEARCH BAR
+                        Expanded(
+                          child: _isSearching
+                              ? TextField(
+                                  controller: _searchController,
+                                  autofocus: true,
+                                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 16),
+                                  decoration: const InputDecoration(
+                                    hintText: "Cari nama produk...",
+                                    border: InputBorder.none,
+                                    hintStyle: TextStyle(color: Colors.grey),
+                                  ),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _searchQuery = value.toLowerCase();
+                                    });
+                                  },
+                                )
+                              : const Text(
+                                  "Produk Saya",
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 22,
+                                    color: primaryColor,
+                                  ),
+                                ),
                         ),
+                        
+                        // TOMBOL AKSI (SEARCH & ADD)
                         Row(
                           children: [
-                            const Icon(Icons.search, color: primaryColor, size: 28),
-                            const SizedBox(width: 15),
-                            InkWell(
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductFormPage())),
-                              borderRadius: BorderRadius.circular(30),
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: primaryColor, width: 2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.add, color: primaryColor, size: 20),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  if (_isSearching) {
+                                    _isSearching = false;
+                                    _searchQuery = "";
+                                    _searchController.clear();
+                                  } else {
+                                    _isSearching = true;
+                                  }
+                                });
+                              },
+                              icon: Icon(
+                                _isSearching ? Icons.close : Icons.search,
+                                color: primaryColor,
+                                size: 28,
                               ),
                             ),
+                            
+                            const SizedBox(width: 5),
+
+                            if (!_isSearching) ...[
+                              InkWell(
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductFormPage())),
+                                borderRadius: BorderRadius.circular(30),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: primaryColor, width: 2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.add, color: primaryColor, size: 20),
+                                ),
+                              ),
+                            ],
                           ],
                         )
                       ],
@@ -76,59 +135,90 @@ class _SellerProductListPageState extends State<SellerProductListPage> {
                   ),
                   const SizedBox(height: 20),
                   
-                  // Tab Kategori
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 25),
-                    child: Row(
-                      children: List.generate(_statusCategories.length, (index) {
-                        final isSelected = _selectedStatusIndex == index;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 20),
-                          child: GestureDetector(
-                            onTap: () => setState(() => _selectedStatusIndex = index),
-                            child: Column(
-                              children: [
-                                Text(
-                                  _statusCategories[index],
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                    fontSize: 14,
-                                    color: isSelected ? primaryColor : Colors.grey[400],
+                  // TAB FILTER (Horizontal Scroll)
+                  // Disembunyikan saat mode searching agar UI bersih
+                  if (!_isSearching)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 25),
+                      child: Row(
+                        children: List.generate(_statusCategories.length, (index) {
+                          final isSelected = _selectedStatusIndex == index;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 20),
+                            child: GestureDetector(
+                              onTap: () => setState(() => _selectedStatusIndex = index),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    _statusCategories[index],
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                      fontSize: 14,
+                                      color: isSelected ? primaryColor : Colors.grey[400],
+                                    ),
                                   ),
-                                ),
-                                if (isSelected)
-                                  Container(
-                                    margin: const EdgeInsets.only(top: 4),
-                                    width: 4, height: 4,
-                                    decoration: const BoxDecoration(color: primaryColor, shape: BoxShape.circle),
-                                  )
-                              ],
+                                  if (isSelected)
+                                    Container(
+                                      margin: const EdgeInsets.only(top: 4),
+                                      width: 4, height: 4,
+                                      decoration: const BoxDecoration(color: primaryColor, shape: BoxShape.circle),
+                                    )
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      }),
+                          );
+                        }),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
 
-            // 2. CONTENT AREA
+            // 2. DAFTAR PRODUK (CONTENT)
             Expanded(
               child: Consumer<MarketplaceProvider>(
                 builder: (context, provider, child) {
                   if (provider.isLoading) return const Center(child: CircularProgressIndicator(color: Colors.white));
 
-                  final products = provider.products;
+                  List<ProdukModel> products = provider.products;
+
+                  // --- LOGIKA FILTER 1: PENCARIAN ---
+                  if (_searchQuery.isNotEmpty) {
+                    products = products.where((p) => p.namaProduk.toLowerCase().contains(_searchQuery)).toList();
+                  }
+
+                  // --- LOGIKA FILTER 2: STATUS/KATEGORI ---
+                  // Hanya jalankan jika tidak sedang mencari, atau bisa digabung
+                  if (_selectedStatusIndex != 0 && _searchQuery.isEmpty) {
+                    final filter = _statusCategories[_selectedStatusIndex];
+                    
+                    products = products.where((p) {
+                      // Normalisasi string untuk perbandingan
+                      final status = p.statusJual.toLowerCase(); // misal: 'tersedia', 'tidak tersedia'
+                      
+                      if (filter == "Aktif") {
+                        // Tampilkan jika Status Tersedia
+                        return status == 'tersedia' || status == 'aktif';
+                      } else if (filter == "Stok Rendah") {
+                        // Tampilkan jika Stok <= 5 (Batas stok rendah)
+                        return p.stok <= 5 && p.stok > 0;
+                      } else if (filter == "Tidak Tersedia") {
+                         // Tampilkan jika status Nonaktif atau stok 0
+                        return status == 'tidak tersedia' || status == 'nonaktif' || p.stok == 0;
+                      }
+                      // Jika ada tab lain, tampilkan semua atau sesuaikan
+                      return true;
+                    }).toList();
+                  }
 
                   // EMPTY STATE
                   if (products.isEmpty) {
-                    return _buildEmptyState(context, primaryColor);
+                    return _buildEmptyState(context, primaryColor, isSearch: _searchQuery.isNotEmpty);
                   }
 
-                  // LIST PRODUK (DESAIN BARU)
+                  // RENDER LIST
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     itemCount: products.length,
@@ -145,8 +235,11 @@ class _SellerProductListPageState extends State<SellerProductListPage> {
     );
   }
 
-  // --- WIDGET KARTU PRODUK MODERN ---
+  // --- WIDGET KARTU PRODUK ---
   Widget _buildProductCard(BuildContext context, ProdukModel item, MarketplaceProvider provider) {
+    bool isLowStock = item.stok <= 5 && item.stok > 0;
+    bool isEmpty = item.stok == 0;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
@@ -164,7 +257,7 @@ class _SellerProductListPageState extends State<SellerProductListPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. FOTO PRODUK (Besar & Rounded)
+          // FOTO PRODUK
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
@@ -185,12 +278,11 @@ class _SellerProductListPageState extends State<SellerProductListPage> {
           
           const SizedBox(width: 16),
 
-          // 2. INFORMASI PRODUK
+          // INFO PRODUK
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nama
                 Text(
                   item.namaProduk,
                   maxLines: 1,
@@ -203,54 +295,56 @@ class _SellerProductListPageState extends State<SellerProductListPage> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                
-                // Harga
                 Text(
                   item.formattedPrice,
                   style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
-                    color: Color(0xFF2D7F6A), // Hijau
+                    color: Color(0xFF2D7F6A),
                   ),
                 ),
                 const SizedBox(height: 10),
-
-                // Chips Info (Stok & Kategori)
                 Wrap(
                   spacing: 8,
                   runSpacing: 4,
                   children: [
-                    // Stok Chip
+                    // CHIP STOK DENGAN WARNA DINAMIS
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F7FA),
+                        color: isEmpty ? Colors.red.withOpacity(0.1) : (isLowStock ? Colors.orange.withOpacity(0.1) : const Color(0xFFF5F7FA)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.inventory_2_outlined, size: 12, color: Colors.grey),
+                          Icon(
+                            Icons.inventory_2_outlined, 
+                            size: 12, 
+                            color: isEmpty ? Colors.red : (isLowStock ? Colors.orange : Colors.grey)
+                          ),
                           const SizedBox(width: 4),
                           Text(
-                            "${item.stok} Stok",
-                            style: const TextStyle(fontSize: 11, fontFamily: 'Poppins', color: Colors.grey),
+                            isEmpty ? "Habis" : "${item.stok} Stok", 
+                            style: TextStyle(
+                              fontSize: 11, 
+                              fontFamily: 'Poppins', 
+                              color: isEmpty ? Colors.red : (isLowStock ? Colors.orange : Colors.grey),
+                              fontWeight: isLowStock || isEmpty ? FontWeight.bold : FontWeight.normal
+                            )
                           ),
                         ],
                       ),
                     ),
-                    // Kategori Chip (Jika ada)
+                    // CHIP KATEGORI
                     if (item.kategori.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE0F2F1), // Teal Muda
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        decoration: BoxDecoration(color: const Color(0xFFE0F2F1), borderRadius: BorderRadius.circular(8)),
                         child: Text(
-                          item.kategori,
-                          style: const TextStyle(fontSize: 10, fontFamily: 'Poppins', fontWeight: FontWeight.w600, color: Color(0xFF00695C)),
+                          item.kategori, 
+                          style: const TextStyle(fontSize: 10, fontFamily: 'Poppins', fontWeight: FontWeight.w600, color: Color(0xFF00695C))
                         ),
                       ),
                   ],
@@ -259,7 +353,7 @@ class _SellerProductListPageState extends State<SellerProductListPage> {
             ),
           ),
 
-          // 3. TOMBOL AKSI (Edit & Delete)
+          // AKSI
           Column(
             children: [
               InkWell(
@@ -284,35 +378,41 @@ class _SellerProductListPageState extends State<SellerProductListPage> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, Color primaryColor) {
+  Widget _buildEmptyState(BuildContext context, Color primaryColor, {bool isSearch = false}) {
     return Stack(
       children: [
+        // Dekorasi latar belakang
         Positioned(top: 50, right: -50, child: Container(width: 200, height: 200, decoration: const BoxDecoration(color: Color(0xFF1E5A4A), shape: BoxShape.circle))),
         Positioned(top: 200, left: -40, child: Container(width: 180, height: 180, decoration: const BoxDecoration(color: Color(0xFF4AB393), shape: BoxShape.circle))),
+        
         Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.shopping_bag_outlined, size: 70, color: Colors.white),
+              Icon(isSearch ? Icons.search_off : Icons.shopping_bag_outlined, size: 70, color: Colors.white),
               const SizedBox(height: 20),
-              const Text("Belum ada produk", style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
+              Text(
+                isSearch ? "Produk tidak ditemukan" : "Belum ada produk",
+                style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)
+              ),
               const SizedBox(height: 30),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductFormPage())),
-                  borderRadius: BorderRadius.circular(30),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))]
+              if (!isSearch)
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductFormPage())),
+                    borderRadius: BorderRadius.circular(30),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))]
+                      ),
+                      child: Text("Tambah Sekarang", style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 14, color: primaryColor)),
                     ),
-                    child: Text("Tambah Sekarang", style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 14, color: primaryColor)),
                   ),
                 ),
-              ),
             ],
           ),
         ),

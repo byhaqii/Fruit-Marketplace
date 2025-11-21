@@ -1,29 +1,38 @@
 // lib/models/notification_model.dart
 
 class NotificationModel {
+  final String id;
   final String title;
-  final String time;
-  final String date;
-  final List<NotificationItem> items; // List untuk menangani multiple items
-  final bool isSuccess; // true untuk 'Berhasil', false untuk 'Gagal'
+  final String body;
+  final String date; // Format string, misal "12:30 PM" atau "10 Jan"
+  final String type; // 'order' atau 'info'
+  final bool isRead;
 
   const NotificationModel({
+    required this.id,
     required this.title,
-    required this.time,
+    required this.body,
     required this.date,
-    required this.items,
-    required this.isSuccess,
+    this.type = 'info',
+    this.isRead = false,
   });
-}
 
-class NotificationItem {
-  final String name;
-  final String weight;
-  final String price;
-
-  const NotificationItem({
-    required this.name,
-    required this.weight,
-    required this.price,
-  });
+  // CopyWith untuk memudahkan update status isRead (karena properti final)
+  NotificationModel copyWith({
+    String? id,
+    String? title,
+    String? body,
+    String? date,
+    String? type,
+    bool? isRead,
+  }) {
+    return NotificationModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      date: date ?? this.date,
+      type: type ?? this.type,
+      isRead: isRead ?? this.isRead,
+    );
+  }
 }
