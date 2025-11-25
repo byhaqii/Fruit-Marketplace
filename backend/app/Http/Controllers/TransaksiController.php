@@ -287,7 +287,7 @@ class TransaksiController extends Controller
             foreach ($transaksi->orderItems as $item) {
                 $produk = $item->produk;
                 if ($produk && $produk->user) {
-                    $penjual = $produk->user; // Ini adalah Model User si Penjual
+                    $penjual = $produk->user;
                     
                     // Hitung total uang untuk produk ini
                     $subtotal = $item->harga_saat_beli * $item->jumlah;

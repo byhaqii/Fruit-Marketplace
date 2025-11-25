@@ -119,8 +119,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
     return Scaffold(
       // LOGIKA NAVIGASI UTAMA:
-      // Menggunakan IndexedStack agar state halaman (scroll position, input form) 
-      // tidak hilang saat pindah tab.
       body: _pages.isNotEmpty 
           ? IndexedStack(index: _selectedIndex, children: _pages)
           : const Center(child: CircularProgressIndicator()),
