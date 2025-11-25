@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Validator; // <-- Pastikan ini ditambahkan
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
@@ -16,7 +16,8 @@ class UserController extends Controller
      */
     private function isAdmin(Request $request): bool
     {
-        return $request->user()->role === 'admin';
+        // Pastikan user login dan rolenya admin
+        return $request->user() && $request->user()->role === 'admin';
     }
 
     /**
@@ -65,8 +66,7 @@ class UserController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:6',
-                // --- DIPERBAIKI DISINI ---
-                'role' => 'required|in:admin,penjual,pembeli', // Validasi role baru
+                'role' => 'required|in:admin,penjual,pembeli',
             ]);
         } catch (ValidationException $e) {
              return response()->json(['message' => 'Input tidak valid', 'errors' => $e->errors()], 422);
@@ -79,16 +79,19 @@ class UserController extends Controller
             'role' => $request->input('role'),
         ]);
 
-        return response()->json($user, 201); // 201 Created
+        return response()->json($user, 201);
     }
 
     /**
      * Memperbarui pengguna (Hanya Admin).
      * PUT /users/{id}
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): JsonResponse
     {
-        // (Otorisasi admin sudah ada di dalam file routes/web.php, jadi tidak perlu cek $this->isAdmin di sini)
+        // Otorisasi tambahan (Defense in depth) meskipun sudah ada di routes
+        if (!$this->isAdmin($request)) {
+            return response()->json(['message' => 'Akses ditolak'], 403);
+        }
         
         $user = User::find($id);
         if (!$user) {
@@ -100,18 +103,19 @@ class UserController extends Controller
             'name' => 'string|max:255',
             // Pastikan email unik, KECUALI untuk ID user ini sendiri
             'email' => 'string|email|unique:users,email,' . $id, 
-            'role' => 'in:admin,penjual,pembeli' // Validasi ini sudah benar
+            'role' => 'in:admin,penjual,pembeli',
+            'password' => 'nullable|string|min:6' // Password opsional saat edit
         ]);
 
         if ($validator->fails()) {
             return response()->json(['message' => 'Input tidak valid', 'errors' => $validator->errors()], 422);
         }
 
-        // Menggunakan fill() untuk update field yang diizinkan di $fillable
+        // Update data text (name, email, role)
         $user->fill($request->only(['name', 'email', 'role']));
 
-        // Jika ada password baru, hash dan update
-        if ($request->has('password') && $request->password) { // Ditambahkan cek $request->password
+        // Jika ada password baru dan tidak kosong, hash dan update
+        if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
 
@@ -122,6 +126,7 @@ class UserController extends Controller
             'data' => $user
         ]);
     }
+
     /**
      * Menghapus pengguna (Hanya Admin).
      * DELETE /users/{id}
@@ -137,7 +142,7 @@ class UserController extends Controller
             return response()->json(['message' => 'Pengguna tidak ditemukan'], 404);
         }
         
-        // Mencegah admin menghapus akunnya sendiri
+        // Mencegah admin menghapus akunnya sendiri yang sedang login
         if ($request->user()->id == $id) {
             return response()->json(['message' => 'Anda tidak dapat menghapus akun Anda sendiri'], 403);
         }

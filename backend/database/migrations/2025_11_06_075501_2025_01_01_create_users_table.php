@@ -20,8 +20,7 @@ return new class extends Migration
             $table->enum('role', [
                 'admin', 'penjual', 'pembeli'
             ])->default('pembeli');
-            $table->string('phone')->nullable();
-            
+            $table->string('phone')->nullable(); 
             $table->string('api_token', 80)->unique()->nullable();
             $table->timestamps();
         });

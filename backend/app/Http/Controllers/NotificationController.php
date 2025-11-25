@@ -2,26 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class NotificationController extends Controller
 {
     /**
-     * Ambil semua notifikasi user yang login
+     * Ambil semua notifikasi user (terbaru di atas)
      */
     public function index()
     {
-        $user = Auth::user();
-        
-        // Asumsi nama tabel 'notifications'
-        $notifs = DB::table('notifications')
-            ->where('user_id', $user->id)
+        $userId = Auth::id();
+        $notif = Notification::where('user_id', $userId)
             ->orderBy('created_at', 'desc')
+            ->limit(50) // Batasi 50 terakhir agar ringan
             ->get();
 
-        return response()->json($notifs);
+        return response()->json($notif);
     }
 
     /**
@@ -29,12 +27,11 @@ class NotificationController extends Controller
      */
     public function markAllRead()
     {
-        $user = Auth::user();
-
-        DB::table('notifications')
-            ->where('user_id', $user->id)
+        $userId = Auth::id();
+        Notification::where('user_id', $userId)
+            ->where('is_read', false)
             ->update(['is_read' => true]);
 
-        return response()->json(['message' => 'Semua notifikasi ditandai terbaca']);
+        return response()->json(['message' => 'Semua notifikasi ditandai sudah dibaca']);
     }
 }

@@ -3,52 +3,47 @@
 namespace App\Http\Controllers;
 
 use App\Models\Review;
+use App\Models\Produk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 class ReviewController extends Controller
 {
-    /**
-     * Menampilkan review untuk produk tertentu.
-     */
-    public function index($id) // <-- DIPERBAIKI: dari $produk_id menjadi $id
+    // Ambil review berdasarkan ID Produk
+    public function index($produkId)
     {
-        $reviews = Review::where('produk_id', $id) // <-- DIPERBAIKI: dari $produk_id menjadi $id
-                        ->with('user') // Tampilkan data user yang memberi review
-                        ->latest()
-                        ->get();
-        
+        $reviews = Review::where('produk_id', $produkId)
+            ->with('user:id,name,avatar') // Ambil nama & avatar user saja
+            ->latest()
+            ->get();
+
         return response()->json($reviews);
     }
 
-    /**
-     * Menyimpan review baru untuk produk tertentu.
-     */
-    public function store(Request $request, $id) // <-- DIPERBAIKI: dari $produk_id menjadi $id
+    // Simpan review baru
+    public function store(Request $request, $produkId)
     {
-        $validator = Validator::make($request->all(), [
+        $this->validate($request, [
             'rating' => 'required|integer|min:1|max:5',
-            'komentar' => 'nullable|string',
+            'komentar' => 'nullable|string'
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+        // Cek apakah user sudah pernah review produk ini?
+        $existing = Review::where('produk_id', $produkId)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if ($existing) {
+            return response()->json(['message' => 'Anda sudah mereview produk ini'], 400);
         }
 
-        // Opsional: Cek apakah user sudah pernah membeli produk ini
-        // ...
-
         $review = Review::create([
-            'user_id' => Auth::id(),
-            'produk_id' => $id, // <-- DIPERBAIKI: dari $produk_id menjadi $id
+            'produk_id' => $produkId,
+            'user_id' => Auth::id(), // Pastikan pakai user_id
             'rating' => $request->rating,
-            'komentar' => $request->komentar,
+            'komentar' => $request->komentar
         ]);
 
-        return response()->json([
-            'message' => 'Review berhasil ditambahkan',
-            'data' => $review
-        ], 201);
+        return response()->json($review, 201);
     }
 }

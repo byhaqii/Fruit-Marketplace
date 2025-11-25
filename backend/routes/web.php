@@ -23,7 +23,7 @@ $router->get('/', function () use ($router) {
 $router->post('/auth/login', 'AuthController@login');
 $router->post('/auth/register', 'AuthController@register');
 
-// Produk & Review bisa dilihat publik (tapi beli/review butuh login)
+// Produk & Review bisa dilihat publik
 $router->get('/produk', 'ProdukController@index');
 $router->get('/produk/{id}', 'ProdukController@show');
 $router->get('/produk/{id}/reviews', 'ReviewController@index');
@@ -43,6 +43,9 @@ $router->group(['middleware' => ['auth', 'role:admin']], function () use ($route
 
     // Laporan Semua Transaksi
     $router->get('/transaksi/all', 'TransaksiController@index');
+    
+    // Update Status Withdraw
+    $router->put('/withdraw/{id}', 'WithdrawController@updateStatus');
 });
 
 
@@ -57,7 +60,6 @@ $router->group(['middleware' => ['auth', 'role:admin,penjual']], function () use
     $router->delete('/produk/{id}', 'ProdukController@destroy');
     
     // Manajemen Pesanan Masuk
-    // PENTING: Fungsi ini harus ada di TransaksiController
     $router->get('/transaksi/masuk', 'TransaksiController@getSellerTransactions');
     $router->put('/transaksi/{id}/update-status', 'TransaksiController@updateStatusBySeller');
 });
@@ -69,6 +71,8 @@ $router->group(['middleware' => ['auth', 'role:admin,penjual']], function () use
 $router->group(['middleware' => 'auth'], function () use ($router) {
 
     $router->post('/auth/logout', 'AuthController@logout');
+    
+    // Notifikasi
     $router->get('/notifications', 'NotificationController@index');
     $router->post('/notifications/read-all', 'NotificationController@markAllRead');
 
@@ -87,12 +91,15 @@ $router->group(['middleware' => 'auth'], function () use ($router) {
 
     // Review Produk
     $router->post('/produk/{id}/reviews', 'ReviewController@store');
+    
+    // Withdraw / Penarikan Saldo
+    $router->post('/withdraw', 'WithdrawController@store');
+    $router->get('/withdraw', 'WithdrawController@index');
 });
 
 
 // ==========================================================
 // 5. HELPER ROUTES (Akses Gambar Storage)
-// Berguna jika server tidak otomatis serving folder public
 // ==========================================================
 $router->get('/storage/{filename}', function ($filename) {
     $path = base_path('public/storage/' . $filename);

@@ -6,59 +6,39 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
     {
         Schema::create('transaksi', function (Blueprint $table) {
             $table->id();
-            // user_id adalah foreign key ke tabel users
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Pembeli
             
-            // ID unik yang bisa dilihat oleh user, misal: INV-2025-12345
+            // Kolom Baru: Identifikasi Penjual (Agar transaksi terpisah per penjual)
+            // Opsional: Jika ingin strict 1 transaksi = 1 penjual di level database
+            // $table->foreignId('seller_id')->nullable()->constrained('users'); 
+
             $table->string('order_id')->unique(); 
-
-            // total_harga adalah total dari SEMUA item dalam pesanan
-            $table->decimal('total_harga', 10, 2); 
+            $table->decimal('total_harga', 15, 2); // Harga Barang + Ongkir
             
-            // Status PESANAN (logistik)
+            // Logistik & Pengiriman (YANG SEBELUMNYA KURANG)
+            $table->decimal('ongkos_kirim', 10, 2)->default(0);
+            $table->string('kurir')->nullable(); // misal: JNE, J&T
+            $table->string('layanan_kurir')->nullable(); // misal: REG, YES
+            $table->string('nomor_resi')->nullable(); // Diisi penjual saat dikirim
+            
             $table->enum('order_status', [
-                'menunggu konfirmasi', 
-                'Diproses', 
-                'Dikirim', 
-                'Tiba di tujuan', 
-                'Cancel',
-                'pending' // (Sebaiknya pending tetap ada sebagai fallback)
-            ])->default('menunggu konfirmasi'); // misal: pending, processing, shipped, completed, cancelled
+                'menunggu konfirmasi', 'Diproses', 'Dikirim', 
+                'Tiba di tujuan', 'Selesai', 'Dibatalkan'
+            ])->default('menunggu konfirmasi');
             
-            // --- Detail Pembayaran Sesuai Rencana Sistem ---
-            // 'cod', 'gateway' (QRIS, Gopay), 'manual_transfer'
             $table->string('payment_method')->nullable(); 
-            
-            // Status PEMBAYARAN
-            $table->string('payment_status')->default('pending'); // misal: pending, paid, failed
-            
-            // URL ke gambar bukti transfer jika payment_method = 'manual_transfer'
+            $table->string('payment_status')->default('pending');
             $table->string('bukti_bayar_url')->nullable(); 
-            
-            // ID referensi dari payment gateway (jika pakai)
-            $table->string('payment_gateway_ref')->nullable(); 
-
-            // Alamat pengiriman, bisa dibuat lebih detail jika perlu
             $table->text('alamat_pengiriman')->nullable(); 
             
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::dropIfExists('transaksi');

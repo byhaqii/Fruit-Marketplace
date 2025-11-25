@@ -3,72 +3,69 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
-    public function show(Request $request): JsonResponse
+    /**
+     * Lihat Profil (termasuk Saldo & Avatar)
+     */
+    public function show()
     {
-        $user = Auth::user();
-        // Tambahkan full URL untuk avatar agar Frontend tinggal pakai
-        if ($user->avatar) {
-            $user->avatar_url = url('storage/profiles/' . $user->avatar);
-        }
-        return response()->json($user);
+        // Mengembalikan data user yang sedang login
+        // Saldo sudah otomatis ter-casting ke float/int di Model User
+        return response()->json(Auth::user());
     }
 
-    public function update(Request $request): JsonResponse
+    /**
+     * Update Profil (Nama, Email, Password, Avatar)
+     */
+    public function update(Request $request)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        $validator = Validator::make($request->all(), [
-            'name'   => 'string|max:255',
-            'email'  => 'string|email|unique:users,email,' . $user->id,
-            'alamat' => 'string|nullable',
-            'image'  => 'nullable|image|max:2048', 
+        $this->validate($request, [
+            'name' => 'string|max:255',
+            'email' => 'email|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:6',
+            'avatar' => 'nullable|image|max:2048', // Validasi Avatar
+            'alamat' => 'nullable|string'
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['message' => 'Input tidak valid', 'errors' => $validator->errors()], 422);
-        }
+        // Update field standar
+        $user->fill($request->only(['name', 'email', 'alamat', 'phone']));
 
-        $user->fill($request->only(['name', 'email', 'alamat']));
-
-        if ($request->has('password') && $request->password) {
+        // Update Password jika diisi
+        if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
 
-        // LOGIKA UPLOAD & SIMPAN PATH
-        if ($request->hasFile('image')) {
-            // Hapus foto lama
+        // Update Avatar jika diupload
+        if ($request->hasFile('avatar')) {
+            // Hapus avatar lama jika bukan default (opsional)
             if ($user->avatar && file_exists(base_path('public/storage/profiles/' . $user->avatar))) {
-               unlink(base_path('public/storage/profiles/' . $user->avatar));
+                @unlink(base_path('public/storage/profiles/' . $user->avatar));
             }
 
-            $file = $request->file('image');
-            // Nama file unik
-            $filename = 'profile_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file = $request->file('avatar');
+            $filename = 'user_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
             
+            // Pastikan folder ada
+            if (!file_exists(base_path('public/storage/profiles'))) {
+                mkdir(base_path('public/storage/profiles'), 0777, true);
+            }
+
             $file->move(base_path('public/storage/profiles'), $filename);
-            
-            // SIMPAN NAMA FILE SAJA KE DATABASE
-            $user->avatar = $filename; 
+            $user->avatar = $filename;
         }
 
         $user->save();
 
-        // Return data user terbaru + URL avatar
-        if ($user->avatar) {
-            $user->avatar_url = url('storage/profiles/' . $user->avatar);
-        }
-
         return response()->json([
             'message' => 'Profil berhasil diperbarui',
-            'data' => $user
+            'user' => $user
         ]);
     }
 }
