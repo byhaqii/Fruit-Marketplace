@@ -1,4 +1,5 @@
 // lib/core/network/api_client.dart
+
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../config/env.dart';
@@ -17,7 +18,7 @@ class ApiClient {
               receiveTimeout: const Duration(milliseconds: 30000),
             ),
           ) {
-    // Menambahkan Interceptor opsional untuk logging
+    // Menambahkan Interceptor opsional untuk logging jika diperlukan
   }
   
   Future<Options> optionsWithAuth() async {
@@ -25,6 +26,7 @@ class ApiClient {
     return Options(
       headers: {
         'Authorization': 'Bearer $token',
+        'Accept': 'application/json', // Tambahkan ini agar Backend merespon JSON
       },
     );
   }
@@ -39,6 +41,7 @@ class ApiClient {
     return null;
   }
 
+  // --- GET ---
   Future<dynamic> get(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -56,6 +59,7 @@ class ApiClient {
     }
   }
 
+  // --- POST ---
   Future<dynamic> post(
     String path,
     dynamic data, {
@@ -64,6 +68,46 @@ class ApiClient {
   }) async {
     try {
       final response = await dio.post(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: await _getFinalOptions(path, options),
+      );
+      return _decodeResponse(response);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  // --- PUT (BARU DITAMBAHKAN) ---
+  Future<dynamic> put(
+    String path,
+    dynamic data, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      final response = await dio.put(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: await _getFinalOptions(path, options),
+      );
+      return _decodeResponse(response);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  // --- DELETE (BARU DITAMBAHKAN) ---
+  Future<dynamic> delete(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      final response = await dio.delete(
         path,
         data: data,
         queryParameters: queryParameters,

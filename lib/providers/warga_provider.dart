@@ -1,6 +1,8 @@
+// lib/providers/warga_provider.dart
+
 import 'package:flutter/material.dart';
-import '../models/user_model.dart'; // <-- 1. GANTI/GUNAKAN UserModel
-import '../core/network/api_client.dart'; // <-- 2. IMPORT ApiClient
+import '../models/user_model.dart';
+import '../core/network/api_client.dart';
 
 class WargaProvider with ChangeNotifier {
   final ApiClient apiClient;
@@ -16,21 +18,17 @@ class WargaProvider with ChangeNotifier {
   // --- CONSTRUCTOR ---
   WargaProvider({ApiClient? apiClient})
       : apiClient = apiClient ?? ApiClient() {
-    // Panggil data saat provider pertama kali dibuat
     fetchWarga();
   }
 
-  // --- METHODS ---
+  // 1. GET ALL USERS
   Future<void> fetchWarga() async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // Asumsi endpoint API Anda adalah '/warga' atau '/users'
-      final resp = await apiClient.get('/warga'); 
-
+      final resp = await apiClient.get('/users'); 
       if (resp is List) {
-        // Ubah data JSON (List<Map>) menjadi List<UserModel>
         _wargaList = resp
             .map((json) => UserModel.fromJson(json as Map<String, dynamic>))
             .toList();
@@ -38,13 +36,54 @@ class WargaProvider with ChangeNotifier {
         _wargaList = [];
       }
     } catch (e) {
-      print('Error fetching warga: $e');
-      _wargaList = []; // Set list kosong jika terjadi error
+      print('Error fetching users: $e');
     }
 
     _isLoading = false;
-    notifyListeners(); // Beri tahu UI bahwa data sudah siap
+    notifyListeners();
   }
-  
-  // TODO: Tambahkan fungsi deleteWarga() dan updateWarga() di sini
+
+  // 2. TAMBAH USER (ADD)
+  Future<bool> addUser(Map<String, dynamic> data) async {
+    try {
+      // POST ke /users
+      await apiClient.post('/users', data);
+      
+      // Refresh data setelah berhasil
+      await fetchWarga(); 
+      return true;
+    } catch (e) {
+      print("Gagal tambah user: $e");
+      return false;
+    }
+  }
+
+  // 3. EDIT USER (UPDATE)
+  Future<bool> updateUser(String id, Map<String, dynamic> data) async {
+    try {
+      // PUT ke /users/{id}
+      await apiClient.put('/users/$id', data);
+      
+      await fetchWarga();
+      return true;
+    } catch (e) {
+      print("Gagal update user: $e");
+      return false;
+    }
+  }
+
+  // 4. HAPUS USER (DELETE)
+  Future<bool> deleteUser(String id) async {
+    try {
+      await apiClient.delete('/users/$id');
+      
+      // Hapus dari list lokal biar UI responsif
+      _wargaList.removeWhere((item) => item.id == id);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      print("Gagal hapus user: $e");
+      return false;
+    }
+  }
 }

@@ -1,75 +1,79 @@
-// lib/providers/notification_provider.dart
-
 import 'package:flutter/material.dart';
+import '../core/network/api_client.dart';
 import '../models/notification_model.dart';
 
 class NotificationProvider with ChangeNotifier {
-  
-  // State variable untuk menyimpan daftar notifikasi
-  List<NotificationModel> _notifications = [];
+  final ApiClient apiClient;
+
+  // --- STATE ---
+  List<NotificationModel> _notifications = []; // Notifikasi Pribadi
+  List<NotificationModel> _activityLogs = [];  // Activity Log (Admin)
   bool _isLoading = false;
 
-  // Getter
+  // --- GETTERS ---
   List<NotificationModel> get notifications => _notifications;
+  List<NotificationModel> get activityLogs => _activityLogs;
   bool get isLoading => _isLoading;
 
   // Constructor
-  NotificationProvider() {
-    fetchNotifications();
-  }
+  NotificationProvider({ApiClient? apiClient})
+      : apiClient = apiClient ?? ApiClient();
 
-  // 1. FETCH DATA (Simulasi Data Dummy)
+  // 1. FETCH NOTIFIKASI PRIBADI (User Biasa/Penjual)
   Future<void> fetchNotifications() async {
     _isLoading = true;
     notifyListeners();
 
-    await Future.delayed(const Duration(seconds: 1)); // Simulasi delay network
-
-    // Isi data dummy agar UI tidak kosong
-    _notifications = [
-      const NotificationModel(
-        id: '1',
-        title: 'Pesanan Masuk',
-        body: 'Anda menerima pesanan baru #ORD-001 dari Budi.',
-        date: 'Baru saja',
-        type: 'order',
-        isRead: false,
-      ),
-      const NotificationModel(
-        id: '2',
-        title: 'Stok Menipis',
-        body: 'Stok "Apel Fuji" tersisa kurang dari 5 kg.',
-        date: '10:30 AM',
-        type: 'info',
-        isRead: false,
-      ),
-      const NotificationModel(
-        id: '3',
-        title: 'Pembayaran Diterima',
-        body: 'Saldo sebesar Rp 150.000 telah masuk ke dompet.',
-        date: 'Kemarin',
-        type: 'info',
-        isRead: true,
-      ),
-    ];
+    try {
+      final response = await apiClient.get('/notifications');
+      if (response is List) {
+        _notifications = response
+            .map((json) => NotificationModel.fromJson(json))
+            .toList();
+      }
+    } catch (e) {
+      print("Error fetching notifications: $e");
+    }
 
     _isLoading = false;
     notifyListeners();
   }
 
-  // 2. FUNGSI TANDAI SEMUA DIBACA (MARK ALL AS READ)
-  void markAllAsRead() {
-    // Kita buat list baru dengan mengubah status isRead menjadi true semua
-    _notifications = _notifications.map((notif) {
-      return notif.copyWith(isRead: true);
-    }).toList();
-    
-    notifyListeners(); // Update UI
+  // 2. FETCH ACTIVITY LOG (Khusus Admin)
+  Future<void> fetchActivities() async {
+    // Jangan set loading true global agar tidak mereset UI notifikasi lain jika ada
+    try {
+      // Pastikan endpoint ini sudah dibuat di Backend (NotificationController)
+      final response = await apiClient.get('/admin/activities');
+      
+      if (response is List) {
+        _activityLogs = response
+            .map((json) => NotificationModel.fromJson(json))
+            .toList();
+        notifyListeners(); // Update UI Log Activity
+      }
+    } catch (e) {
+      print("Error fetching activity logs: $e");
+    }
   }
 
-  // 3. FUNGSI TANDAI SATU DIBACA (Opsional, untuk onTap)
+  // 3. TANDAI SEMUA DIBACA
+  Future<void> markAllAsRead() async {
+    try {
+      await apiClient.post('/notifications/read-all', {});
+      // Update state lokal
+      _notifications = _notifications.map((n) => n.copyWith(isRead: true)).toList();
+      notifyListeners();
+    } catch (e) {
+      print("Gagal menandai baca: $e");
+    }
+  }
+
+  // 4. TANDAI SATU DIBACA (Opsional)
   void markAsRead(String id) {
-    final index = _notifications.indexWhere((n) => n.id == id);
+    // Implementasi jika ada endpoint spesifik per ID
+    // Saat ini update lokal saja
+    final index = _notifications.indexWhere((n) => n.id.toString() == id);
     if (index != -1) {
       _notifications[index] = _notifications[index].copyWith(isRead: true);
       notifyListeners();

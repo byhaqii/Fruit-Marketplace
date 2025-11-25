@@ -20,20 +20,23 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'email', 
         'password', 
         'role', 
-        'api_token', 
-        'alamat',
-        'avatar', // <-- TAMBAHKAN INI
-        'saldo',  // <-- TAMBAHKAN INI
+        'api_token',
+        'mobile_number', // Pastikan kolom ini ada di database (migration)
+        'alamat',        // Pastikan kolom ini ada di database (migration)
+        'avatar', 
+        'saldo',
     ];
 
     protected $hidden = [
         'password', 'api_token',
     ];
     
-    // Casting agar saldo otomatis jadi tipe data float/integer, bukan string
+    // Casting agar saldo otomatis jadi tipe data float/integer
     protected $casts = [
         'saldo' => 'float',
     ];
+
+    // --- RELASI / RELATIONSHIPS ---
 
     public function produk()
     {
