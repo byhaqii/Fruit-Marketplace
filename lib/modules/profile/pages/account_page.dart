@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../auth/pages/login_page.dart';
+import '../../../config/env.dart'; // <<< Tambahkan import Env
 
 // Import Halaman Sub-Menu
 import 'setting_page.dart'; 
@@ -18,32 +19,32 @@ class AccountPage extends StatelessWidget {
   static const Color gradientEnd = Color(0xFF51E5BF);
   static const Color primaryText = Color(0xFF2D7F6A);
 
-  // !!! PENTING: GANTI DENGAN URL BACKEND ANDA YANG SEBENARNYA !!!
-  static const String BASE_URL = 'http://[YOUR_BASE_URL_HERE]'; 
-
-  // Helper untuk mendapatkan URL avatar lengkap
-  String getAvatarUrl(String? filename) {
-    if (filename == null || filename.isEmpty) {
-      return ''; 
-    }
-    return '$BASE_URL/storage/profiles/$filename';
+  // --- Helper URL Baru ---
+  String _getStorageBaseUrl() {
+   
+    return Env.apiBaseUrl.replaceFirst('/api', '');
   }
+
+  String getAvatarUrl(String? filename) {
+    if (filename == null || filename.isEmpty) return ''; 
+  
+    return '${_getStorageBaseUrl()}/storage/profiles/$filename';
+  }
+  // -----------------------
 
   @override
   Widget build(BuildContext context) {
-    // Gunakan Selector atau Consumer jika hanya butuh sebagian, atau Provider.of untuk seluruh build
     final authProvider = Provider.of<AuthProvider>(context);
     final UserModel? user = authProvider.user;
 
-    // Tampilkan loading jika data user belum siap
-    if (user == null || authProvider.loading) {
+    // Jika data user belum siap/loading
+    if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
+    
     // Tentukan sumber gambar avatar
-    final ImageProvider avatarImage = (user.avatar != null && user.avatar!.isNotEmpty)
-        ? NetworkImage(getAvatarUrl(user.avatar)) as ImageProvider
-        : const AssetImage('assets/image-1.png') as ImageProvider; // Gambar default asset
+    final String? avatarFilename = user.avatar;
+    final bool hasAvatar = avatarFilename != null && avatarFilename.isNotEmpty;
 
     return Scaffold(
       backgroundColor: Colors.white, 
@@ -76,7 +77,7 @@ class AccountPage extends StatelessWidget {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
               ),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.only(top: 90), 
+                padding: const EdgeInsets.only(top: 90), // Ruang untuk Avatar
                 child: Column(
                   children: [
                     // --- MENU OPTIONS ---
@@ -140,7 +141,7 @@ class AccountPage extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end, 
               children: [
-                // AVATAR FIX: Menggunakan constructed URL/Image
+                // AVATAR - FIX DITERAPKAN DI SINI
                 Container(
                   width: 130, height: 130,
                   decoration: BoxDecoration(
@@ -150,8 +151,17 @@ class AccountPage extends StatelessWidget {
                     boxShadow: [
                       BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5)),
                     ],
-                    image: DecorationImage(image: avatarImage, fit: BoxFit.cover)
+                    // LOGIC BARU: Tampilkan NetworkImage jika ada avatar
+                    image: hasAvatar 
+                        ? DecorationImage(
+                            image: NetworkImage(getAvatarUrl(avatarFilename)),
+                            fit: BoxFit.cover,
+                          )
+                        : null, // Jika tidak ada avatar, biarkan null
                   ),
+                  child: hasAvatar 
+                      ? null // Jika ada avatar, jangan tampilkan child
+                      : const Icon(Icons.person, size: 60, color: Colors.white), // Default icon
                 ),
                 
                 const SizedBox(width: 20),
@@ -180,13 +190,10 @@ class AccountPage extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 5),
-                            // Tampilkan Icon Role
-                            if (user.role == 'penjual')
-                              const Icon(Icons.store, color: Colors.orange, size: 20)
-                            else if (user.role == 'admin')
-                              const Icon(Icons.shield, color: Colors.red, size: 20)
+                            if (user.role == 'pedagang' || user.role == 'penjual')
+                              const Icon(Icons.store, color: Colors.orange, size: 20) // Icon Toko
                             else
-                              const Icon(Icons.verified, color: Colors.blue, size: 20),
+                              const Icon(Icons.verified, color: Colors.blue, size: 20), // Icon Warga
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -220,7 +227,7 @@ class AccountPage extends StatelessWidget {
     required VoidCallback onTap,
     bool isLogout = false,
   }) {
-    // ... (widget menu button sama seperti sebelumnya)
+    // ... (widget _buildMenuButton tetap sama)
     return Container(
       width: double.infinity,
       height: 55, 

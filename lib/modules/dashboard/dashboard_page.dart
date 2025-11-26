@@ -22,6 +22,7 @@ import '../history/pages/transaction_history_page.dart';
 
 // 4. UMUM (SHARED)
 import '../profile/pages/account_page.dart';
+import '../scan/pages/scan_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -89,12 +90,14 @@ class _DashboardPageState extends State<DashboardPage> {
           onGoToShop: () => setState(() => _selectedIndex = 1), // Pindah ke tab Shop
         ),
         const ProdukListPage(), 
+        const ScanPage(),
         const TransactionHistoryPage(), 
         const AccountPage(), 
       ];
       _navItems = const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'Belanja'),
+        BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner), label: 'Scan'),
         BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Riwayat'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Akun'),
       ];

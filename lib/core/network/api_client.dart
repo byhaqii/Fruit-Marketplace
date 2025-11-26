@@ -26,7 +26,7 @@ class ApiClient {
     return Options(
       headers: {
         'Authorization': 'Bearer $token',
-        'Accept': 'application/json', // Tambahkan ini agar Backend merespon JSON
+        'Accept': 'application/json',
       },
     );
   }
@@ -34,7 +34,6 @@ class ApiClient {
   // Helper untuk menentukan apakah route perlu token
   Future<Options?> _getFinalOptions(String path, Options? options) async {
     if (options != null) return options;
-    // Jika path BUKAN untuk auth (login, register), kirim token
     if (!path.contains('/auth/')) {
         return await optionsWithAuth();
     }
@@ -78,6 +77,52 @@ class ApiClient {
       throw _handleDioError(e);
     }
   }
+
+  // =======================================================
+  // --- POST MULTIPART (BARU DITAMBAHKAN UNTUK UPLOAD FILE) ---
+  // =======================================================
+  Future<dynamic> postMultipart(
+    String path,
+    Map<String, dynamic> fields, {
+    String? fileFieldName, // e.g., 'avatar'
+    String? filePath,
+  }) async {
+    try {
+      final options = await _getFinalOptions(path, null);
+      
+      // 1. Buat FormData
+      FormData formData = FormData.fromMap(fields);
+
+      // 2. Tambahkan File jika ada
+      if (filePath != null && filePath.isNotEmpty) {
+        if (fileFieldName == null) {
+          throw Exception('fileFieldName tidak boleh null jika filePath diisi.');
+        }
+        
+        // Tambahkan file ke FormData
+        formData.files.add(
+          MapEntry(
+            fileFieldName, // Key yang digunakan backend (misalnya 'avatar')
+            await MultipartFile.fromFile(
+              filePath,
+              filename: filePath.split('/').last,
+            ),
+          ),
+        );
+      }
+
+      final response = await dio.post(
+        path,
+        data: formData, // Kirim sebagai FormData
+        options: options,
+      );
+      
+      return _decodeResponse(response);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+  // =======================================================
 
   // --- PUT (BARU DITAMBAHKAN) ---
   Future<dynamic> put(

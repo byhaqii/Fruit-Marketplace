@@ -1,7 +1,13 @@
 // lib/modules/scan/pages/scan_page.dart
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:image_picker/image_picker.dart'; 
+import 'dart:io'; 
+
 import '../widget/displaypicture_screen.dart'; 
+
+// Constants
+const Color primaryColor = Color(0xFF2D7F6A); 
 
 class ScanPage extends StatefulWidget {
   const ScanPage({super.key});
@@ -11,14 +17,16 @@ class ScanPage extends StatefulWidget {
 }
 
 class _ScanPageState extends State<ScanPage> {
-  // UBAH 1: Jadikan controller nullable (?)
   CameraController? _controller;
   late Future<void> _initializeControllerFuture;
+  final ImagePicker _picker = ImagePicker(); 
+
+  // State untuk loading OCR/ML
+  bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
-    // Memulai inisialisasi kamera
     _initializeControllerFuture = _initCamera();
   }
 
@@ -28,51 +36,111 @@ class _ScanPageState extends State<ScanPage> {
       final cameras = await availableCameras();
       final firstCamera = cameras.first;
       
-      // Inisialisasi controller
       _controller = CameraController(
         firstCamera,
         ResolutionPreset.high,
       );
       
-      // Kembalikan Future initialize
       return _controller!.initialize();
     } catch (e) {
       print('Error inisialisasi kamera: $e');
-      // UBAH 2: Lempar error agar FutureBuilder bisa menangkapnya
       rethrow; 
     }
   }
 
   @override
   void dispose() {
-    // UBAH 3: Gunakan safe call (?.) 
-    // Ini akan memanggil dispose() HANYA jika _controller tidak null
     _controller?.dispose();
     super.dispose();
   }
 
-  // Fungsi untuk mengambil gambar
+  // =========================================================
+  // LOGIKA PEMROSESAN (ML/OCR)
+  // =========================================================
+  Future<void> _processImageForProduct(String imagePath, BuildContext context) async {
+    if (_isProcessing) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      // --- Placeholder Panggilan Service ML/OCR ---
+      // Target Deteksi Anda: Apel, Jeruk Bali, Peach, Tomat.
+      // Anda akan mengganti kode di bawah ini dengan pemanggilan API ke service ML/OCR Anda.
+      
+      await Future.delayed(const Duration(seconds: 2)); // Simulasi waktu proses
+      
+      // Hasil Simulasi: Deteksi Tomat
+      final String detectedProductName = "Tomat Ceri Grade A"; 
+      final String searchResult = "Tomat"; // Query yang akan diteruskan ke halaman hasil
+
+      if (!context.mounted) return;
+
+      // Navigasi ke halaman hasil
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => DisplayPictureScreen(
+            imagePath: imagePath,
+            ocrResult: detectedProductName, 
+            searchQuery: searchResult,     
+          ),
+        ),
+      );
+
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memproses gambar: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
+
+  // 1. Fungsi untuk mengambil gambar dari kamera
   Future<void> _takePicture(BuildContext context) async {
-    // UBAH 4: Tambahkan pengecekan null
     if (_controller == null || !_controller!.value.isInitialized) {
       print('Error: Kamera tidak siap.');
       return;
     }
+    if (_isProcessing) return;
 
     try {
       await _initializeControllerFuture;
       final image = await _controller!.takePicture();
       if (!context.mounted) return;
 
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => DisplayPictureScreen(
-            imagePath: image.path, 
-          ),
-        ),
-      );
+      // Lanjut ke proses OCR/ML
+      _processImageForProduct(image.path, context);
+      
     } catch (e) {
       print('Terjadi kesalahan saat mengambil gambar: $e');
+    }
+  }
+
+  // 2. Fungsi untuk mengambil gambar dari galeri
+  Future<void> _handleGalleryPick(BuildContext context) async {
+    if (_isProcessing) return;
+    
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      
+      if (image != null && context.mounted) {
+        _processImageForProduct(image.path, context);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal memilih gambar dari galeri')),
+        );
+      }
     }
   }
 
@@ -85,11 +153,10 @@ class _ScanPageState extends State<ScanPage> {
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
           
-          // UBAH 5: Tambahkan penanganan error
           if (snapshot.hasError) {
             return Container(
               color: Colors.black,
-              child: Center(
+              child: const Center(
                 child: Text(
                   'Gagal memuat kamera.\nPastikan Anda sudah memberi izin.',
                   textAlign: TextAlign.center,
@@ -99,18 +166,16 @@ class _ScanPageState extends State<ScanPage> {
             );
           }
 
-          // Jika kamera siap (dan tidak error)
           if (snapshot.connectionState == ConnectionState.done) {
             return Stack(
               fit: StackFit.expand,
               children: [
-                // UBAH 6: Gunakan null-check operator (!)
                 CameraPreview(_controller!), 
                 _buildUIOverlays(context),
+                if (_isProcessing) _buildProcessingOverlay(), // Loading Overlay
               ],
             );
           } else {
-            // Tampilan loading
             return Container(
               color: Colors.black,
               child: const Center(child: CircularProgressIndicator()),
@@ -121,7 +186,31 @@ class _ScanPageState extends State<ScanPage> {
     );
   }
 
-  // --- UI Helper Widgets (Tidak berubah) ---
+  // --- UI Helper Widgets ---
+
+  // Overlay Loading saat memproses
+  Widget _buildProcessingOverlay() {
+    return Container(
+      color: Colors.black54,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              CircularProgressIndicator(color: primaryColor),
+              SizedBox(height: 15),
+              Text("Memproses gambar (ML/OCR)...", style: TextStyle(color: primaryColor)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   AppBar _buildTransparentAppBar() {
     return AppBar(
@@ -134,13 +223,14 @@ class _ScanPageState extends State<ScanPage> {
       actions: [
         IconButton(
           icon: const Icon(Icons.flash_on_outlined),
-          onPressed: () {
-             _controller?.setFlashMode(
-               _controller!.value.flashMode == FlashMode.off 
-                 ? FlashMode.torch 
-                 : FlashMode.off
-             );
-          },
+          onPressed: _controller != null && _controller!.value.isInitialized
+            ? () {
+               _controller!.setFlashMode(
+                 _controller!.value.flashMode == FlashMode.off 
+                   ? FlashMode.torch 
+                   : FlashMode.off
+               );
+            } : null,
         ),
         IconButton(
           icon: const Icon(Icons.flip_camera_ios_outlined),
@@ -168,7 +258,7 @@ class _ScanPageState extends State<ScanPage> {
         ),
         _buildScanBox(),
         const Spacer(),
-        _buildBottomControls(context),
+        _buildBottomControls(context), 
       ],
     );
   }
@@ -196,8 +286,9 @@ class _ScanPageState extends State<ScanPage> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(width: 48), 
+          // Tombol Ambil Gambar
           GestureDetector(
-            onTap: () => _takePicture(context), 
+            onTap: _isProcessing ? null : () => _takePicture(context), 
             child: Container(
               width: 70.0,
               height: 70.0,
@@ -217,13 +308,12 @@ class _ScanPageState extends State<ScanPage> {
               ),
             ),
           ),
+          // Tombol Upload dari Galeri
           IconButton(
-            onPressed: () {
-              // TODO: Logika untuk upload gambar dari galeri
-            },
-            icon: const Icon(
+            onPressed: _isProcessing ? null : () => _handleGalleryPick(context), 
+            icon: Icon(
               Icons.file_upload_outlined,
-              color: Colors.white,
+              color: _isProcessing ? Colors.grey : Colors.white,
               size: 32.0,
             ),
           ),

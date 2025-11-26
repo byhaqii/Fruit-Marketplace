@@ -86,7 +86,7 @@ $router->group(['middleware' => 'auth'], function () use ($router) {
 
     // Profil Pengguna
     $router->get('/profile', 'ProfileController@show');
-    $router->put('/profile', 'ProfileController@update');
+   $router->post('/profile', 'ProfileController@update');
 
     // Transaksi (Sisi Pembeli)
     $router->get('/transaksi', 'TransaksiController@getUserTransactions');

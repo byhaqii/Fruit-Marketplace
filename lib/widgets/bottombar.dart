@@ -1,6 +1,6 @@
-// file bottombar.dart
+// lib/widgets/bottombar.dart
 import 'package:flutter/material.dart';
-import '_nav_item.dart'; // Import NavItem
+import '_nav_item.dart'; 
 
 // Definisi route item navigasi
 class NavData {
@@ -11,15 +11,13 @@ class NavData {
   const NavData({required this.icon, required this.label, required this.route});
 }
 
-// Data navigasi untuk BottomBar
+// Data navigasi untuk BottomBar (5 ITEMS)
 final List<NavData> navItems = [
   const NavData(icon: Icons.home, label: 'Home', route: '/'),
   const NavData(icon: Icons.shopping_bag, label: 'Marketplace', route: '/produk'),
-  // const NavData(icon: Icons.history, label: 'History', route: '/history'), // DI-COMMENT (ASLI)
-  // const NavData(icon: Icons.analytics, label: 'Keuangan', route: '/keuangan'), // DI-COMMENT (PERMINTAAN SEBELUMNYA)
-  const NavData(icon: Icons.group, label: 'User', route: '/user'), // DITAMBAHKAN TAMPILAN USER
-
-  const NavData(icon: Icons.person, label: 'Akun', route: '/akun'),
+  const NavData(icon: Icons.qr_code_scanner, label: 'Scan', route: '/scan'), // <<< NEW SCAN ITEM
+  const NavData(icon: Icons.group, label: 'User', route: '/user'), // Bergeser ke index 3
+  const NavData(icon: Icons.person, label: 'Akun', route: '/akun'), // Bergeser ke index 4
 ];
 
 class BottomBar extends StatelessWidget {
@@ -38,7 +36,8 @@ class BottomBar extends StatelessWidget {
 
     return BottomAppBar(
       color: Colors.white,
-      shape: const CircularNotchedRectangle(),
+      // Mengubah desain agar sesuai dengan 5 item jika digunakan di Scaffold utama
+      shape: const CircularNotchedRectangle(), // Biarkan bentuk notch, tapi tidak kita gunakan centernya
       notchMargin: 6.0,
       padding: EdgeInsets.zero,
       surfaceTintColor: Colors.white,
@@ -47,7 +46,7 @@ class BottomBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
-            // Item 1: Home
+            // Item 1: Home (Index 0)
             NavItem(
               icon: navItems[0].icon,
               label: navItems[0].label,
@@ -56,7 +55,7 @@ class BottomBar extends StatelessWidget {
               activeColor: primaryColor,
             ),
 
-            // Item 2: Marketplace
+            // Item 2: Marketplace (Index 1)
             NavItem(
               icon: navItems[1].icon,
               label: navItems[1].label,
@@ -64,12 +63,8 @@ class BottomBar extends StatelessWidget {
               onTap: () => onItemTapped(1),
               activeColor: primaryColor,
             ),
-
-            // Spacer kosong untuk menyeimbangkan tombol 'Scan'
-            const SizedBox(width: 48),
-
-            // --- PERUBAHAN DI SINI ---
-            // Item 3: User (Menggantikan Keuangan)
+            
+            // Item 3: Scan (Index 2)
             NavItem(
               icon: navItems[2].icon,
               label: navItems[2].label,
@@ -77,14 +72,22 @@ class BottomBar extends StatelessWidget {
               onTap: () => onItemTapped(2),
               activeColor: primaryColor,
             ),
-            // --- BATAS PERUBAHAN ---
 
-            // Item 4: Akun
+            // Item 4: User (Index 3)
             NavItem(
               icon: navItems[3].icon,
               label: navItems[3].label,
               isSelected: selectedIndex == 3,
               onTap: () => onItemTapped(3),
+              activeColor: primaryColor,
+            ),
+
+            // Item 5: Akun (Index 4)
+            NavItem(
+              icon: navItems[4].icon,
+              label: navItems[4].label,
+              isSelected: selectedIndex == 4,
+              onTap: () => onItemTapped(4),
               activeColor: primaryColor,
             ),
           ],

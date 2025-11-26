@@ -6,6 +6,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../providers/marketplace_provider.dart';
 import '../widgets/discount_card.dart';
 import '../../marketplace/widgets/produk_card.dart';
+import '../../../config/env.dart'; // <<< Tambahkan import Env
 
 class BuyerHomePage extends StatefulWidget {
   final VoidCallback? onGoToShop; 
@@ -24,10 +25,22 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
   int selectedCategoryIndex = 0;
   final TextEditingController _searchController = TextEditingController();
 
+  // --- Helper URL Baru ---
+  String _getStorageBaseUrl() {
+    // Mengambil base URL dari Env dan menghapus '/api'
+    return Env.apiBaseUrl.replaceFirst('/api', '');
+  }
+
+  String getAvatarUrl(String? filename) {
+    if (filename == null || filename.isEmpty) return ''; 
+    // Path storage sesuai konfigurasi backend: public/storage/profiles/
+    return '${_getStorageBaseUrl()}/storage/profiles/$filename';
+  }
+  // -----------------------
+
   @override
   void initState() {
     super.initState();
-    // --- PERBAIKAN PENTING DI SINI ---
     // Panggil fetchAllData agar Produk DAN Transaksi terambil semua
     Future.microtask(() {
       Provider.of<MarketplaceProvider>(context, listen: false).fetchAllData();
@@ -49,6 +62,14 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
         : "Pelanggan";
     
     const Color mainBackgroundColor = Color(0xFF2D7F6A);
+    
+    // Tentukan sumber gambar avatar
+    final String? avatarFilename = user?.avatar;
+    final bool hasAvatar = avatarFilename != null && avatarFilename.isNotEmpty;
+    final ImageProvider? avatarImage = hasAvatar 
+        ? NetworkImage(getAvatarUrl(avatarFilename!)) 
+        : null;
+
 
     return Scaffold(
       backgroundColor: mainBackgroundColor,
@@ -57,7 +78,6 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
           color: mainBackgroundColor,
           backgroundColor: Colors.white,
           onRefresh: () async {
-            // --- PERBAIKAN JUGA DI SINI ---
             // Saat tarik ke bawah, refresh semua data
             await Provider.of<MarketplaceProvider>(context, listen: false).fetchAllData();
           },
@@ -80,9 +100,17 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                           const Text("Cari Kebutuhanmu?", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
                         ],
                       ),
+                      // AVATAR - FIX DITERAPKAN DI SINI
                       Container(
                         decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white24, width: 2)),
-                        child: CircleAvatar(radius: 24, backgroundColor: Colors.white.withOpacity(0.2), child: const Icon(Icons.person, color: Colors.white)),
+                        child: CircleAvatar(
+                            radius: 24, 
+                            backgroundColor: Colors.white.withOpacity(0.2), 
+                            backgroundImage: avatarImage, // Tampilkan NetworkImage
+                            child: hasAvatar 
+                                ? null // Jika ada gambar, kosongkan child
+                                : const Icon(Icons.person, color: Colors.white), // Default icon
+                        ),
                       ),
                     ],
                   ),

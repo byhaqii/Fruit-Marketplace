@@ -26,7 +26,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => MarketplaceProvider()),
         ChangeNotifierProvider(create: (_) => KeuanganProvider()),
         ChangeNotifierProvider(create: (_) => WargaProvider()),
-        ChangeNotifierProvider(create: (_) => DashboardProvider()), // <--- TAMBAHKAN BARIS INI
+        ChangeNotifierProvider(create: (_) => DashboardProvider()), 
       ],
       child: const App(), 
     ),

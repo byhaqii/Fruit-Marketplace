@@ -70,11 +70,7 @@ class ProdukModel {
       if (imgString.startsWith('http')) {
         return imgString;
       } 
-      
-      // Jika belum ada http, berarti itu nama file dari database lokal.
-      // Kita gabungkan dengan Base URL server + folder tempat simpan gambar.
-      // Sesuaikan '/storage/' dengan folder public di Laravel Anda.
-      // Contoh hasil: http://192.168.1.5:8081/storage/apel.jpg
+    
       return '${Env.apiBaseUrl}/storage/$imgString'; 
     }
 
