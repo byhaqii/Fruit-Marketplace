@@ -28,6 +28,12 @@ $router->get('/produk', 'ProdukController@index');
 $router->get('/produk/{id}', 'ProdukController@show');
 $router->get('/produk/{id}/reviews', 'ReviewController@index');
 
+$router->get('/storage/{filename}', function ($filename) {
+    $path = base_path('public/storage/' . $filename);
+    if (!file_exists($path)) return response()->json(['message' => 'Not found'], 404);
+    return response(file_get_contents($path), 200)->header("Content-Type", mime_content_type($path));
+});
+
 
 // ==========================================================
 // 2. RUTE ADMIN (Role: admin)
@@ -43,6 +49,8 @@ $router->group(['middleware' => ['auth', 'role:admin']], function () use ($route
 
     // Laporan Semua Transaksi
     $router->get('/transaksi/all', 'TransaksiController@index');
+    // Log Aktivitas Sistem
+    $router->get('/admin/activities', 'NotificationController@getActivities');
     
     // Update Status Withdraw
     $router->put('/withdraw/{id}', 'WithdrawController@updateStatus');

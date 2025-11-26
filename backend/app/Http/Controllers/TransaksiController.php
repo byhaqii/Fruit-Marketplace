@@ -23,21 +23,16 @@ class TransaksiController extends Controller
     public function index()
     {
         // PERBAIKAN: Menggunakan 'orderItems' sesuai nama fungsi di Model Transaksi.php
-        $transaksi = Transaksi::with(['user', 'orderItems.produk'])
-            ->latest()
-            ->get();
+        $transaksi = Transaksi::with(['user', 'orderItems.produk'])->latest()->get();
         return response()->json($transaksi);
     }
 
     public function show($id)
     {
         // PERBAIKAN: Menggunakan 'orderItems'
-        $transaksi = Transaksi::with(['user', 'orderItems.produk'])->find($id);
-        
-        if (!$transaksi) {
-            return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
-        }
-        
+      $transaksi = Transaksi::with(['user', 'orderItems.produk'])->find($id);
+        if (!$transaksi) return response()->json(['message' => 'Not Found'], 404);
+
         $user = Auth::user();
         $isAllowed = false;
 
@@ -65,17 +60,6 @@ class TransaksiController extends Controller
     // 2. FITUR PEMBELI (BUYER)
     // =================================================================
 
-    public function getUserTransactions()
-    {
-        $userId = Auth::id();
-        // PERBAIKAN: Menggunakan 'orderItems'
-        $transaksi = Transaksi::where('user_id', $userId)
-            ->with(['orderItems.produk'])
-            ->latest()
-            ->get();
-        return response()->json($transaksi);
-    }
-
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -86,58 +70,32 @@ class TransaksiController extends Controller
             'items.*.jumlah'    => 'required|integer|min:1',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
+        if ($validator->fails()) return response()->json($validator->errors(), 422);
 
         DB::beginTransaction();
         try {
             $groupedItems = [];
             
-            // 1. Grouping Item berdasarkan Penjual (User ID pemilik produk)
-            // Agar jika beli dari 2 Toko berbeda, jadi 2 Transaksi berbeda (Split Order)
+            // Grouping berdasarkan Penjual
             foreach ($request->items as $itemReq) {
                 $produk = Produk::find($itemReq['produk_id']);
-                
                 if ($produk->stok < $itemReq['jumlah']) {
-                    throw new \Exception("Stok {$produk->nama_produk} tidak cukup.");
+                    throw new \Exception("Stok {$produk->nama_produk} kurang.");
                 }
-
-                $sellerId = $produk->user_id;
-                
-                if (!isset($groupedItems[$sellerId])) {
-                    $groupedItems[$sellerId] = [];
-                }
-
-                // Masukkan data produk ke grup penjualnya
-                $groupedItems[$sellerId][] = [
-                    'produk' => $produk,
-                    'qty' => $itemReq['jumlah']
-                ];
+                $groupedItems[$produk->user_id][] = ['produk' => $produk, 'qty' => $itemReq['jumlah']];
             }
 
             $createdTransactions = [];
 
-            // 2. Buat Transaksi Terpisah untuk Setiap Penjual
             foreach ($groupedItems as $sellerId => $items) {
-                $subtotalBelanja = 0;
+                $subtotal = 0;
+                foreach ($items as $d) $subtotal += $d['produk']->harga * $d['qty'];
                 
-                // Hitung total per penjual
-                foreach ($items as $data) {
-                    $subtotalBelanja += $data['produk']->harga * $data['qty'];
-                }
-
-                // TODO: Logika hitung ongkir dinamis bisa ditaruh di sini
-                // Saat ini di-hardcode Rp 10.000 per transaksi
                 $ongkir = 10000; 
-                $totalBayar = $subtotalBelanja + $ongkir;
-
-                // Buat Transaksi
                 $transaksi = Transaksi::create([
                     'user_id'           => Auth::id(),
-                    // Order ID Unik: INV-TIMESTAMP-SELLERID
-                    'order_id'          => 'INV-' . time() . '-' . $sellerId . '-' . Str::random(3),
-                    'total_harga'       => $totalBayar,
+                    'order_id'          => 'INV-' . time() . '-' . Str::random(4),
+                    'total_harga'       => $subtotal + $ongkir,
                     'ongkos_kirim'      => $ongkir,
                     'order_status'      => 'menunggu konfirmasi',
                     'payment_method'    => $request->payment_method,
@@ -145,34 +103,30 @@ class TransaksiController extends Controller
                     'alamat_pengiriman' => $request->alamat_pengiriman,
                 ]);
 
-                // Simpan Item & Kurangi Stok
-                foreach ($items as $data) {
+                foreach ($items as $d) {
                     OrderItem::create([
-                        'transaksi_id'    => $transaksi->id,
-                        'produk_id'       => $data['produk']->id,
-                        'jumlah'          => $data['qty'],
-                        'harga_saat_beli' => $data['produk']->harga,
+                        'transaksi_id' => $transaksi->id,
+                        'produk_id'    => $d['produk']->id,
+                        'jumlah'       => $d['qty'],
+                        'harga_saat_beli' => $d['produk']->harga,
                     ]);
-
-                    $data['produk']->decrement('stok', $data['qty']);
+                    $d['produk']->decrement('stok', $d['qty']);
                 }
 
-                // Notifikasi ke Penjual
-                if (class_exists(Notification::class)) {
-                    Notification::create([
-                        'user_id' => $sellerId,
-                        'title' => 'Pesanan Baru!',
-                        'body' => "Pesanan #{$transaksi->order_id} perlu dikonfirmasi.",
-                        'type' => 'order',
-                        'related_id' => $transaksi->id
-                    ]);
-                }
+                // [LOG ACTIVITY] Notifikasi ke Penjual
+                Notification::create([
+                    'user_id'    => $sellerId,
+                    'title'      => 'Pesanan Masuk',
+                    'body'       => "Anda menerima pesanan baru #{$transaksi->order_id}",
+                    'type'       => 'order',
+                    'related_id' => $transaksi->id
+                ]);
 
                 $createdTransactions[] = $transaksi;
             }
 
             DB::commit();
-            return response()->json(['message' => 'Transaksi berhasil', 'data' => $createdTransactions], 201);
+            return response()->json(['message' => 'Checkout berhasil', 'data' => $createdTransactions], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();

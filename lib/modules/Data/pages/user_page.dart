@@ -1,12 +1,10 @@
-// lib/modules/Data/pages/user_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/warga_provider.dart';
 
 //======================================================================
-// 1. HALAMAN LIST USER
+// 1. HALAMAN LIST USER (TAMPILAN SESUAI DESAIN CSS)
 //======================================================================
 class UserListPage extends StatefulWidget {
   const UserListPage({super.key});
@@ -16,14 +14,16 @@ class UserListPage extends StatefulWidget {
 }
 
 class _UserListPageState extends State<UserListPage> {
+  // Warna Utama (Hijau) sesuai desain
   static const Color primaryGreen = Color(0xFF2D7F6A);
+  
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
 
   @override
   void initState() {
     super.initState();
-    // Refresh data saat halaman dibuka
+    // Ambil data user saat halaman dibuka
     Future.microtask(() =>
         Provider.of<WargaProvider>(context, listen: false).fetchWarga());
   }
@@ -37,35 +37,45 @@ class _UserListPageState extends State<UserListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.white, // Background putih
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
             
-            // HEADER
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 30),
-              child: Text(
-                'User Management',
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
-                  color: primaryGreen,
-                ),
+            // --- HEADER TITLE ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Row(
+                children: [
+                  // Tombol Back Opsional (jika perlu)
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.arrow_back, color: primaryGreen, size: 28),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'User Management',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 25,
+                      fontWeight: FontWeight.bold,
+                      color: primaryGreen,
+                    ),
+                  ),
+                ],
               ),
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
-            // TOMBOL + NEW USER
+            // --- TOMBOL + NEW USER ---
+            // (Rectangle 106 di desain)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: InkWell(
                 onTap: () {
-                  // Navigasi ke Form User (Mode Tambah)
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const UserFormPage()),
@@ -83,16 +93,20 @@ class _UserListPageState extends State<UserListPage> {
                   child: const Text(
                     '+ New User',
                     style: TextStyle(
-                      fontFamily: 'Poppins', fontSize: 17, fontWeight: FontWeight.w400, color: Colors.white,
+                      fontFamily: 'Poppins',
+                      fontSize: 17,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
                     ),
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 15),
 
-            // SEARCH BAR
+            // --- SEARCH BAR ---
+            // (Rectangle 107 di desain)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Container(
@@ -100,7 +114,7 @@ class _UserListPageState extends State<UserListPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: Colors.black.withOpacity(0.5), width: 0.5),
+                  border: Border.all(color: Colors.black.withOpacity(0.3), width: 0.5),
                 ),
                 child: TextField(
                   controller: _searchController,
@@ -109,17 +123,22 @@ class _UserListPageState extends State<UserListPage> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "Search",
-                    hintStyle: TextStyle(fontFamily: 'Poppins', fontSize: 17, fontWeight: FontWeight.w300, color: Colors.black.withOpacity(0.5)),
+                    hintStyle: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.black.withOpacity(0.5),
+                    ),
                     prefixIcon: Icon(Icons.search, color: Colors.black.withOpacity(0.5), size: 20),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 9),
+                    contentPadding: const EdgeInsets.only(bottom: 4), // Center vertical text
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 25),
+            const SizedBox(height: 30),
 
-            // LIST USER
+            // --- LIST USER ---
             Expanded(
               child: Consumer<WargaProvider>(
                 builder: (context, provider, child) {
@@ -127,6 +146,7 @@ class _UserListPageState extends State<UserListPage> {
                     return const Center(child: CircularProgressIndicator(color: primaryGreen));
                   }
 
+                  // Filter pencarian
                   final users = provider.wargaList.where((user) {
                     return user.name.toLowerCase().contains(_searchQuery) ||
                            user.email.toLowerCase().contains(_searchQuery);
@@ -152,6 +172,7 @@ class _UserListPageState extends State<UserListPage> {
     );
   }
 
+  // Widget Kartu User (Rectangle 109 style)
   Widget _buildUserCard(BuildContext context, UserModel user, WargaProvider provider) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
@@ -162,46 +183,82 @@ class _UserListPageState extends State<UserListPage> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.black.withOpacity(0.1), width: 0.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 4, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           children: [
-            // FOTO PROFIL
+            // Foto Profil (Kotak Rounded)
             Container(
               width: 40, height: 40,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(10),
-                // image: const DecorationImage(image: AssetImage('assets/image-1.png'), fit: BoxFit.cover), // Uncomment jika ada asset
+                // Gunakan NetworkImage jika ada URL avatar, atau asset default
+                image: const DecorationImage(
+                  image: AssetImage('assets/image-1.png'), // Pastikan asset ini ada
+                  fit: BoxFit.cover,
+                ),
               ),
-              child: const Icon(Icons.person, color: Colors.grey),
             ),
             const SizedBox(width: 12),
             
-            // INFO
+            // Nama & Email
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(user.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600)),
-                  Text(user.email, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, fontWeight: FontWeight.w300)),
+                  Text(
+                    user.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600, // Medium/SemiBold
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    user.email,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.black.withOpacity(0.7),
+                    ),
+                  ),
                 ],
               ),
             ),
 
-            // AKSI
+            // Tombol Edit
             InkWell(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => UserFormPage(user: user))),
-              child: const Padding(padding: EdgeInsets.all(4.0), child: Icon(Icons.edit_outlined, size: 24)),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => UserFormPage(user: user)));
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: Icon(Icons.edit_outlined, color: Colors.black.withOpacity(0.7), size: 22),
+              ),
             ),
-            const SizedBox(width: 4),
+            
+            // Tombol Delete
             InkWell(
               onTap: () => _confirmDelete(context, provider, user.id),
-              child: const Padding(padding: EdgeInsets.all(4.0), child: Icon(Icons.delete_outline, size: 24)),
+              child: Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: Icon(Icons.delete_outline, color: Colors.black.withOpacity(0.7), size: 22),
+              ),
             ),
           ],
         ),
@@ -213,18 +270,18 @@ class _UserListPageState extends State<UserListPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus User?'),
-        content: const Text('Data tidak bisa dikembalikan.'),
+        title: const Text("Hapus User?"),
+        content: const Text("Data yang dihapus tidak dapat dikembalikan."),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Batal")),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              provider.deleteUser(id);
-            },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
-          ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await provider.deleteUser(id);
+            },
+            child: const Text("Hapus", style: TextStyle(color: Colors.white)),
+          )
         ],
       ),
     );
@@ -232,7 +289,7 @@ class _UserListPageState extends State<UserListPage> {
 }
 
 //======================================================================
-// 2. HALAMAN FORM USER (LOGIKA UTAMA TAMBAH DATA)
+// 2. HALAMAN FORM USER (LOGIKA SUDAH FIX UNTUK BACKEND BARU)
 //======================================================================
 class UserFormPage extends StatefulWidget {
   final UserModel? user;
@@ -262,17 +319,15 @@ class _UserFormPageState extends State<UserFormPage> {
     final user = widget.user;
     _nameController = TextEditingController(text: user?.name ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
-    _phoneController = TextEditingController(text: user?.mobileNumber ?? '');
+    _phoneController = TextEditingController(text: user?.mobileNumber ?? ''); // Pakai mobileNumber
     _addressController = TextEditingController(text: user?.address ?? '');
     _passwordController = TextEditingController(); 
     
-    if (user != null) {
-      // Pastikan role valid, kalau kosong default ke pembeli
-      _selectedRole = (user.role.isNotEmpty) ? user.role : 'pembeli';
+    if (user != null && user.role.isNotEmpty) {
+      _selectedRole = user.role;
     }
   }
 
-  // --- FUNGSI SIMPAN DATA ---
   Future<void> _saveUser() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -281,23 +336,20 @@ class _UserFormPageState extends State<UserFormPage> {
     final provider = Provider.of<WargaProvider>(context, listen: false);
     final isEdit = widget.user != null;
 
-    // Siapkan data
+    // DATA YANG DIKIRIM KE BACKEND (Sesuai Tabel Baru)
     final data = {
       'name': _nameController.text,
       'email': _emailController.text,
       'role': _selectedRole,
-      'mobile_number': _phoneController.text,
-      'alamat': _addressController.text,
+      'mobile_number': _phoneController.text, // PENTING: Sesuai migrasi
+      'alamat': _addressController.text,      // PENTING: Sesuai migrasi
     };
 
-    // Logika Password
     if (isEdit) {
-      // Kalau edit, kirim password hanya jika diisi
       if (_passwordController.text.isNotEmpty) {
         data['password'] = _passwordController.text;
       }
     } else {
-      // Kalau tambah baru, password WAJIB
       if (_passwordController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Password wajib diisi untuk user baru')));
@@ -317,16 +369,16 @@ class _UserFormPageState extends State<UserFormPage> {
     setState(() => _isLoading = false);
 
     if (success && mounted) {
-      Navigator.pop(context); // Kembali ke list
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isEdit ? 'User diperbarui' : 'User ditambahkan'),
+          content: Text(isEdit ? 'Data berhasil diperbarui' : 'User baru ditambahkan'),
           backgroundColor: primaryGreen,
         ),
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal menyimpan data user'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Gagal menyimpan data. Cek koneksi/input.'), backgroundColor: Colors.red),
       );
     }
   }
@@ -340,8 +392,8 @@ class _UserFormPageState extends State<UserFormPage> {
       appBar: AppBar(
         backgroundColor: primaryGreen,
         elevation: 0,
+        title: Text(isEdit ? 'Edit User' : 'New User', style: const TextStyle(color: Colors.white)),
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
-        title: Text(isEdit ? 'Edit User' : 'Tambah User', style: const TextStyle(color: Colors.white)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(25.0),
@@ -349,22 +401,30 @@ class _UserFormPageState extends State<UserFormPage> {
           key: _formKey,
           child: Column(
             children: [
+              // Ilustrasi Avatar
               Container(
-                width: 100, height: 100,
-                decoration: BoxDecoration(color: primaryGreen.withOpacity(0.1), shape: BoxShape.circle),
+                width: 90, height: 90,
+                decoration: BoxDecoration(
+                  color: primaryGreen.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: primaryGreen, width: 2),
+                ),
                 child: const Icon(Icons.person, size: 50, color: primaryGreen),
               ),
               const SizedBox(height: 30),
 
-              _buildTextField("Nama Lengkap", _nameController),
+              _buildTextField("Full Name", _nameController),
               const SizedBox(height: 15),
-              _buildTextField("Email", _emailController, inputType: TextInputType.emailAddress),
+              _buildTextField("Email Address", _emailController, inputType: TextInputType.emailAddress),
               const SizedBox(height: 15),
               
-              // DROPDOWN ROLE
+              // Dropdown Role
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 15),
-                decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: DropdownButtonFormField<String>(
                   value: _selectedRole,
                   decoration: const InputDecoration(labelText: 'Role', border: InputBorder.none),
@@ -376,15 +436,15 @@ class _UserFormPageState extends State<UserFormPage> {
               ),
               const SizedBox(height: 15),
 
-              _buildTextField("Password", _passwordController, isObscure: true, hint: isEdit ? "(Kosongkan jika tidak ubah)" : ""),
+              _buildTextField("Password", _passwordController, isObscure: true, hint: isEdit ? "(Isi jika ingin mengubah)" : "Min. 6 karakter"),
               const SizedBox(height: 15),
-              _buildTextField("No. HP", _phoneController, inputType: TextInputType.phone),
+              _buildTextField("Phone Number", _phoneController, inputType: TextInputType.phone), // Masuk ke mobile_number
               const SizedBox(height: 15),
-              _buildTextField("Alamat", _addressController, maxLines: 2),
+              _buildTextField("Address", _addressController, maxLines: 2),
               
               const SizedBox(height: 40),
               
-              // TOMBOL SIMPAN
+              // Tombol Simpan
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -396,7 +456,7 @@ class _UserFormPageState extends State<UserFormPage> {
                   onPressed: _isLoading ? null : _saveUser,
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(isEdit ? 'Simpan Perubahan' : 'Buat User',
+                      : Text(isEdit ? 'Save Changes' : 'Create User',
                           style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
@@ -410,14 +470,17 @@ class _UserFormPageState extends State<UserFormPage> {
   Widget _buildTextField(String label, TextEditingController controller, {bool isObscure = false, TextInputType inputType = TextInputType.text, int maxLines = 1, String? hint}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-      decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: TextFormField(
         controller: controller,
         obscureText: isObscure,
         keyboardType: inputType,
         maxLines: maxLines,
         validator: (v) {
-          if (!isObscure && (v == null || v.isEmpty)) return "Wajib diisi";
+          if (!isObscure && (v == null || v.isEmpty)) return "Required";
           return null;
         },
         decoration: InputDecoration(

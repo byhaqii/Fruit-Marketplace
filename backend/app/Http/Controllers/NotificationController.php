@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Auth;
 class NotificationController extends Controller
 {
     /**
-     * 1. UNTUK USER BIASA: Ambil notifikasi milik sendiri
+     * UNTUK USER BIASA: Ambil notifikasi milik sendiri.
+     * GET /notifications
      */
     public function index()
     {
@@ -23,28 +24,28 @@ class NotificationController extends Controller
     }
 
     /**
-     * 2. KHUSUS ADMIN: Ambil semua aktivitas sistem (Activity Log)
+     * KHUSUS ADMIN: Ambil semua aktivitas sistem (Activity Log).
      * GET /admin/activities
      */
     public function getActivities(Request $request)
     {
-        // Cek apakah user adalah admin
+        // Cek hak akses Admin
         if ($request->user()->role !== 'admin') {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Ambil notifikasi dari seluruh sistem untuk ditampilkan sebagai Log
-        // Kita bisa memfilter tipe tertentu jika perlu
-        $activities = Notification::with('user') // Load data user pelakunya
+        // Ambil notifikasi dari seluruh user untuk dijadikan Log
+        $activities = Notification::with('user') // Include data user pelakunya
             ->orderBy('created_at', 'desc')
-            ->limit(10) // Ambil 10 aktivitas terakhir
+            ->limit(20) // Batasi 20 aktivitas terakhir
             ->get();
 
         return response()->json($activities);
     }
 
     /**
-     * Tandai semua sebagai sudah dibaca
+     * Tandai semua sebagai sudah dibaca.
+     * POST /notifications/read-all
      */
     public function markAllRead()
     {

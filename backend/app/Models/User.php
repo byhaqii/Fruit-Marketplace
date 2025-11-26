@@ -21,8 +21,8 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'password', 
         'role', 
         'api_token',
-        'mobile_number', // Pastikan kolom ini ada di database (migration)
-        'alamat',        // Pastikan kolom ini ada di database (migration)
+        'mobile_number', 
+        'alamat',        
         'avatar', 
         'saldo',
     ];
@@ -36,7 +36,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'saldo' => 'float',
     ];
 
-    // --- RELASI / RELATIONSHIPS ---
+
 
     public function produk()
     {

@@ -3,17 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Notification; // <-- Import Model Notification
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     /**
-     * Mendaftarkan pengguna baru (default sebagai 'pembeli').
+     * Mendaftarkan pengguna baru.
      * POST /auth/register
      */
     public function register(Request $request): JsonResponse
@@ -22,29 +22,43 @@ class AuthController extends Controller
             $this->validate($request, [
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:6', // Sesuaikan min:6 jika perlu
+                'password' => 'required|string|min:6',
             ]);
         } catch (ValidationException $e) {
             return response()->json(['message' => 'Input tidak valid', 'errors' => $e->errors()], 422);
         }
 
+        // 1. Buat User Baru
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'api_token' => Str::random(60),
-            // 'role' akan otomatis 'pembeli' sesuai pengaturan default di migrasi
+            'role' => 'pembeli', // Default role
         ]);
+
+        // 2. [LOG ACTIVITY] Catat pendaftaran user baru
+        try {
+            Notification::create([
+                'user_id'    => $user->id, 
+                'title'      => 'User Baru',
+                'body'       => "Pengguna baru bernama '{$user->name}' telah mendaftar.",
+                'type'       => 'info',
+                'is_read'    => false,
+            ]);
+        } catch (\Exception $e) {
+            // Ignore log error
+        }
 
         return response()->json([
             'message' => 'Registrasi berhasil',
             'user' => $user,
-            'api_token' => $user->api_token // Kembalikan token saat registrasi
+            'api_token' => $user->api_token
         ], 201);
     }
 
     /**
-     * Login pengguna dan hasilkan token.
+     * Login pengguna.
      * POST /auth/login
      */
     public function login(Request $request): JsonResponse
@@ -64,10 +78,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Email atau password salah'], 401);
         }
 
-        // Buat token baru jika belum ada atau null
+        // Refresh token jika kosong
         if (!$user->api_token) {
             $user->api_token = Str::random(60);
-            $user->save(); // Method .save() ada di sini dan sudah benar
+            $user->save();
         }
 
         return response()->json([
@@ -78,22 +92,19 @@ class AuthController extends Controller
     }
 
     /**
-     * Logout pengguna (hapus token).
+     * Logout pengguna.
      * POST /auth/logout
      */
     public function logout(Request $request): JsonResponse
     {
-        // Middleware 'auth' akan memastikan user sudah login
         $user = $request->user(); 
         
         if ($user) {
-            $user->api_token = null; // Hapus token
-            $user->save(); // Method .save() ada di sini dan sudah benar
+            $user->api_token = null;
+            $user->save();
             return response()->json(['message' => 'Logout berhasil']);
         }
 
         return response()->json(['message' => 'Tidak ada user yang login'], 400);
     }
-
-    // Fungsi profile() telah dipindahkan ke ProfileController.php
 }

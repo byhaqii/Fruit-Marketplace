@@ -10,16 +10,17 @@ class ProfileController extends Controller
 {
     /**
      * Lihat Profil (termasuk Saldo & Avatar)
+     * GET /profile
      */
     public function show()
     {
         // Mengembalikan data user yang sedang login
-        // Saldo sudah otomatis ter-casting ke float/int di Model User
         return response()->json(Auth::user());
     }
 
     /**
-     * Update Profil (Nama, Email, Password, Avatar)
+     * Update Profil (Nama, Email, Password, Avatar, Mobile Number, Alamat)
+     * PUT /profile
      */
     public function update(Request $request)
     {
@@ -30,12 +31,14 @@ class ProfileController extends Controller
             'name' => 'string|max:255',
             'email' => 'email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6',
-            'avatar' => 'nullable|image|max:2048', // Validasi Avatar
-            'alamat' => 'nullable|string'
+            'avatar' => 'nullable|image|max:2048', 
+            'alamat' => 'nullable|string',
+            'mobile_number' => 'nullable|string', // <-- TAMBAH VALIDASI
         ]);
 
-        // Update field standar
-        $user->fill($request->only(['name', 'email', 'alamat', 'phone']));
+        // FIX: Update field standar, MENGGANTI 'phone' menjadi 'mobile_number'
+        // Jika database Anda juga memiliki kolom 'phone' dan ingin diisi, Anda bisa menambahkannya.
+        $user->fill($request->only(['name', 'email', 'alamat', 'mobile_number']));
 
         // Update Password jika diisi
         if ($request->filled('password')) {
@@ -44,7 +47,7 @@ class ProfileController extends Controller
 
         // Update Avatar jika diupload
         if ($request->hasFile('avatar')) {
-            // Hapus avatar lama jika bukan default (opsional)
+            // Logika menyimpan file avatar...
             if ($user->avatar && file_exists(base_path('public/storage/profiles/' . $user->avatar))) {
                 @unlink(base_path('public/storage/profiles/' . $user->avatar));
             }
@@ -52,7 +55,6 @@ class ProfileController extends Controller
             $file = $request->file('avatar');
             $filename = 'user_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
             
-            // Pastikan folder ada
             if (!file_exists(base_path('public/storage/profiles'))) {
                 mkdir(base_path('public/storage/profiles'), 0777, true);
             }

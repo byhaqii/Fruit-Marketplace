@@ -18,15 +18,32 @@ class AccountPage extends StatelessWidget {
   static const Color gradientEnd = Color(0xFF51E5BF);
   static const Color primaryText = Color(0xFF2D7F6A);
 
+  // !!! PENTING: GANTI DENGAN URL BACKEND ANDA YANG SEBENARNYA !!!
+  static const String BASE_URL = 'http://[YOUR_BASE_URL_HERE]'; 
+
+  // Helper untuk mendapatkan URL avatar lengkap
+  String getAvatarUrl(String? filename) {
+    if (filename == null || filename.isEmpty) {
+      return ''; 
+    }
+    return '$BASE_URL/storage/profiles/$filename';
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Gunakan Selector atau Consumer jika hanya butuh sebagian, atau Provider.of untuk seluruh build
     final authProvider = Provider.of<AuthProvider>(context);
     final UserModel? user = authProvider.user;
 
-    // Jika data user belum siap/loading
-    if (user == null) {
+    // Tampilkan loading jika data user belum siap
+    if (user == null || authProvider.loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+
+    // Tentukan sumber gambar avatar
+    final ImageProvider avatarImage = (user.avatar != null && user.avatar!.isNotEmpty)
+        ? NetworkImage(getAvatarUrl(user.avatar)) as ImageProvider
+        : const AssetImage('assets/image-1.png') as ImageProvider; // Gambar default asset
 
     return Scaffold(
       backgroundColor: Colors.white, 
@@ -59,7 +76,7 @@ class AccountPage extends StatelessWidget {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
               ),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.only(top: 90), // Ruang untuk Avatar
+                padding: const EdgeInsets.only(top: 90), 
                 child: Column(
                   children: [
                     // --- MENU OPTIONS ---
@@ -123,7 +140,7 @@ class AccountPage extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end, 
               children: [
-                // AVATAR
+                // AVATAR FIX: Menggunakan constructed URL/Image
                 Container(
                   width: 130, height: 130,
                   decoration: BoxDecoration(
@@ -133,8 +150,8 @@ class AccountPage extends StatelessWidget {
                     boxShadow: [
                       BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5)),
                     ],
+                    image: DecorationImage(image: avatarImage, fit: BoxFit.cover)
                   ),
-                  child: const Icon(Icons.person, size: 60, color: Colors.white),
                 ),
                 
                 const SizedBox(width: 20),
@@ -163,10 +180,13 @@ class AccountPage extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 5),
-                            if (user.role == 'pedagang' || user.role == 'penjual')
-                              const Icon(Icons.store, color: Colors.orange, size: 20) // Icon Toko
+                            // Tampilkan Icon Role
+                            if (user.role == 'penjual')
+                              const Icon(Icons.store, color: Colors.orange, size: 20)
+                            else if (user.role == 'admin')
+                              const Icon(Icons.shield, color: Colors.red, size: 20)
                             else
-                              const Icon(Icons.verified, color: Colors.blue, size: 20), // Icon Warga
+                              const Icon(Icons.verified, color: Colors.blue, size: 20),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -200,6 +220,7 @@ class AccountPage extends StatelessWidget {
     required VoidCallback onTap,
     bool isLogout = false,
   }) {
+    // ... (widget menu button sama seperti sebelumnya)
     return Container(
       width: double.infinity,
       height: 55, 
