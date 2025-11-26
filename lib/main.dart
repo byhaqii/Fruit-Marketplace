@@ -10,7 +10,7 @@ import 'providers/notification_provider.dart';
 import 'providers/marketplace_provider.dart';
 import 'providers/keuangan_provider.dart';
 import 'providers/warga_provider.dart';
-import 'providers/dashboard_provider.dart'; // <--- JANGAN LUPA IMPORT INI
+import 'providers/dashboard_provider.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
