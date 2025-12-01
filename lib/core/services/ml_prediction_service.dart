@@ -8,13 +8,17 @@ import 'package:image/image.dart' as img_lib;
 import '../../utils/logger.dart'; 
 
 class MlPredictionService {
-  late Interpreter _interpreter;
-  late List<String> _labels;
+  // Gunakan Interpreter? untuk penanganan inisialisasi yang lebih aman
+  Interpreter? _interpreter;
+  List<String> _labels = [];
   final String _modelPath = 'assets/fruit_model.tflite'; 
   final String _labelPath = 'assets/labels.txt';
 
+  // Future yang melacak status inisialisasi model
+  late final Future<void> initialization; 
+
   MlPredictionService() {
-    _loadModel();
+    initialization = _loadModel();
   }
 
   /// Memuat model TFLite dan file label.
@@ -33,10 +37,14 @@ class MlPredictionService {
 
   /// Melakukan inferensi (prediksi) pada gambar buah.
   Future<Map<String, dynamic>> predictFruit(String imagePath) async {
-    if (_labels == null || _labels.isEmpty) { 
-        await _loadModel();
+    // Tunggu sampai model selesai dimuat sebelum melakukan prediksi
+    await initialization;
+    
+    // Pastikan interpreter siap
+    if (_interpreter == null || _labels.isEmpty) {
+      throw Exception("Model ML belum dimuat atau label hilang.");
     }
-
+    
     try {
       final inputImage = img_lib.decodeImage(File(imagePath).readAsBytesSync());
       if (inputImage == null) {
@@ -44,24 +52,21 @@ class MlPredictionService {
       }
 
       // 1. Pra-pemrosesan Gambar (Resize & Normalisasi)
-      final resizedImage = img_lib.copyResize(inputImage, width: 224, height: 224);
-      final inputTensor = Float32List(1 * 224 * 224 * 3).reshape([1, 224, 224, 3]);
+      final int inputSize = 224; 
+      final resizedImage = img_lib.copyResize(inputImage, width: inputSize, height: inputSize);
+      
+      // Menggunakan Float32List untuk tensor input, sesuai kebutuhan TFLite
+      final inputTensor = Float32List(1 * inputSize * inputSize * 3).reshape([1, inputSize, inputSize, 3]);
 
-      for (int y = 0; y < 224; y++) {
-        for (int x = 0; x < 224; x++) {
-          final pixel = resizedImage.getPixel(x, y);
+      for (int y = 0; y < inputSize; y++) {
+        for (int x = 0; x < inputSize; x++) {
+          final pixel = resizedImage.getPixelSafe(x, y);
           
-          // PERBAIKAN FINAL: Mengakses komponen warna Red, Green, Blue 
-          // secara langsung melalui index pada objek Pixel, lalu normalisasi
-          
-          // Channel 0 = Red
-          inputTensor[0][y][x][0] = pixel[0] / 255.0; 
-          
-          // Channel 1 = Green
-          inputTensor[0][y][x][1] = pixel[1] / 255.0;
-          
-          // Channel 2 = Blue
-          inputTensor[0][y][x][2] = pixel[2] / 255.0;
+          // Normalisasi: nilai RGB dibagi 255.0
+          // PERBAIKAN: Menggunakan .r, .g, .b untuk mengakses komponen warna
+          inputTensor[0][y][x][0] = pixel.r / 255.0; // Red
+          inputTensor[0][y][x][1] = pixel.g / 255.0; // Green
+          inputTensor[0][y][x][2] = pixel.b / 255.0; // Blue
         }
       }
 
@@ -69,9 +74,9 @@ class MlPredictionService {
       final outputTensor = Float32List(1 * _labels.length).reshape([1, _labels.length]);
 
       // 3. Jalankan Inferensi
-      _interpreter.run(inputTensor, outputTensor);
+      _interpreter!.run(inputTensor, outputTensor); 
 
-      // 4. Pasca-pemrosesan Output
+      // 4. Pasca-pemrosesan Output (Argmax)
       double maxScore = -1;
       int maxIndex = -1;
       for (int i = 0; i < _labels.length; i++) {
@@ -92,11 +97,12 @@ class MlPredictionService {
       };
     } catch (e) {
       Logger.log('MlService', "Gagal melakukan prediksi ML: $e"); 
-      return {'label': 'ERROR: Prediksi Gagal', 'confidence': 0.0};
+      // Lempar exception agar ScanPage tahu ada error dan menampilkannya.
+      throw Exception('Gagal melakukan prediksi ML: $e'); 
     }
   }
 
   void dispose() {
-    _interpreter.close();
+    _interpreter?.close(); 
   }
 }
