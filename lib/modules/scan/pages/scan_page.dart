@@ -87,14 +87,17 @@ class _ScanPageState extends State<ScanPage> {
     String searchQuery = ""; 
 
     try {
-      // Panggil ML Service untuk Klasifikasi Buah berbasis Fitur (HSV/GLCM/SVM)
+      // Panggil ML Service
       Map<String, dynamic> prediction = await _mlService.predictFruit(imagePath);
       String label = prediction['label'];
       double confidence = prediction['confidence'];
 
       // Klasifikasi Sukses
       searchQuery = label.toUpperCase(); 
-      finalDisplayResult = "HASIL KLASIFIKASI BUAH (SVM):\nJenis: $label\nConfidence: ${(confidence * 100).toStringAsFixed(2)}%";
+      
+      // >>> PERUBAHAN UTAMA DI SINI: Menyederhanakan output <<<
+      // finalDisplayResult sekarang hanya berisi Jenis dan Confidence
+      finalDisplayResult = "Jenis: $label\nConfidence: ${(confidence * 100).toStringAsFixed(2)}%";
       
       // Navigasi ke DisplayPictureScreen
       if (mounted) {
@@ -102,8 +105,8 @@ class _ScanPageState extends State<ScanPage> {
           MaterialPageRoute(
             builder: (context) => DisplayPictureScreen(
               imagePath: imagePath,
-              ocrResult: finalDisplayResult, // Gunakan untuk menampilkan detail ML
-              searchQuery: searchQuery,      
+              ocrResult: finalDisplayResult, // Data Jenis & Confidence
+              searchQuery: searchQuery,      // Data Produk untuk Pencarian
             ),
           ),
         );

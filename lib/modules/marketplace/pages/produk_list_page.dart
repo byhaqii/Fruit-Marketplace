@@ -1,4 +1,5 @@
 // lib/modules/marketplace/pages/produk_list_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../models/produk_model.dart';
@@ -6,12 +7,37 @@ import 'produk_detail_page.dart';
 import 'produk_cart_page.dart';
 import '../../../providers/marketplace_provider.dart';
 
-class ProdukListPage extends StatelessWidget {
+class ProdukListPage extends StatefulWidget { // UBAH ke StatefulWidget
   static const Color kPrimaryColor = Color(0xFF1E605A);
+  final String? initialSearchQuery; // NEW: Terima query pencarian
 
-  const ProdukListPage({super.key});
+  const ProdukListPage({super.key, this.initialSearchQuery});
 
-  // --- WIDGET SEARCH BAR & CART ---
+  @override
+  State<ProdukListPage> createState() => _ProdukListPageState();
+}
+
+class _ProdukListPageState extends State<ProdukListPage> {
+  late TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inisialisasi controller dengan nilai query yang masuk
+    _searchController = TextEditingController(text: widget.initialSearchQuery);
+    
+    // TODO: Jika initialSearchQuery ada, Anda bisa memanggil fungsi filter 
+    // pada MarketplaceProvider di sini untuk menyaring produk.
+  }
+  
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+
+  // --- WIDGET SEARCH BAR & CART (Menggunakan _searchController) ---
   Widget _buildSearchBarAndCart(BuildContext context) {
     // Menggunakan Selector untuk performa lebih baik (hanya rebuild jika cartItemCount berubah)
     return Padding(
@@ -26,13 +52,18 @@ class ProdukListPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.grey[300]!),
               ),
-              child: const TextField(
-                decoration: InputDecoration(
+              child: TextField( // Diubah dari const TextField
+                controller: _searchController, // NEW: Gunakan controller
+                decoration: const InputDecoration(
                   hintText: 'Search',
                   prefixIcon: Icon(Icons.search, color: Colors.grey),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),
+                onSubmitted: (query) {
+                  // TODO: Implementasi logika search/filter di sini.
+                  print('Search submitted: $query');
+                },
               ),
             ),
           ),
@@ -82,10 +113,10 @@ class ProdukListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-    const extraBottomSpace = 90.0; // Space agar tidak tertutup BottomNavBar
+    const extraBottomSpace = 90.0; 
 
     return Scaffold(
-      backgroundColor: kPrimaryColor,
+      backgroundColor: ProdukListPage.kPrimaryColor, // Akses static constant via class name
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60.0),
         child: Container(
@@ -144,7 +175,7 @@ class ProdukListPage extends StatelessWidget {
   }
 }
 
-// --- WIDGET KARTU PRODUK (DIPERBAIKI) ---
+// --- WIDGET KARTU PRODUK (TIDAK BERUBAH) ---
 class ProdukCard extends StatelessWidget {
   final ProdukModel produk;
   final VoidCallback onTap;
@@ -190,7 +221,6 @@ class ProdukCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. PERBAIKAN: Ganti 'title' dengan 'namaProduk'
                   Text(
                     produk.namaProduk, 
                     style: const TextStyle(
@@ -200,7 +230,7 @@ class ProdukCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   
-                  // Kategori (Ganti statis '500g' dengan kategori asli)
+                  // Kategori
                   Text(
                     produk.kategori.isNotEmpty ? produk.kategori : 'Umum',
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
@@ -215,12 +245,12 @@ class ProdukCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      // Harga (Menggunakan getter formattedPrice dari model)
+                      // Harga
                       Text(
                         produk.formattedPrice,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15, // Sedikit diperkecil agar muat
+                          fontSize: 15,
                           color: Colors.black,
                         ),
                       ),
