@@ -10,6 +10,7 @@ import '../../../config/env.dart'; // <<< Tambahkan import Env
 // Import Halaman Sub-Menu
 import 'setting_page.dart'; 
 import 'profile_page.dart';
+import 'aboutus_page.dart';
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
@@ -104,8 +105,10 @@ class AccountPage extends StatelessWidget {
                       title: "About Us",
                       icon: Icons.info_outline,
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Aplikasi Fruit Marketplace v1.0'))
+                        // PERUBAHAN: Navigasi ke AboutUsPage
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(builder: (_) => const AboutUsPage())
                         );
                       },
                     ),
