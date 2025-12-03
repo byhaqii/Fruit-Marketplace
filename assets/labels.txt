@@ -1,4 +1,4 @@
-Apple
 Bali Orange
-Peach
-Tomato
+apple
+peach
+tomato

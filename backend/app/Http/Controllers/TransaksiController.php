@@ -135,6 +135,20 @@ class TransaksiController extends Controller
             return response()->json(['message' => 'Gagal transaksi', 'error' => $e->getMessage()], 500);
         }
     }
+    public function getUserTransactions()
+    {
+        // Ambil ID pengguna yang sedang login
+        $userId = Auth::id();
+        
+        // Ambil transaksi milik user ID tersebut, urutkan dari yang terbaru
+        // Eager load orderItems dan produknya untuk parsing di Flutter
+        $transaksi = Transaksi::where('user_id', $userId)
+            ->with(['orderItems.produk']) 
+            ->latest() // Urutkan dari yang terbaru
+            ->get();
+            
+        return response()->json($transaksi);
+    }
 
     // =================================================================
     // 3. FITUR PENJUAL (SELLER)

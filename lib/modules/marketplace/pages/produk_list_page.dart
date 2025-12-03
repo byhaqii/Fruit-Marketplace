@@ -10,7 +10,7 @@ import '../../../providers/marketplace_provider.dart';
 // --- PRODUK LIST PAGE ---
 
 class ProdukListPage extends StatefulWidget { 
-  static const Color kPrimaryColor = Color(0xFF1E605A);
+  static const Color kPrimaryColor = Color(0xFF1E605A); // Warna Latar Belakang Tetap
   final String? initialSearchQuery; 
 
   const ProdukListPage({super.key, this.initialSearchQuery});
@@ -59,14 +59,17 @@ class _ProdukListPageState extends State<ProdukListPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.grey[300]!),
+                boxShadow: [ 
+                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, 2))
+                ]
               ),
               child: TextField( 
                 controller: _searchController, 
                 decoration: const InputDecoration(
-                  hintText: 'Search',
+                  hintText: 'Cari Produk...', 
                   prefixIcon: Icon(Icons.search, color: Colors.grey),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 14),
+                  contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 8),
                 ),
               ),
             ),
@@ -79,21 +82,22 @@ class _ProdukListPageState extends State<ProdukListPage> {
                 icon: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    const Icon(Icons.shopping_cart_outlined, color: Colors.black),
+                    // Ikon Keranjang Utama
+                    const Icon(Icons.shopping_cart_outlined, color: Colors.black, size: 28), 
                     if (provider.cartItemCount > 0)
                       Positioned(
-                        right: -6,
-                        top: -6,
+                        right: -4,
+                        top: -4,
                         child: Container(
-                          padding: const EdgeInsets.all(1),
+                          padding: const EdgeInsets.all(4), 
                           decoration: BoxDecoration(
                             color: Colors.red,
-                            borderRadius: BorderRadius.circular(6),
+                            shape: BoxShape.circle,
                           ),
-                          constraints: const BoxConstraints(minWidth: 12, minHeight: 12),
+                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                           child: Text(
                             provider.cartItemCount.toString(),
-                            style: const TextStyle(color: Colors.white, fontSize: 8),
+                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -116,8 +120,9 @@ class _ProdukListPageState extends State<ProdukListPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Padding aman 200.0 piksel untuk membersihkan BottomBar
-    const safeBottomClearance = 200.0; 
+    // PERBAIKAN UTAMA: Mengurangi padding aman ke nilai yang sangat kecil
+    // Nilai 8.0 piksel seharusnya cukup untuk menghilangkan sisa overflow 17px.
+    const safeBottomClearance = 8.0; 
 
     return Scaffold(
       backgroundColor: ProdukListPage.kPrimaryColor,
@@ -130,7 +135,6 @@ class _ProdukListPageState extends State<ProdukListPage> {
           ),
         ),
       ),
-      // STRUKTUR STABIL: SingleChildScrollView + GridView non-scrollable
       body: Consumer<MarketplaceProvider>(
         builder: (context, provider, child) {
           final produkList = provider.products;
@@ -163,8 +167,8 @@ class _ProdukListPageState extends State<ProdukListPage> {
                     currentQuery.isNotEmpty ? 'Hasil Pencarian untuk "$currentQuery"' : 'Semua Produk',
                     style: const TextStyle(
                       color: Colors.white, 
-                      fontSize: 18, 
-                      fontWeight: FontWeight.bold
+                      fontSize: 20, 
+                      fontWeight: FontWeight.w900
                     ),
                   ),
                 ),
@@ -173,10 +177,10 @@ class _ProdukListPageState extends State<ProdukListPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: GridView.builder(
-                    shrinkWrap: true, // Wajib: GridView akan mengambil tinggi sesuai konten
-                    physics: const NeverScrollableScrollPhysics(), // Wajib: Scroll ditangani oleh SingleChildScrollView
+                    shrinkWrap: true, 
+                    physics: const NeverScrollableScrollPhysics(), 
                     itemCount: produkList.length,
-                    padding: EdgeInsets.zero, // Hapus padding default
+                    padding: EdgeInsets.zero, 
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       mainAxisSpacing: 16,
@@ -202,7 +206,7 @@ class _ProdukListPageState extends State<ProdukListPage> {
                   ),
                 ),
                 
-                // PADDING AKHIR: Memberikan ruang aman 200.0 piksel untuk clearance
+                // PADDING AKHIR yang sangat kecil untuk mencegah overflow
                 const SizedBox(height: safeBottomClearance), 
 
               ],
@@ -214,7 +218,7 @@ class _ProdukListPageState extends State<ProdukListPage> {
   }
 }
 
-// --- WIDGET KARTU PRODUK (tetap sama) ---
+// --- WIDGET KARTU PRODUK (Tampilan Diperbaiki) ---
 class ProdukCard extends StatelessWidget {
   final ProdukModel produk;
   final VoidCallback onTap;
@@ -229,16 +233,23 @@ class ProdukCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const Color kPrimaryColor = ProdukListPage.kPrimaryColor;
+    
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        color: Colors.white,
-        elevation: 2, 
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: Colors.grey[200]!, width: 1),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1), 
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        clipBehavior: Clip.hardEdge,
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -261,61 +272,71 @@ class ProdukCard extends StatelessWidget {
             ),
             
             // Detail Produk
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    produk.namaProduk, 
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 16),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  
-                  // Kategori
-                  Text(
-                    produk.kategori.isNotEmpty ? produk.kategori : 'Umum',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // Harga & Tombol Add
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // Harga
-                      Text(
-                        produk.formattedPrice,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16, 
-                          color: Colors.black,
-                        ),
-                      ),
-                      
-                      // Tombol Add (Dibuat Fungsional)
-                      GestureDetector(
-                        onTap: () => onAddToCart(produk), // Panggil callback saat di-tap
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
-                            borderRadius: BorderRadius.circular(8),
+            Expanded( 
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      produk.namaProduk, 
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 16, color: Colors.black87), 
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    
+                    // Kategori
+                    Text(
+                      produk.kategori.isNotEmpty ? produk.kategori : 'Umum',
+                      style: const TextStyle(color: kPrimaryColor, fontSize: 12, fontWeight: FontWeight.w500), 
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    const Spacer(), 
+                    // Harga & Tombol Add
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Harga
+                        Expanded(
+                          child: Text(
+                            produk.formattedPrice,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900, 
+                              fontSize: 17, 
+                              color: kPrimaryColor, 
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          child: const Icon(Icons.add, color: Colors.white, size: 20),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        
+                        // Tombol Add 
+                        GestureDetector(
+                          onTap: () => onAddToCart(produk), 
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: kPrimaryColor,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(color: kPrimaryColor.withOpacity(0.5), blurRadius: 4, offset: const Offset(0, 2))
+                              ]
+                            ),
+                            child: const Icon(Icons.add_shopping_cart, color: Colors.white, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

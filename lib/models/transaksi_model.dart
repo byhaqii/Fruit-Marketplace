@@ -39,6 +39,20 @@ class TransaksiModel {
     var firstItem = listItemsJson?.isNotEmpty == true ? listItemsJson![0] : null;
     var produk = firstItem != null ? firstItem['produk'] : null;
 
+    // Hitung jumlah item untuk judul ringkasan
+    final int itemCount = listItemsJson?.length ?? 0;
+
+    // LOGIKA PERBAIKAN UNTUK TITLE:
+    String calculatedTitle = 'Pesanan #${json['order_id'] ?? '-'}'; 
+    if (itemCount == 1 && produk != null) {
+      // Jika hanya 1 barang, tampilkan nama barangnya
+      calculatedTitle = produk['nama_produk'] ?? 'Produk';
+    } else if (itemCount > 1) {
+      // Jika lebih dari 1, tampilkan nama barang pertama + jumlah produk lainnya
+      String firstName = produk != null ? (produk['nama_produk'] ?? 'Produk') : 'Produk';
+      calculatedTitle = "$firstName dan ${itemCount - 1} Produk Lainnya";
+    }
+
     // Parsing aman untuk total harga
     int rawHarga = 0;
     if (json['total_harga'] != null) {
@@ -49,7 +63,7 @@ class TransaksiModel {
       id: json['id'],
       orderId: json['order_id'] ?? '-', // Ambil Order ID
       totalHarga: rawHarga,            // Simpan nilai integer
-      title: produk != null ? (produk['nama_produk'] ?? 'Produk') : (json['order_id'] ?? 'Pesanan'),
+      title: calculatedTitle, // <-- Menggunakan title yang sudah diperbarui
       date: json['created_at'] ?? '-',
       price: "Rp ${json['total_harga']}", 
       status: json['order_status'] ?? 'Unknown',
