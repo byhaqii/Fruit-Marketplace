@@ -140,6 +140,33 @@ class AuthProvider with ChangeNotifier {
       notifyListeners(); 
     }
   }
+  
+  Future<void> changePassword(String newPassword) async {
+    _setLoading(true);
+    try {
+      // Kita kirim nama & email saat ini agar validasi backend tetap lolos
+      // Backend Anda: ProfileController@update mengecek 'email' => 'unique...'
+      Map<String, dynamic> fields = {
+        'name': _user?.name ?? '',
+        'email': _user?.email ?? '',
+        'password': newPassword,
+      };
+
+      // Gunakan postMultipart (sesuai logika updateProfile) atau post biasa
+      // Karena tidak ada file, post biasa sebenarnya cukup, tapi kita ikuti pola yang ada.
+      final response = await apiClient.post('/profile', fields);
+
+      // Update data user lokal jika berhasil
+      if (response != null && response['user'] is Map<String, dynamic>) {
+        _user = UserModel.fromJson(response['user']);
+      }
+    } catch (e) {
+      rethrow;
+    } finally {
+      _setLoading(false);
+      notifyListeners();
+    }
+  }
   // =======================================================
 
   Future<void> logout() async {
