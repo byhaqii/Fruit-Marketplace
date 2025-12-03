@@ -22,14 +22,14 @@ class TransaksiController extends Controller
 
     public function index()
     {
-        // PERBAIKAN: Menggunakan 'orderItems' sesuai nama fungsi di Model Transaksi.php
+        // Perbaikan di Model Transaksi.php sudah dilakukan
         $transaksi = Transaksi::with(['user', 'orderItems.produk'])->latest()->get();
         return response()->json($transaksi);
     }
 
     public function show($id)
     {
-        // PERBAIKAN: Menggunakan 'orderItems'
+        // Perbaikan di Model Transaksi.php sudah dilakukan
       $transaksi = Transaksi::with(['user', 'orderItems.produk'])->find($id);
         if (!$transaksi) return response()->json(['message' => 'Not Found'], 404);
 
@@ -92,6 +92,8 @@ class TransaksiController extends Controller
                 foreach ($items as $d) $subtotal += $d['produk']->harga * $d['qty'];
                 
                 $ongkir = 10000; 
+                // PERBAIKAN MINOR: Kolom 'kurir' dan 'layanan_kurir' tetap dikosongkan 
+                // di sini karena baru akan diisi oleh penjual saat status 'Dikirim'.
                 $transaksi = Transaksi::create([
                     'user_id'           => Auth::id(),
                     'order_id'          => 'INV-' . time() . '-' . Str::random(4),
@@ -145,7 +147,7 @@ class TransaksiController extends Controller
     {
         $user = Auth::user();
 
-        // PERBAIKAN: Menggunakan 'orderItems'
+        // Perbaikan di Model Transaksi.php sudah dilakukan
         $transaksi = Transaksi::whereHas('orderItems.produk', function ($query) use ($user) {
             $query->where('user_id', $user->id);
         })
@@ -163,14 +165,17 @@ class TransaksiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'status' => 'required|string|in:Diproses,Dikirim,Dibatalkan',
-            'nomor_resi' => 'nullable|string' // Resi opsional/wajib tergantung status
+            'nomor_resi' => 'nullable|string', 
+            // PERBAIKAN: Tambahkan validasi untuk kurir dan layanan_kurir
+            'kurir' => 'nullable|string', 
+            'layanan_kurir' => 'nullable|string'
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        // PERBAIKAN: Menggunakan 'orderItems'
+        // Perbaikan di Model Transaksi.php sudah dilakukan
         $transaksi = Transaksi::with('orderItems.produk')->find($id);
 
         if (!$transaksi) {
@@ -205,9 +210,14 @@ class TransaksiController extends Controller
 
         // Update status & Resi
         $transaksi->order_status = $newStatus;
-        if ($request->has('nomor_resi') && $newStatus === 'Dikirim') {
-            $transaksi->nomor_resi = $request->nomor_resi;
+        
+        // PERBAIKAN: Simpan kurir, layanan_kurir, dan nomor_resi jika status Dikirim
+        if ($newStatus === 'Dikirim') {
+            if ($request->has('nomor_resi')) $transaksi->nomor_resi = $request->nomor_resi;
+            if ($request->has('kurir')) $transaksi->kurir = $request->kurir;
+            if ($request->has('layanan_kurir')) $transaksi->layanan_kurir = $request->layanan_kurir;
         }
+
         $transaksi->save();
 
         // Kirim Notifikasi ke Pembeli
@@ -232,7 +242,7 @@ class TransaksiController extends Controller
     // ================================================================
     public function markAsReceived(Request $request, $id): JsonResponse
     {
-        // PERBAIKAN: Menggunakan 'orderItems'
+        // Perbaikan di Model Transaksi.php sudah dilakukan
         $transaksi = Transaksi::with('orderItems.produk.user')->find($id);
         
         if (!$transaksi) {

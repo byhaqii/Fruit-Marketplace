@@ -7,9 +7,11 @@ import 'produk_detail_page.dart';
 import 'produk_cart_page.dart';
 import '../../../providers/marketplace_provider.dart';
 
-class ProdukListPage extends StatefulWidget { // UBAH ke StatefulWidget
+// --- PRODUK LIST PAGE ---
+
+class ProdukListPage extends StatefulWidget { 
   static const Color kPrimaryColor = Color(0xFF1E605A);
-  final String? initialSearchQuery; // NEW: Terima query pencarian
+  final String? initialSearchQuery; 
 
   const ProdukListPage({super.key, this.initialSearchQuery});
 
@@ -23,23 +25,29 @@ class _ProdukListPageState extends State<ProdukListPage> {
   @override
   void initState() {
     super.initState();
-    // Inisialisasi controller dengan nilai query yang masuk
     _searchController = TextEditingController(text: widget.initialSearchQuery);
+    _searchController.addListener(_onSearchChanged);
     
-    // TODO: Jika initialSearchQuery ada, Anda bisa memanggil fungsi filter 
-    // pada MarketplaceProvider di sini untuk menyaring produk.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _onSearchChanged();
+    });
+  }
+
+  void _onSearchChanged() {
+    Provider.of<MarketplaceProvider>(context, listen: false)
+            .filterProducts(_searchController.text);
   }
   
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
 
 
-  // --- WIDGET SEARCH BAR & CART (Menggunakan _searchController) ---
+  // --- WIDGET SEARCH BAR & CART ---
   Widget _buildSearchBarAndCart(BuildContext context) {
-    // Menggunakan Selector untuk performa lebih baik (hanya rebuild jika cartItemCount berubah)
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
@@ -52,18 +60,14 @@ class _ProdukListPageState extends State<ProdukListPage> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.grey[300]!),
               ),
-              child: TextField( // Diubah dari const TextField
-                controller: _searchController, // NEW: Gunakan controller
+              child: TextField( 
+                controller: _searchController, 
                 decoration: const InputDecoration(
                   hintText: 'Search',
                   prefixIcon: Icon(Icons.search, color: Colors.grey),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),
-                onSubmitted: (query) {
-                  // TODO: Implementasi logika search/filter di sini.
-                  print('Search submitted: $query');
-                },
               ),
             ),
           ),
@@ -112,11 +116,11 @@ class _ProdukListPageState extends State<ProdukListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    const extraBottomSpace = 90.0; 
+    // Padding aman 200.0 piksel untuk membersihkan BottomBar
+    const safeBottomClearance = 200.0; 
 
     return Scaffold(
-      backgroundColor: ProdukListPage.kPrimaryColor, // Akses static constant via class name
+      backgroundColor: ProdukListPage.kPrimaryColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60.0),
         child: Container(
@@ -126,47 +130,82 @@ class _ProdukListPageState extends State<ProdukListPage> {
           ),
         ),
       ),
+      // STRUKTUR STABIL: SingleChildScrollView + GridView non-scrollable
       body: Consumer<MarketplaceProvider>(
         builder: (context, provider, child) {
           final produkList = provider.products;
+          final currentQuery = _searchController.text;
 
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator(color: Colors.white));
           }
 
           if (produkList.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'Tidak ada produk yang tersedia.',
-                style: TextStyle(color: Colors.white70),
+                currentQuery.isNotEmpty 
+                  ? 'Produk dengan nama "$currentQuery" tidak ditemukan.'
+                  : 'Tidak ada produk yang tersedia.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70),
               ),
             );
           }
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: GridView.builder(
-              itemCount: produkList.length,
-              padding: EdgeInsets.only(bottom: bottomPadding + extraBottomSpace),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 0.67,
-              ),
-              itemBuilder: (context, index) {
-                final item = produkList[index];
-                return ProdukCard(
-                  produk: item,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => ProdukDetailPage(produk: item)),
-                    );
-                  },
-                );
-              },
+          return SingleChildScrollView( 
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header List Produk
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
+                  child: Text(
+                    currentQuery.isNotEmpty ? 'Hasil Pencarian untuk "$currentQuery"' : 'Semua Produk',
+                    style: const TextStyle(
+                      color: Colors.white, 
+                      fontSize: 18, 
+                      fontWeight: FontWeight.bold
+                    ),
+                  ),
+                ),
+                
+                // GridView
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: GridView.builder(
+                    shrinkWrap: true, // Wajib: GridView akan mengambil tinggi sesuai konten
+                    physics: const NeverScrollableScrollPhysics(), // Wajib: Scroll ditangani oleh SingleChildScrollView
+                    itemCount: produkList.length,
+                    padding: EdgeInsets.zero, // Hapus padding default
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 0.67,
+                    ),
+                    itemBuilder: (context, index) {
+                      final item = produkList[index];
+                      return ProdukCard(
+                        produk: item,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => ProdukDetailPage(produk: item)),
+                          );
+                        },
+                        onAddToCart: (p) {
+                          provider.incrementQuantity(p);
+                        },
+                      );
+                    },
+                  ),
+                ),
+                
+                // PADDING AKHIR: Memberikan ruang aman 200.0 piksel untuk clearance
+                const SizedBox(height: safeBottomClearance), 
+
+              ],
             ),
           );
         },
@@ -175,12 +214,18 @@ class _ProdukListPageState extends State<ProdukListPage> {
   }
 }
 
-// --- WIDGET KARTU PRODUK (TIDAK BERUBAH) ---
+// --- WIDGET KARTU PRODUK (tetap sama) ---
 class ProdukCard extends StatelessWidget {
   final ProdukModel produk;
   final VoidCallback onTap;
+  final void Function(ProdukModel) onAddToCart; 
 
-  const ProdukCard({required this.produk, required this.onTap, super.key});
+  const ProdukCard({
+    required this.produk, 
+    required this.onTap, 
+    required this.onAddToCart, 
+    super.key
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -188,10 +233,10 @@ class ProdukCard extends StatelessWidget {
       onTap: onTap,
       child: Card(
         color: Colors.white,
-        elevation: 0,
+        elevation: 2, 
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: Colors.grey[300]!, width: 1),
+          side: BorderSide(color: Colors.grey[200]!, width: 1),
         ),
         clipBehavior: Clip.hardEdge,
         child: Column(
@@ -224,7 +269,7 @@ class ProdukCard extends StatelessWidget {
                   Text(
                     produk.namaProduk, 
                     style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 16),
+                        fontWeight: FontWeight.w700, fontSize: 16),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -250,20 +295,23 @@ class ProdukCard extends StatelessWidget {
                         produk.formattedPrice,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 16, 
                           color: Colors.black,
                         ),
                       ),
                       
-                      // Tombol Add (Visual Saja)
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(8),
+                      // Tombol Add (Dibuat Fungsional)
+                      GestureDetector(
+                        onTap: () => onAddToCart(produk), // Panggil callback saat di-tap
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.add, color: Colors.white, size: 20),
                         ),
-                        child: const Icon(Icons.add, color: Colors.white, size: 20),
                       ),
                     ],
                   ),

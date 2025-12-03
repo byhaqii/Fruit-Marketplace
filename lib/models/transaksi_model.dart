@@ -65,6 +65,13 @@ class TransaksiModel {
   bool get isWaiting => status == 'menunggu konfirmasi';
   bool get isProcessed => status == 'Diproses';
   bool get isShipped => status == 'Dikirim';
-  bool get isSuccess => status == 'Selesai' || status == 'Tiba di tujuan';
-  bool get isCancelled => status == 'Cancel' || status == 'Dibatalkan';
+  
+  // PERBAIKAN 1: Tambahkan getter untuk status yang memungkinkan penerimaan barang.
+  bool get isReceivable => status == 'Dikirim' || status == 'Tiba di tujuan';
+
+  // PERBAIKAN 2: isSuccess hanya untuk status yang sudah selesai/siap diulas.
+  bool get isSuccess => status == 'Selesai';
+
+  // PERBAIKAN 3: isCancelled hanya menggunakan status dari enum backend
+  bool get isCancelled => status == 'Dibatalkan'; 
 }

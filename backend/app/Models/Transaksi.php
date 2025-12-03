@@ -28,7 +28,9 @@ class Transaksi extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function items() // Saya ubah kembali ke 'items' agar konsisten dengan Controller
+    // PERBAIKAN KRITIS: Ganti nama fungsi relasi dari 'items' ke 'orderItems'
+    // agar sesuai dengan penggunaan di TransaksiController.php
+    public function orderItems() 
     {
         return $this->hasMany(OrderItem::class, 'transaksi_id');
     }

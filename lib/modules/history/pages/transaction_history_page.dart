@@ -52,7 +52,8 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     Color statusColor = Colors.grey;
     if (data.isWaiting) statusColor = Colors.orange;
     else if (data.isProcessed) statusColor = Colors.blue;
-    else if (data.isShipped) statusColor = Colors.purple;
+    // PERBAIKAN: Gunakan isReceivable (Dikirim atau Tiba di tujuan) untuk warna ungu
+    else if (data.isReceivable) statusColor = Colors.purple; 
     else if (data.isSuccess) statusColor = Colors.green;
     else if (data.isCancelled) statusColor = Colors.red;
 
@@ -152,8 +153,9 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                     child: const Text("Batalkan", style: TextStyle(color: Colors.white)),
                   ),
 
-                // 2. Tombol Terima Barang (Hanya jika Dikirim)
-                if (data.isShipped)
+                // 2. Tombol Terima Barang (Hanya jika Dikirim atau Tiba di tujuan)
+                // PERBAIKAN: Menggunakan isReceivable
+                if (data.isReceivable)
                   ElevatedButton(
                     onPressed: () async {
                        // Panggil fungsi terima di provider
@@ -163,7 +165,8 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                     child: const Text("Terima Barang", style: TextStyle(color: Colors.white)),
                   ),
 
-                // 3. Tombol Ulasan (Hanya jika Sukses / Tiba di tujuan)
+                // 3. Tombol Ulasan (Hanya jika Selesai)
+                // PERBAIKAN: Menggunakan isSuccess
                 if (data.isSuccess)
                   OutlinedButton(
                     onPressed: () {

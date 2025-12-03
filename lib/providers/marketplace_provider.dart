@@ -1,16 +1,16 @@
-// lib/providers/marketplace_provider.dart
-
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart'; 
 import '../core/network/api_client.dart';
 import '../models/produk_model.dart';
 import '../models/transaksi_model.dart';
+import '../utils/logger.dart'; // Pastikan Logger diimpor
 
 class MarketplaceProvider with ChangeNotifier {
   final ApiClient apiClient;
 
   // --- STATE ---
-  List<ProdukModel> _products = [];
+  List<ProdukModel> _allProducts = []; // Data lengkap dari API (Sumber utama)
+  List<ProdukModel> _filteredProducts = []; // Data yang ditampilkan di UI (Hasil filter)
   Map<int, int> _cartItems = {}; 
   List<TransaksiModel> _transactions = [];
   bool _isLoading = false;
@@ -23,13 +23,14 @@ class MarketplaceProvider with ChangeNotifier {
 
   // --- GETTERS ---
   bool get isLoading => _isLoading;
-  List<ProdukModel> get products => _products;
+  List<ProdukModel> get products => _filteredProducts; 
   List<TransaksiModel> get transactions => _transactions;
 
   // Mengembalikan daftar PRODUK UNIK yang ada di keranjang
   List<ProdukModel> get cartItems {
     return _cartItems.keys.map((productId) {
-      return _products.firstWhere(
+      // Selalu cari produk dari _allProducts (list lengkap)
+      return _allProducts.firstWhere( 
         (p) => p.id == productId,
         orElse: () => const ProdukModel(
             id: -1, userId: 0, namaProduk: 'Unknown', deskripsi: '', 
@@ -49,7 +50,8 @@ class MarketplaceProvider with ChangeNotifier {
     int total = 0;
     _cartItems.forEach((productId, quantity) {
       try {
-        final product = _products.firstWhere((p) => p.id == productId);
+        // Selalu cari produk dari _allProducts (list lengkap)
+        final product = _allProducts.firstWhere((p) => p.id == productId); 
         total += product.harga * quantity; 
       } catch (e) {
         print("Error: Produk ID $productId tidak ditemukan di list lokal.");
@@ -74,14 +76,33 @@ class MarketplaceProvider with ChangeNotifier {
     }
     return 'Rp ${buffer.toString().split('').reversed.join()}';
   }
+  
+  // --- FITUR FILTERING ---
+  
+  /// Memfilter produk yang ditampilkan berdasarkan query pencarian.
+  void filterProducts(String query) {
+    final lowerCaseQuery = query.toLowerCase();
+    Logger.log('MarketplaceProvider', 'Filtering products with query: $query');
+
+    if (lowerCaseQuery.isEmpty) {
+        _filteredProducts = _allProducts;
+    } else {
+        _filteredProducts = _allProducts.where((produk) {
+            final matchesName = produk.namaProduk.toLowerCase().contains(lowerCaseQuery);
+            final matchesCategory = produk.kategori.toLowerCase().contains(lowerCaseQuery);
+            return matchesName || matchesCategory;
+        }).toList();
+    }
+    notifyListeners();
+  }
+
 
   // --- METHODS KERANJANG ---
-
   int getQuantity(ProdukModel produk) {
     return _cartItems[produk.id] ?? 0;
   }
 
-  void incrementQuantity(ProdukModel produk) {
+  void incrementQuantity(ProdukModel produk) { 
     if (_cartItems.containsKey(produk.id)) {
       _cartItems[produk.id] = _cartItems[produk.id]! + 1;
     } else {
@@ -133,26 +154,37 @@ class MarketplaceProvider with ChangeNotifier {
     try {
       final resp = await apiClient.get('/produk'); 
       if (resp is List) {
-        _products = resp
+        final fetchedProducts = resp
             .map((json) => ProdukModel.fromJson(json as Map<String, dynamic>))
             .toList();
+             
+        _allProducts = fetchedProducts; 
+        _filteredProducts = fetchedProducts; // Inisialisasi list tampilan
       }
     } catch (e) {
       print('Error fetching products: $e');
     }
   }
-
+  
   /// GET /transaksi (History)
+  // FIX: Dibuat lebih robust untuk penanganan error API
   Future<void> fetchTransactions() async {
     try {
       final resp = await apiClient.get('/transaksi'); 
+      
       if (resp is List) {
         _transactions = resp
             .map((json) => TransaksiModel.fromJson(json as Map<String, dynamic>))
             .toList();
+      } else {
+        _transactions = []; 
       }
+    } on DioException catch (e) {
+      print('Dio Error fetching transactions: ${e.response?.data ?? e.message}');
+      _transactions = []; 
     } catch (e) {
-      print('Error fetching transactions: $e');
+      print('General Error fetching transactions: $e');
+      _transactions = [];
     }
   }
 
@@ -162,14 +194,25 @@ class MarketplaceProvider with ChangeNotifier {
   Future<bool> checkout(String alamat, String paymentMethod) async {
     try {
       List<Map<String, dynamic>> itemsPayload = [];
+      
       _cartItems.forEach((id, qty) {
-        final product = _products.firstWhere((p) => p.id == id);
-        itemsPayload.add({
-          'produk_id': id,
-          'jumlah': qty,
-          'harga_saat_beli': product.harga,
-        });
+        final productIndex = _allProducts.indexWhere((p) => p.id == id); 
+        
+        if (productIndex != -1) {
+          final product = _allProducts[productIndex];
+          itemsPayload.add({
+            'produk_id': id,
+            'jumlah': qty,
+            'harga_saat_beli': product.harga,
+          });
+        } else {
+          print('Warning: Produk ID $id di keranjang tidak ditemukan saat checkout.');
+        }
       });
+      
+      if (itemsPayload.isEmpty) {
+          return false;
+      }
 
       final payload = {
         'total_harga': totalCost,
@@ -234,7 +277,7 @@ class MarketplaceProvider with ChangeNotifier {
     return results.take(10).toList();
   }
 
-  // --- FITUR PENJUAL (LENGKAP & FIXED) ---
+  // --- FITUR PENJUAL ---
 
   /// POST /produk (Tambah Produk)
   Future<bool> addProduct({
@@ -266,7 +309,6 @@ class MarketplaceProvider with ChangeNotifier {
   }
 
   /// PUT /produk/{id} (Edit Produk)
-  /// PERBAIKAN PENTING: Menggunakan POST dengan _method: PUT agar file terbaca di PHP
   Future<bool> updateProduct({
     required int id,
     required String nama,
@@ -297,7 +339,6 @@ class MarketplaceProvider with ChangeNotifier {
       FormData formData = FormData.fromMap(dataMap);
 
       // PENTING: Gunakan POST, bukan PUT. Backend akan membacanya sebagai PUT karena ada _method
-      // Hapus "data:" parameter named, gunakan positional argument
       await apiClient.post('/produk/$id', formData, options: options);
       
       await fetchProducts(); 
@@ -318,7 +359,8 @@ class MarketplaceProvider with ChangeNotifier {
       final options = await apiClient.optionsWithAuth();
       await apiClient.dio.delete('/produk/$id', options: options);
       
-      _products.removeWhere((p) => p.id == id);
+      _allProducts.removeWhere((p) => p.id == id);
+      _filteredProducts.removeWhere((p) => p.id == id);
       notifyListeners();
       return true;
     } catch (e) {
