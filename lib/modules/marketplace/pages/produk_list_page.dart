@@ -185,7 +185,7 @@ class _ProdukListPageState extends State<ProdukListPage> {
                       crossAxisCount: 2,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
-                      childAspectRatio: 0.67,
+                      childAspectRatio: 0.60,
                     ),
                     itemBuilder: (context, index) {
                       final item = produkList[index];
@@ -274,7 +274,7 @@ class ProdukCard extends StatelessWidget {
             // Detail Produk
             Expanded( 
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -285,7 +285,7 @@ class ProdukCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     
                     // Kategori
                     Text(
@@ -297,7 +297,7 @@ class ProdukCard extends StatelessWidget {
                     
                     const SizedBox(height: 8),
                     
-                    const Spacer(), 
+                    // const Spacer(), 
                     // Harga & Tombol Add
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -344,4 +344,4 @@ class ProdukCard extends StatelessWidget {
       ),
     );
   }
-}
+} 
