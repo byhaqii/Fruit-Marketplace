@@ -84,6 +84,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         title: const Text("Riwayat Transaksi", style: TextStyle(color: Colors.white)),
         backgroundColor: kPrimaryColor,
         iconTheme: const IconThemeData(color: Colors.white),
+        automaticallyImplyLeading: false, // <--- TAMBAHKAN BARIS INI
       ),
       body: Consumer<MarketplaceProvider>(
         builder: (context, provider, child) {

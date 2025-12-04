@@ -10,7 +10,7 @@ import '../../../core/services/ml_prediction_service.dart';
 // Import display screen
 import '../widget/displaypicture_screen.dart'; 
 
-// Variabel global 'cameras' (asumsi diinisialisasi di main.dart)
+// Variabel global
 List<CameraDescription> cameras = []; 
 
 class ScanPage extends StatefulWidget {
@@ -20,59 +20,149 @@ class ScanPage extends StatefulWidget {
   State<ScanPage> createState() => _ScanPageState();
 }
 
-class _ScanPageState extends State<ScanPage> {
+class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   // --- Camera Controller & State ---
   CameraController? _controller;
+  CameraDescription? _currentDescription; 
   late Future<void> _initializeControllerFuture;
   bool _isProcessing = false;
   final ImagePicker _picker = ImagePicker(); 
   
-  // Hanya ML Service (sesuai permintaan klasifikasi HSV/GLCM/SVM)
+  // Hanya ML Service
   late final MlPredictionService _mlService; 
 
   @override
   void initState() {
     super.initState();
-    // Inisialisasi hanya ML Service
+    WidgetsBinding.instance.addObserver(this);
     _mlService = MlPredictionService();
     _initializeControllerFuture = _initCamera();
   }
 
-  // Fungsi terpisah untuk inisialisasi async
-  Future<void> _initCamera() async {
+  // --- FUNGSI UTAMA INISIALISASI KAMERA ---
+  Future<void> _initCamera([CameraDescription? cameraDescription]) async {
     try {
-      List<CameraDescription> camList;
+      // 1. Pastikan daftar kamera terisi
+      if (cameras.isEmpty) {
+          cameras = await availableCameras();
+      }
+      if (cameras.isEmpty) return;
       
-      // Cek apakah variabel global 'cameras' sudah diisi (dari main.dart)
-      if (cameras.isNotEmpty) {
-          camList = cameras;
-      } else {
-          // Panggil fungsi global availableCameras()
-          camList = await availableCameras(); 
-          if (camList.isEmpty) {
-             throw Exception('Kamera tidak ditemukan.');
-          }
+      // 2. Pilih kamera (Parameter -> Tersimpan -> Default)
+      final CameraDescription cameraToUse = cameraDescription ?? 
+                                            _currentDescription ?? 
+                                            cameras.first;
+      
+      // Simpan kamera yang sedang dipakai
+      _currentDescription = cameraToUse;
+
+      // 3. PENTING: Matikan controller lama dengan aman
+      if (_controller != null) {
+        // Simpan referensi controller lama
+        final CameraController oldController = _controller!;
+        
+        // Putuskan hubungan controller dari State SEBELUM dispose
+        // agar UI tidak mencoba merender kamera yang sedang dimatikan.
+        _controller = null;
+        if (mounted) {
+          setState(() {}); // Memicu rebuild ke tampilan loading
+        }
+
+        // Baru lakukan dispose pada referensi lama
+        await oldController.dispose();
+      }
+
+      // 4. Buat controller baru
+      final CameraController newController = CameraController(
+        cameraToUse,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+
+      _controller = newController;
+      
+      // 5. Inisialisasi
+      await newController.initialize();
+      
+      // 6. Update UI setelah siap
+      if (mounted) {
+        setState(() {});
       }
       
-      final firstCamera = camList.first;
-      
-      _controller = CameraController(
-        firstCamera,
-        ResolutionPreset.high,
-      );
-      
-      return _controller!.initialize();
     } catch (e) {
       print('Error inisialisasi kamera: $e');
-      rethrow; 
     }
   }
 
+  // --- LOGIKA SWITCH CAMERA ---
+  Future<void> _switchCamera() async {
+    // Cek ketersediaan kamera
+    if (cameras.isEmpty) {
+      cameras = await availableCameras();
+    }
+    if (cameras.isEmpty || cameras.length < 2) {
+      _showResultDialog("Info", "Hanya satu kamera yang terdeteksi.");
+      return;
+    }
+
+    if (_controller == null) return;
+
+    // Cari index kamera saat ini dan tentukan kamera berikutnya
+    int currentCameraIndex = cameras.indexOf(_controller!.description);
+    if (currentCameraIndex == -1) currentCameraIndex = 0;
+
+    final int nextCameraIndex = (currentCameraIndex + 1) % cameras.length;
+    final CameraDescription newCamera = cameras[nextCameraIndex];
+
+    setState(() {
+      _isProcessing = true; 
+    });
+
+    try {
+      // Panggil _initCamera dengan kamera baru
+      // Logika dispose yang aman sudah ada di dalam _initCamera
+      _initializeControllerFuture = _initCamera(newCamera);
+      await _initializeControllerFuture;
+
+    } catch (e) {
+      print("Gagal ganti kamera: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
+  // --- LIFECYCLE MANAGEMENT ---
+  
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
     _mlService.dispose(); 
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final CameraController? cameraController = _controller;
+
+    // App Inactive/Background -> Matikan Kamera
+    if (state == AppLifecycleState.inactive) {
+      if (cameraController != null) {
+        cameraController.dispose();
+        _controller = null; // Set null agar UI aman
+        if (mounted) setState(() {});
+      }
+    } 
+    // App Resumed -> Nyalakan Kamera Kembali
+    else if (state == AppLifecycleState.resumed) {
+      if (_controller == null) {
+        _initializeControllerFuture = _initCamera(_currentDescription);
+      }
+    }
   }
 
   // --- FUNGSI KLASIFIKASI & NAVIGASI ---
@@ -87,34 +177,27 @@ class _ScanPageState extends State<ScanPage> {
     String searchQuery = ""; 
 
     try {
-      // Panggil ML Service
       Map<String, dynamic> prediction = await _mlService.predictFruit(imagePath);
       String label = prediction['label'];
       double confidence = prediction['confidence'];
 
-      // Klasifikasi Sukses
       searchQuery = label.toUpperCase(); 
-      
-      // >>> PERUBAHAN UTAMA DI SINI: Menyederhanakan output <<<
-      // finalDisplayResult sekarang hanya berisi Jenis dan Confidence
       finalDisplayResult = "Jenis: $label\nConfidence: ${(confidence * 100).toStringAsFixed(2)}%";
       
-      // Navigasi ke DisplayPictureScreen
       if (mounted) {
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => DisplayPictureScreen(
               imagePath: imagePath,
-              ocrResult: finalDisplayResult, // Data Jenis & Confidence
-              searchQuery: searchQuery,      // Data Produk untuk Pencarian
+              ocrResult: finalDisplayResult, 
+              searchQuery: searchQuery,      
             ),
           ),
         );
       }
 
     } catch (e) {
-      String resultMessage = "Terjadi kesalahan saat memproses data: $e";
-      _showResultDialog("Error Pemrosesan", resultMessage);
+      _showResultDialog("Error Pemrosesan", "Terjadi kesalahan: $e");
     } finally {
       if (mounted) {
         setState(() {
@@ -124,39 +207,35 @@ class _ScanPageState extends State<ScanPage> {
     }
   }
 
-
   Future<void> _takePicture(BuildContext context) async {
     if (_controller == null || !_controller!.value.isInitialized) {
-      print('Error: Kamera tidak siap.');
-      _showResultDialog("Kamera Error", "Kamera belum siap atau tidak tersedia.");
+      _showResultDialog("Kamera Error", "Kamera belum siap.");
       return;
     }
+    if (_controller!.value.isTakingPicture) return;
 
     try {
-      await _initializeControllerFuture;
+      // Pastikan Future selesai sebelum ambil gambar
+      await _initializeControllerFuture; 
+      
       final image = await _controller!.takePicture();
       if (!context.mounted) return;
-
-      // Lanjutkan ke proses klasifikasi
       _processImageAndNavigate(image.path);
-
     } catch (e) {
       print('Terjadi kesalahan saat mengambil gambar: $e');
-      _showResultDialog("Ambil Gambar Error", e.toString());
+      _showResultDialog("Error", "Gagal mengambil gambar.");
     }
   }
 
   Future<void> _pickImageFromGallery(BuildContext context) async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      
       if (image != null) {
         if (!context.mounted) return;
-        // Lanjutkan ke proses klasifikasi
         _processImageAndNavigate(image.path);
       }
     } catch (e) {
-      print('Terjadi kesalahan saat memilih gambar dari galeri: $e');
+      print('Error galeri: $e');
       _showResultDialog("Galeri Error", e.toString());
     }
   }
@@ -171,16 +250,13 @@ class _ScanPageState extends State<ScanPage> {
           actions: <Widget>[
             TextButton(
               child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
           ],
         );
       },
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -192,56 +268,60 @@ class _ScanPageState extends State<ScanPage> {
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
           
-          if (snapshot.hasError || _controller == null) {
-            // Tampilan jika kamera gagal dimuat atau tidak ada.
+          // Cek apakah controller siap. Jika null atau belum init, tampilkan loading.
+          if (snapshot.connectionState != ConnectionState.done || 
+              _controller == null || 
+              !_controller!.value.isInitialized) {
             return Container(
               color: Colors.black,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      snapshot.error?.toString() ?? "Kamera tidak ditemukan. Gunakan tombol upload.",
-                      textAlign: TextAlign.center,
-                      // PERBAIKAN: Hapus duplikasi 'color'
-                      style: const TextStyle(color: Colors.white), 
-                    ),
-                    const SizedBox(height: 30),
-                    if (!_isProcessing) 
-                       _buildUploadButton(context),
-                    if (_isProcessing)
-                      const CircularProgressIndicator(color: Colors.white),
-                  ],
-                ),
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.white),
               ),
             );
           }
 
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                CameraPreview(_controller!), 
-                _buildUIOverlays(context),
-              ],
-            );
-          } else {
-            // Tampilan loading
-            return Container(
+          if (snapshot.hasError) {
+             return Container(
               color: Colors.black,
-              child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+              child: Center(
+                child: Text(
+                  "Kamera tidak tersedia.\n${snapshot.error}", 
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white),
+                )
+              ),
             );
           }
+
+          // Tampilan Kamera Full Screen
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+               SizedBox.expand(
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: _controller!.value.previewSize!.height,
+                    height: _controller!.value.previewSize!.width,
+                    child: CameraPreview(_controller!),
+                  ),
+                ),
+              ),
+              _buildUIOverlays(context),
+            ],
+          );
         },
       ),
     );
   }
 
-  // --- UI Helper Widgets (Adaptasi dari kode Anda) ---
+  // --- UI Helper Widgets ---
 
   AppBar _buildTransparentAppBar() {
     return AppBar(
       title: const Text('Scan'),
+      automaticallyImplyLeading: false, // Hilangkan tombol Back
+      centerTitle: true,
       backgroundColor: Colors.transparent,
       elevation: 0,
       iconTheme: const IconThemeData(color: Colors.white),
@@ -255,22 +335,21 @@ class _ScanPageState extends State<ScanPage> {
               : Icons.flash_on_outlined,
             color: Colors.white,
           ),
-          onPressed: _isProcessing ? null : () {
+          onPressed: _isProcessing || _controller == null || !_controller!.value.isInitialized
+            ? null 
+            : () {
             if (_controller != null) {
-              _controller!.setFlashMode(
-                _controller!.value.flashMode == FlashMode.off 
-                  ? FlashMode.torch 
-                  : FlashMode.off
-              );
-              setState(() {}); 
+              try {
+                _controller!.setFlashMode(
+                  _controller!.value.flashMode == FlashMode.off 
+                    ? FlashMode.torch 
+                    : FlashMode.off
+                );
+                setState(() {}); 
+              } catch(e) {
+                print("Error flash: $e");
+              }
             }
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.flip_camera_ios_outlined),
-          onPressed: _isProcessing ? null : () {
-            // TODO: Logika untuk membalik kamera
-            print('Tombol putar kamera ditekan');
           },
         ),
       ],
@@ -361,20 +440,15 @@ class _ScanPageState extends State<ScanPage> {
             ),
           ),
           
-          // TOMBOL PUTAR KAMERA
+          // TOMBOL SWITCH KAMERA
           IconButton(
-            onPressed: _isProcessing ? null : () {
-               if (_controller != null) {
-                // TODO: Logika untuk membalik kamera
-                print('Tombol putar kamera ditekan');
-               }
-            },
+            onPressed: _isProcessing ? null : _switchCamera, 
             icon: const Icon(
               Icons.flip_camera_ios,
               color: Colors.white,
               size: 32.0,
             ),
-            tooltip: 'Putar Kamera',
+            tooltip: 'Ganti Kamera',
           ),
         ],
       ),
