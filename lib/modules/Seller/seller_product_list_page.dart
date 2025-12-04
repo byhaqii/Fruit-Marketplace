@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/produk_model.dart';
 import '../../providers/marketplace_provider.dart';
+import '../../providers/auth_provider.dart'; // <-- Pastikan ini ada
 import 'product_form_page.dart';
 
 class SellerProductListPage extends StatefulWidget {
@@ -20,12 +21,11 @@ class _SellerProductListPageState extends State<SellerProductListPage> {
   String _searchQuery = "";
 
   // --- KATEGORI STATUS FILTER ---
-  // Menambahkan "Semua" di awal agar defaultnya tampil semua
   final List<String> _statusCategories = [
     "Semua", 
     "Aktif", 
     "Stok Rendah", 
-    "Tidak Tersedia", // Mengganti 'Nonaktif' agar sesuai logic umum
+    "Tidak Tersedia",
   ];
   
   int _selectedStatusIndex = 0;
@@ -136,7 +136,6 @@ class _SellerProductListPageState extends State<SellerProductListPage> {
                   const SizedBox(height: 20),
                   
                   // TAB FILTER (Horizontal Scroll)
-                  // Disembunyikan saat mode searching agar UI bersih
                   if (!_isSearching)
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
@@ -177,38 +176,43 @@ class _SellerProductListPageState extends State<SellerProductListPage> {
             ),
 
             // 2. DAFTAR PRODUK (CONTENT)
+            // Menggunakan Consumer2 untuk mendapatkan data produk dan data pengguna
             Expanded(
-              child: Consumer<MarketplaceProvider>(
-                builder: (context, provider, child) {
-                  if (provider.isLoading) return const Center(child: CircularProgressIndicator(color: Colors.white));
+              child: Consumer2<MarketplaceProvider, AuthProvider>( 
+                builder: (context, provider, authProvider, child) { 
+                  
+                  // Konversi ID pengguna (String) ke int dengan aman
+                  final int? currentUserId = int.tryParse(authProvider.user?.id ?? ''); //
 
+                  if (provider.isLoading || currentUserId == null) {
+                      return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  }
+                  
                   List<ProdukModel> products = provider.products;
 
+                  // --- LOGIKA FILTER 0: KEPEMILIKAN SELLER (PERBAIKAN) ---
+                  // Filter produk HANYA yang dimiliki oleh user yang sedang login
+                  products = products.where((p) => p.userId == currentUserId).toList(); 
+                  
                   // --- LOGIKA FILTER 1: PENCARIAN ---
                   if (_searchQuery.isNotEmpty) {
                     products = products.where((p) => p.namaProduk.toLowerCase().contains(_searchQuery)).toList();
                   }
 
                   // --- LOGIKA FILTER 2: STATUS/KATEGORI ---
-                  // Hanya jalankan jika tidak sedang mencari, atau bisa digabung
                   if (_selectedStatusIndex != 0 && _searchQuery.isEmpty) {
                     final filter = _statusCategories[_selectedStatusIndex];
                     
                     products = products.where((p) {
-                      // Normalisasi string untuk perbandingan
-                      final status = p.statusJual.toLowerCase(); // misal: 'tersedia', 'tidak tersedia'
+                      final status = p.statusJual.toLowerCase(); 
                       
                       if (filter == "Aktif") {
-                        // Tampilkan jika Status Tersedia
                         return status == 'tersedia' || status == 'aktif';
                       } else if (filter == "Stok Rendah") {
-                        // Tampilkan jika Stok <= 5 (Batas stok rendah)
                         return p.stok <= 5 && p.stok > 0;
                       } else if (filter == "Tidak Tersedia") {
-                         // Tampilkan jika status Nonaktif atau stok 0
                         return status == 'tidak tersedia' || status == 'nonaktif' || p.stok == 0;
                       }
-                      // Jika ada tab lain, tampilkan semua atau sesuaikan
                       return true;
                     }).toList();
                   }

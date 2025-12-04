@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Support\Facades\Auth;
 
 class CheckRole
 {
@@ -11,22 +12,26 @@ class CheckRole
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
-     * @param  string  $role
+     * @param  string|array  $roles
      * @return mixed
      */
-    public function handle($request, Closure $next, $role)
+    public function handle($request, Closure $next, ...$roles)
     {
-        // User harus login
-        if (!$request->user()) {
+        if (!Auth::check()) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // Ubah string "admin,penjual" menjadi array ["admin", "penjual"]
-        $allowedRoles = explode(',', $role);
+        $user = Auth::user();
 
-        // Cek apakah role user ada di dalam daftar yang diizinkan
-        if (!in_array($request->user()->role, $allowedRoles)) {
-            return response()->json(['message' => 'Forbidden: Akses ditolak'], 403);
+        // Ambil peran pengguna saat ini
+        $userRole = strtolower(trim($user->role)); // <--- PERBAIKAN: Bersihkan dan ubah ke huruf kecil
+
+        // Ubah peran yang disyaratkan oleh rute juga ke huruf kecil (untuk konsistensi)
+        $requiredRoles = array_map('strtolower', $roles);
+
+        // Periksa apakah peran pengguna ada di dalam daftar peran yang diizinkan
+        if (!in_array($userRole, $requiredRoles)) {
+            return response()->json(['message' => 'Forbidden (Role mismatch)'], 403);
         }
 
         return $next($request);

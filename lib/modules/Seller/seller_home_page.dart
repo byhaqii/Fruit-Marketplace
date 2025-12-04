@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/marketplace_provider.dart';
+import '../../models/produk_model.dart'; // Import ini dibutuhkan untuk List<ProdukModel>
 
 // --- IMPORT HALAMAN NAVIGASI ---
 import 'seller_product_list_page.dart';
@@ -33,12 +34,26 @@ class _SellerHomePageState extends State<SellerHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<AuthProvider>(context).user;
     
-    return Consumer<MarketplaceProvider>(
-      builder: (context, provider, child) {
-        final int totalProduk = provider.products.length; 
-        final int pesananBaru = provider.incomingOrders.length;
+    // PERBAIKAN: Menggunakan Consumer2 untuk mengakses MarketplaceProvider dan AuthProvider
+    return Consumer2<MarketplaceProvider, AuthProvider>(
+      builder: (context, provider, authProvider, child) {
+        
+        final user = authProvider.user; // Ambil data user
+        
+        // PERBAIKAN KRUSIAL: Konversi ID pengguna (String) ke int dengan aman
+        final int? currentUserId = int.tryParse(user?.id ?? '');
+        
+        // 1. Filter produk yang dimiliki oleh penjual yang sedang login
+        List<ProdukModel> sellerProducts = [];
+        if (currentUserId != null) {
+          // Asumsi: provider.products berisi SEMUA produk (dari fetchProducts())
+          sellerProducts = provider.products.where((p) => p.userId == currentUserId).toList();
+        }
+
+        // 2. Hitung statistik dari data yang sudah difilter
+        final int totalProduk = sellerProducts.length; 
+        final int pesananBaru = provider.incomingOrders.length; 
         final bool isLoading = provider.isLoading;
 
         return Scaffold(
@@ -130,6 +145,7 @@ class _SellerHomePageState extends State<SellerHomePage> {
                       children: [
                         Expanded(child: _buildStatCard("Pesanan Baru", pesananBaru.toString(), Icons.receipt_long, Colors.orange)),
                         const SizedBox(width: 15),
+                        // totalProduk kini sudah difilter
                         Expanded(child: _buildStatCard("Total Produk", totalProduk.toString(), Icons.inventory_2, Colors.blue)),
                       ],
                     ),
