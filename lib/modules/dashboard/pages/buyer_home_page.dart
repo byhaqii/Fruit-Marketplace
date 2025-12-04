@@ -6,7 +6,8 @@ import '../../../providers/auth_provider.dart';
 import '../../../providers/marketplace_provider.dart';
 import '../widgets/discount_card.dart';
 import '../../marketplace/widgets/produk_card.dart';
-import '../../../config/env.dart'; // <<< Tambahkan import Env
+import '../../../config/env.dart';
+import '../../marketplace/pages/produk_detail_page.dart'; 
 
 class BuyerHomePage extends StatefulWidget {
   final VoidCallback? onGoToShop; 
@@ -21,19 +22,19 @@ class BuyerHomePage extends StatefulWidget {
 }
 
 class _BuyerHomePageState extends State<BuyerHomePage> {
+  // Pastikan nama kategori ini SAMA dengan data 'kategori' di database/seeder Anda
   final List<String> categories = ["Semua", "Apel", "Jeruk Bali", "Peach", "Tomat"];
+  
   int selectedCategoryIndex = 0;
   final TextEditingController _searchController = TextEditingController();
 
-  // --- Helper URL Baru ---
+  // --- Helper URL ---
   String _getStorageBaseUrl() {
-    // Mengambil base URL dari Env dan menghapus '/api'
     return Env.apiBaseUrl.replaceFirst('/api', '');
   }
 
   String getAvatarUrl(String? filename) {
     if (filename == null || filename.isEmpty) return ''; 
-    // Path storage sesuai konfigurasi backend: public/storage/profiles/
     return '${_getStorageBaseUrl()}/storage/profiles/$filename';
   }
   // -----------------------
@@ -41,7 +42,6 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
   @override
   void initState() {
     super.initState();
-    // Panggil fetchAllData agar Produk DAN Transaksi terambil semua
     Future.microtask(() {
       Provider.of<MarketplaceProvider>(context, listen: false).fetchAllData();
     });
@@ -63,7 +63,6 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
     
     const Color mainBackgroundColor = Color(0xFF2D7F6A);
     
-    // Tentukan sumber gambar avatar
     final String? avatarFilename = user?.avatar;
     final bool hasAvatar = avatarFilename != null && avatarFilename.isNotEmpty;
     final ImageProvider? avatarImage = hasAvatar 
@@ -78,7 +77,6 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
           color: mainBackgroundColor,
           backgroundColor: Colors.white,
           onRefresh: () async {
-            // Saat tarik ke bawah, refresh semua data
             await Provider.of<MarketplaceProvider>(context, listen: false).fetchAllData();
           },
           child: SingleChildScrollView(
@@ -100,16 +98,15 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                           const Text("Cari Kebutuhanmu?", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
                         ],
                       ),
-                      // AVATAR - FIX DITERAPKAN DI SINI
                       Container(
                         decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white24, width: 2)),
                         child: CircleAvatar(
                             radius: 24, 
                             backgroundColor: Colors.white.withOpacity(0.2), 
-                            backgroundImage: avatarImage, // Tampilkan NetworkImage
+                            backgroundImage: avatarImage, 
                             child: hasAvatar 
-                                ? null // Jika ada gambar, kosongkan child
-                                : const Icon(Icons.person, color: Colors.white), // Default icon
+                                ? null 
+                                : const Icon(Icons.person, color: Colors.white), 
                         ),
                       ),
                     ],
@@ -157,7 +154,6 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                 // 4. ORDER AGAIN (BELI LAGI)
                  Consumer<MarketplaceProvider>(
                   builder: (context, provider, _) {
-                  
                     if (provider.buyAgainList.isEmpty) return const SizedBox.shrink();
                     
                     return Column(
@@ -189,7 +185,12 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
                                 child: InkWell(
                                   onTap: () {
-                                    // Navigasi ke detail (opsional)
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ProdukDetailPage(produk: produk),
+                                      ),
+                                    );
                                   },
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,12 +229,25 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
 
                 const SizedBox(height: 25),
 
-                // 5. KATEGORI
+                // 5. KATEGORI & LIHAT SEMUA (DIGABUNG DALAM SATU ROW)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: const Text("Kategori", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Kategori", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                      // Tombol Lihat Semua dipindah ke sini
+                      TextButton(
+                        onPressed: widget.onGoToShop,
+                        child: const Text("Lihat Semua", style: TextStyle(color: Colors.white70)),
+                      )
+                    ],
+                  ),
                 ),
+                
                 const SizedBox(height: 15),
+                
+                // FILTER CHIPS KATEGORI
                 SizedBox(
                   height: 40,
                   child: ListView.builder(
@@ -243,7 +257,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                     itemBuilder: (context, index) {
                       final bool isSelected = selectedCategoryIndex == index;
                       return GestureDetector(
-                        onTap: () => setState(() => selectedCategoryIndex = index),
+                        onTap: () => setState(() => selectedCategoryIndex = index), // Update state saat diklik
                         child: Container(
                           margin: const EdgeInsets.only(right: 10),
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -266,27 +280,51 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
 
                 const SizedBox(height: 25),
 
-                // 6. GRID PRODUK
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Terbaru", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                      TextButton(
-                        onPressed: widget.onGoToShop,
-                        child: const Text("Lihat Semua", style: TextStyle(color: Colors.white70)),
-                      )
-                    ],
-                  ),
-                ),
-
+                // 6. GRID PRODUK (LOGIKA FILTER DIPERBAIKI)
                 Consumer<MarketplaceProvider>(
                   builder: (context, provider, child) {
-                    if (provider.isLoading) return const Center(child: Padding(padding: EdgeInsets.all(50.0), child: CircularProgressIndicator(color: Colors.white)));
-                    if (provider.products.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(30.0), child: Text("Belum ada produk tersedia", style: TextStyle(color: Colors.white))));
+                    if (provider.isLoading) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(50.0), 
+                          child: CircularProgressIndicator(color: Colors.white)
+                        )
+                      );
+                    }
                     
-                    final displayProducts = provider.products.take(4).toList();
+                    // --- PERBAIKAN LOGIKA FILTER ---
+                    final allProducts = provider.products;
+                    final selectedCategory = categories[selectedCategoryIndex];
+                    
+                    final filteredProducts = selectedCategory == "Semua"
+                        ? allProducts
+                        : allProducts.where((p) {
+                            final filterKeyword = selectedCategory.toLowerCase();
+                            final productCategory = p.kategori.toLowerCase();
+                            final productName = p.namaProduk.toLowerCase();
+                            
+                            // Cek: Apakah Kategori ATAU Nama Produk mengandung kata kunci?
+                            // Contoh: Jika klik "Apel", maka produk dengan nama "Apel Malang" akan muncul
+                            return productCategory.contains(filterKeyword) || 
+                                   productName.contains(filterKeyword);
+                          }).toList();
+                    // -------------------------------------
+
+                    if (filteredProducts.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(30.0), 
+                          child: Text(
+                            "Produk '$selectedCategory' tidak ditemukan.", 
+                            style: const TextStyle(color: Colors.white)
+                          )
+                        )
+                      );
+                    }
+                    
+                    // Batasi tampilan hanya 4 item di Home
+                    final displayProducts = filteredProducts.take(4).toList();
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: GridView.builder(
@@ -301,7 +339,17 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                         ),
                         itemBuilder: (context, index) {
                           final produk = displayProducts[index];
-                          return ProdukCard(produk: produk, onTap: () {});
+                          return ProdukCard(
+                            produk: produk, 
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProdukDetailPage(produk: produk),
+                                ),
+                              );
+                            }
+                          );
                         },
                       ),
                     );

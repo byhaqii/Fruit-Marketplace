@@ -140,6 +140,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   }
   
   // --- UI HELPER: Search Bar ---
+  // --- UI HELPER: Search Bar (DIPERBAIKI) ---
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -152,11 +153,14 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         ),
         child: TextField( 
           controller: _searchController, 
+          // 1. KUNCI: Menambahkan ini agar teks & icon sejajar di tengah (center)
+          textAlignVertical: TextAlignVertical.center, 
           decoration: const InputDecoration(
             hintText: 'Cari Order ID atau Nama Produk',
             prefixIcon: Icon(Icons.search, color: Colors.grey),
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(vertical: 14),
+            // 2. Set padding jadi kosong agar tidak bentrok dengan textAlignVertical
+            contentPadding: EdgeInsets.zero, 
           ),
         ),
       ),

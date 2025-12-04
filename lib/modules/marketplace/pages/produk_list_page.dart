@@ -55,6 +55,7 @@ class _ProdukListPageState extends State<ProdukListPage> {
           Expanded(
             child: Container(
               height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
@@ -63,26 +64,42 @@ class _ProdukListPageState extends State<ProdukListPage> {
                     BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, 2))
                 ]
               ),
-              child: TextField( 
-                controller: _searchController, 
-                decoration: const InputDecoration(
-                  hintText: 'Cari Produk...', 
-                  prefixIcon: Icon(Icons.search, color: Colors.grey),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-                ),
+              // Tetap menggunakan Row agar SEJAJAR VERTIKAL (Center)
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center, 
+                children: [
+                  // Ikon Search
+                  const Icon(Icons.search, color: Colors.grey), 
+                  
+                  const SizedBox(width: 8), 
+                  
+                  // TextField
+                  Expanded(
+                    child: TextField( 
+                      controller: _searchController, 
+                      // Tidak ada properti 'style' di sini (mengikuti default)
+                      decoration: const InputDecoration(
+                        hintText: 'Cari Produk...', 
+                        // HAPUS hintStyle agar warna & tebalnya persis kode referensi (default)
+                        border: InputBorder.none,
+                        isCollapsed: true, 
+                        contentPadding: EdgeInsets.zero, 
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
           const SizedBox(width: 10),
-          // Ikon Keranjang
+          
+          // --- Ikon Keranjang (Tidak Berubah) ---
           Consumer<MarketplaceProvider>(
             builder: (context, provider, child) {
               return IconButton(
                 icon: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    // Ikon Keranjang Utama
                     const Icon(Icons.shopping_cart_outlined, color: Colors.black, size: 28), 
                     if (provider.cartItemCount > 0)
                       Positioned(
@@ -90,7 +107,7 @@ class _ProdukListPageState extends State<ProdukListPage> {
                         top: -4,
                         child: Container(
                           padding: const EdgeInsets.all(4), 
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.red,
                             shape: BoxShape.circle,
                           ),
