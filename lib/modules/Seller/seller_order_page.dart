@@ -1,5 +1,3 @@
-// lib/modules/Seller/seller_order_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/transaksi_model.dart';
@@ -22,14 +20,12 @@ class _SellerOrderPageState extends State<SellerOrderPage> {
   @override
   void initState() {
     super.initState();
-    // Ambil data saat halaman dibuka
     Future.microtask(() => _refreshData());
   }
 
   Future<void> _refreshData() async {
-    await Provider.of<MarketplaceProvider>(context, listen: false).fetchTransactions();
+    await Provider.of<MarketplaceProvider>(context, listen: false).fetchSellerTransactions();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
