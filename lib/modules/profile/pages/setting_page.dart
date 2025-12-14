@@ -19,56 +19,78 @@ class SettingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          'Setting',
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Security',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: kPrimaryColor,
+      backgroundColor: kPrimaryColor,
+      body: Stack(
+        children: [
+          // Header
+          SafeArea(
+            child: Container(
+              height: 180,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              alignment: Alignment.topCenter,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    "Setting",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Menu Ganti Password
-            _buildSettingItem(
-              context,
-              title: 'Change Password',
-              icon: Icons.lock_outline,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const ChangePasswordPage()),
-                );
-              },
+          ),
+          // Body
+          Container(
+            margin: const EdgeInsets.only(top: 140),
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
             ),
-          ],
-        ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Security',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: kPrimaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Menu Ganti Password
+                  _buildSettingItem(
+                    context,
+                    title: 'Change Password',
+                    icon: Icons.lock_outline,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ChangePasswordPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -98,8 +120,11 @@ class SettingPage extends StatelessWidget {
             color: Colors.black87,
           ),
         ),
-        trailing:
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black54),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Colors.black54,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
       ),
     );
@@ -139,17 +164,19 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     // 2. Validasi Konfirmasi Password
     if (_newPassController.text != _confirmPassController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('New password and confirmation do not match')),
+        const SnackBar(
+          content: Text('New password and confirmation do not match'),
+        ),
       );
       return;
     }
 
     // 3. Panggil Provider
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     try {
       await authProvider.changePassword(_newPassController.text);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -228,7 +255,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         Text(
                           "Change Password",
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -239,44 +268,47 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     const Text(
                       "Your password must be at least 6 characters.",
                       style: TextStyle(
-                          color: Colors.grey, fontSize: 13, height: 1.5),
+                        color: Colors.grey,
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 25),
-                    
+
                     // Input Fields
-                    // Note: Backend Anda saat ini tidak memvalidasi password lama, 
+                    // Note: Backend Anda saat ini tidak memvalidasi password lama,
                     // jadi field ini hanya visual (atau validasi client-side saja).
                     _buildPasswordField(
-                      controller: _currentPassController, 
-                      hint: "Current password"
+                      controller: _currentPassController,
+                      hint: "Current password",
                     ),
                     const SizedBox(height: 15),
-                    
+
                     _buildPasswordField(
-                      controller: _newPassController, 
+                      controller: _newPassController,
                       hint: "New password",
                       validator: (value) {
                         if (value == null || value.length < 6) {
                           return 'Password must be at least 6 characters';
                         }
                         return null;
-                      }
+                      },
                     ),
                     const SizedBox(height: 15),
-                    
+
                     _buildPasswordField(
-                      controller: _confirmPassController, 
+                      controller: _confirmPassController,
                       hint: "Re-type new password",
                       validator: (value) {
                         if (value != _newPassController.text) {
                           return 'Passwords do not match';
                         }
                         return null;
-                      }
+                      },
                     ),
-                    
+
                     const SizedBox(height: 40),
-                    
+
                     // SAVE BUTTON
                     SizedBox(
                       width: double.infinity,
@@ -286,22 +318,29 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: kPrimaryColor,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15)),
-                          disabledBackgroundColor: kPrimaryColor.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          disabledBackgroundColor: kPrimaryColor.withOpacity(
+                            0.6,
+                          ),
                         ),
-                        child: isLoading 
-                          ? const SizedBox(
-                              height: 20, 
-                              width: 20, 
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                            )
-                          : const Text(
-                              "Save",
-                              style: TextStyle(
+                        child: isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                "Save",
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white),
-                            ),
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -319,7 +358,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     required String hint,
     String? Function(String?)? validator,
   }) {
-    return TextFormField( // Menggunakan TextFormField untuk validasi
+    return TextFormField(
+      // Menggunakan TextFormField untuk validasi
       controller: controller,
       obscureText: true,
       validator: validator,
@@ -328,8 +368,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide(color: Colors.grey.shade300),

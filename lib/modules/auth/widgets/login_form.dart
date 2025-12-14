@@ -27,13 +27,12 @@ class _LoginFormState extends State<LoginForm> {
           _emailController.text,
           _passwordController.text,
         );
-        
-        Navigator.pushReplacementNamed(context, '/'); 
 
+        Navigator.pushReplacementNamed(context, '/');
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     }
   }
@@ -71,54 +70,20 @@ class _LoginFormState extends State<LoginForm> {
             obscureText: true,
             prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
           ),
-          
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                // TODO: Implementasi Forgot Password
-              }, 
-              child: Text('Forgot Password?', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
-            ),
-          ),
 
           const SizedBox(height: 24),
-          Row(
-            children: [
-              // Tombol Login
-              Expanded(
-                child: Consumer<AuthProvider>(
-                  builder: (context, auth, child) {
-                    if (auth.loading) {
-                      return const Center(child: LoadingIndicator());
-                    }
-                    return CustomButton(
-                      label: 'Login',
-                      onPressed: _submitLogin,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 15),
-              // Tombol Biometrik (Face Recognition Icon)
-              Container(
-                height: 50,
-                width: 50,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.face, size: 30),
-                  color: Theme.of(context).colorScheme.primary,
-                  onPressed: () {
-                    // TODO: Panggil Biometric Login
-                  },
-                ),
-              )
-            ],
+          Consumer<AuthProvider>(
+            builder: (context, auth, child) {
+              if (auth.loading) {
+                return const Center(child: LoadingIndicator());
+              }
+              return CustomButton(
+                label: 'Login',
+                onPressed: _submitLogin,
+                color: const Color(0xFF2D7F6A),
+              );
+            },
           ),
-
         ],
       ),
     );

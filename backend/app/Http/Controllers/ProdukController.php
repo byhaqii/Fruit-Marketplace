@@ -41,7 +41,8 @@ class ProdukController extends Controller
                 'harga'       => 'required|numeric|min:0',
                 'stok'        => 'required|integer|min:0',
                 'kategori'    => 'nullable|string',
-                'image'       => 'nullable|image|max:2048', // Max 2MB
+                // Allow common mobile formats (including HEIC) and increase size limit
+                'image'       => 'nullable|mimes:jpeg,jpg,png,heic|max:4096', // Max 4MB
             ]);
         } catch (ValidationException $e) {
              return response()->json(['message' => 'Input tidak valid', 'errors' => $e->errors()], 422);
@@ -80,7 +81,8 @@ class ProdukController extends Controller
             'nama_produk' => 'string',
             'harga'       => 'numeric|min:0',
             'stok'        => 'integer|min:0',
-            'image'       => 'nullable|image|max:2048'
+            // Allow common mobile formats (including HEIC) and increase size limit
+            'image'       => 'nullable|mimes:jpeg,jpg,png,heic|max:4096'
         ]);
 
         $data = $request->except(['image']);

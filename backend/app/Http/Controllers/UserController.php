@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -101,5 +102,89 @@ class UserController extends Controller
 
         $user->delete();
         return response()->json(['message' => 'Pengguna berhasil dihapus']);
+    }
+
+    // Get user statistics for dashboard
+    public function getStats(Request $request): JsonResponse
+    {
+        if (!$this->isAdmin($request)) return response()->json(['message' => 'Akses ditolak'], 403);
+        
+        $totalUsers = User::count();
+        
+        // New users: created in last 7 days
+        $newUsers = User::where('created_at', '>=', Carbon::now()->subDays(7))->count();
+        
+        // Active users: users who have made transactions, created products, or have notifications in last 30 days
+        // We'll count distinct users from transactions
+        $activeUserIds = \DB::table('transaksi')
+            ->where('created_at', '>=', Carbon::now()->subDays(30))
+            ->distinct()
+            ->pluck('user_id')
+            ->toArray();
+        
+        // Also include sellers who created/updated products recently
+        $activeSellerIds = \DB::table('produk')
+            ->where('updated_at', '>=', Carbon::now()->subDays(30))
+            ->distinct()
+            ->pluck('user_id')
+            ->toArray();
+        
+        // Merge and count unique users
+        $allActiveIds = array_unique(array_merge($activeUserIds, $activeSellerIds));
+        $activeUsers = count($allActiveIds);
+        
+        return response()->json([
+            'total_users' => $totalUsers,
+            'new_users' => $newUsers,
+            'active_users' => $activeUsers,
+        ]);
+    }
+
+    // Get user growth data for chart (penambahan user)
+    public function getUserGrowth(Request $request): JsonResponse
+    {
+        if (!$this->isAdmin($request)) return response()->json(['message' => 'Akses ditolak'], 403);
+        
+        $period = $request->input('period', 'daily'); // 'daily', 'monthly', 'yearly'
+        $data = [];
+        $labels = [];
+        $cumulativeCount = 0;
+
+        if ($period === 'daily') {
+            // Last 7 days - show daily new user additions
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i);
+                $newUsersCount = User::whereDate('created_at', $date->toDateString())->count();
+                $cumulativeCount += $newUsersCount;
+                $data[] = (float) $newUsersCount; // Daily additions
+                $labels[] = $date->format('M d');
+            }
+        } elseif ($period === 'monthly') {
+            // Last 12 months - show monthly new user additions
+            for ($i = 11; $i >= 0; $i--) {
+                $date = Carbon::now()->subMonths($i);
+                $newUsersCount = User::whereYear('created_at', $date->year)
+                    ->whereMonth('created_at', $date->month)
+                    ->count();
+                $cumulativeCount += $newUsersCount;
+                $data[] = (float) $newUsersCount; // Monthly additions
+                $labels[] = $date->format('M Y');
+            }
+        } elseif ($period === 'yearly') {
+            // Last 5 years - show yearly new user additions
+            for ($i = 4; $i >= 0; $i--) {
+                $date = Carbon::now()->subYears($i);
+                $newUsersCount = User::whereYear('created_at', $date->year)->count();
+                $cumulativeCount += $newUsersCount;
+                $data[] = (float) $newUsersCount; // Yearly additions
+                $labels[] = $date->format('Y');
+            }
+        }
+
+        return response()->json([
+            'data' => $data,
+            'labels' => $labels,
+            'total_growth' => $cumulativeCount,
+        ]);
     }
 }

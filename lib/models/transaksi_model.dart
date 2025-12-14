@@ -4,19 +4,19 @@ import 'produk_model.dart';
 
 class TransaksiModel {
   final int id;
-  final String orderId;   
-  final int totalHarga;   
+  final String orderId; // <--- 1. Tambahan: Untuk ditampilkan di dashboard
+  final int totalHarga; // <--- 2. Tambahan: Untuk kalkulasi saldo di provider
   final String title;
   final String date;
-  final String price;     
+  final String price; // String terformat "Rp ..."
   final String status;
   final String imageUrl;
   final List<ProdukModel> items;
 
   const TransaksiModel({
     required this.id,
-    required this.orderId,    
-    required this.totalHarga, 
+    required this.orderId, // <--- Wajib diisi
+    required this.totalHarga, // <--- Wajib diisi
     required this.title,
     required this.date,
     required this.price,
@@ -28,7 +28,7 @@ class TransaksiModel {
   factory TransaksiModel.fromJson(Map<String, dynamic> json) {
     
     var listItemsJson = (json['items'] ?? json['order_items']) as List?;
-    
+
     List<ProdukModel> parsedItems = [];
     if (listItemsJson != null) {
       parsedItems = listItemsJson.map((itemJson) {
@@ -37,20 +37,24 @@ class TransaksiModel {
       }).toList();
     }
 
-    var firstItem = listItemsJson?.isNotEmpty == true ? listItemsJson![0] : null;
+    var firstItem = listItemsJson?.isNotEmpty == true
+        ? listItemsJson![0]
+        : null;
     var produk = firstItem != null ? firstItem['produk'] : null;
 
     
     final int itemCount = listItemsJson?.length ?? 0;
 
-    
-    String calculatedTitle = 'Pesanan #${json['order_id'] ?? '-'}'; 
+    // LOGIKA PERBAIKAN UNTUK TITLE:
+    String calculatedTitle = 'Pesanan #${json['order_id'] ?? '-'}';
     if (itemCount == 1 && produk != null) {
       
       calculatedTitle = produk['nama_produk'] ?? 'Produk';
     } else if (itemCount > 1) {
-      
-      String firstName = produk != null ? (produk['nama_produk'] ?? 'Produk') : 'Produk';
+      // Jika lebih dari 1, tampilkan nama barang pertama + jumlah produk lainnya
+      String firstName = produk != null
+          ? (produk['nama_produk'] ?? 'Produk')
+          : 'Produk';
       calculatedTitle = "$firstName dan ${itemCount - 1} Produk Lainnya";
     }
 
@@ -60,30 +64,25 @@ class TransaksiModel {
       rawHarga = int.tryParse(json['total_harga'].toString()) ?? 0;
     }
 
-    
-    String? rawImageName;
-    if (produk != null) {
-      
-      rawImageName = produk['gambar_url'] ?? produk['image_url'] ?? produk['image'];
-    }
-
-    String finalImageUrl = 'https://via.placeholder.com/150';
-    if (rawImageName != null && rawImageName.isNotEmpty) {
-      
-      
-      finalImageUrl = '/storage/$rawImageName'; 
-    }
-    
+    // Resolve image URL: prefer parsed ProdukModel's imageUrl which normalizes storage path
+    final String resolvedImageUrl = parsedItems.isNotEmpty
+        ? parsedItems.first.imageUrl
+        : (produk != null
+              ? (produk['image'] ??
+                    produk['image_url'] ??
+                    produk['gambar_url'] ??
+                    'https://via.placeholder.com/150')
+              : 'https://via.placeholder.com/150');
 
     return TransaksiModel(
       id: json['id'],
-      orderId: json['order_id'] ?? '-',
-      totalHarga: rawHarga,
-      title: calculatedTitle,
+      orderId: json['order_id'] ?? '-', // Ambil Order ID
+      totalHarga: rawHarga, // Simpan nilai integer
+      title: calculatedTitle, // <-- Menggunakan title yang sudah diperbarui
       date: json['created_at'] ?? '-',
-      price: "Rp ${json['total_harga']}", 
+      price: "Rp ${json['total_harga']}",
       status: json['order_status'] ?? 'Unknown',
-      imageUrl: finalImageUrl,
+      imageUrl: resolvedImageUrl,
       items: parsedItems,
     );
   }
@@ -92,13 +91,13 @@ class TransaksiModel {
   bool get isWaiting => status == 'menunggu konfirmasi';
   bool get isProcessed => status == 'Diproses';
   bool get isShipped => status == 'Dikirim';
-  
-  
+
+  // PERBAIKAN 1: Tambahkan getter untuk status yang memungkinkan penerimaan barang.
   bool get isReceivable => status == 'Dikirim' || status == 'Tiba di tujuan';
 
   
   bool get isSuccess => status == 'Selesai';
 
-  
-  bool get isCancelled => status == 'Dibatalkan'; 
+  // PERBAIKAN 3: isCancelled hanya menggunakan status dari enum backend
+  bool get isCancelled => status == 'Dibatalkan';
 }

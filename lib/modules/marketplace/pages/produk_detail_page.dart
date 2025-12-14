@@ -305,7 +305,7 @@ class _ProdukDetailPageState extends State<ProdukDetailPage> {
                           elevation: 0,
                         ),
                         child: Text(
-                          widget.produk.stok > 0 ? 'Tambah ke Keranjang' : 'Stok Habis',
+                          widget.produk.stok > 0 ? 'Add to Cart' : 'Out of Stock',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
