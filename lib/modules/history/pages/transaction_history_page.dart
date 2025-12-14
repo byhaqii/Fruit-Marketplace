@@ -51,6 +51,11 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     await Provider.of<MarketplaceProvider>(context, listen: false).fetchTransactions();
   }
 
+  void _onSearchChanged() {
+    // Memanggil setState agar widget rebuild dan menerapkan filter pencarian
+    setState(() {});
+  }
+
   // --- LOGIKA FILTER TRANSAKSI GABUNGAN ---
   List<TransaksiModel> _getFilteredTransactions(
     List<TransaksiModel> all,
@@ -90,7 +95,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: primaryColor,
+      backgroundColor: kPrimaryColor, // FIX: Mengganti primaryColor dengan kPrimaryColor
       appBar: AppBar(
         title: const Text(
           "Transaction History",
@@ -330,8 +335,8 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                 ),
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -574,7 +579,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 

@@ -286,37 +286,31 @@ class MarketplaceProvider with ChangeNotifier {
   }
 
   /// GET /transaksi/masuk (Seller incoming orders)
+  // MENGGANTIKAN DEFINISI SEBELUMNYA DENGAN YANG LEBIH BAIK
   Future<void> fetchSellerTransactions() async {
+    _isLoading = true;
+    notifyListeners();
     try {
-      final options = await apiClient.optionsWithAuth();
-      final resp = await apiClient.dio.get(
-        '/transaksi/masuk',
-        options: options,
-      );
+      // PERBAIKAN: CALL ENDPOINT KHUSUS UNTUK TRANSAKSI PENJUAL
+      final resp = await apiClient.get('/transaksi/masuk');
 
-      final data = resp.data;
-      if (data is List) {
-        _transactions = data
-            .map(
-              (json) => TransaksiModel.fromJson(json as Map<String, dynamic>),
-            )
+      if (resp is List) {
+        // UPDATE THE MAIN _transactions LIST
+        _transactions = resp
+            .map((json) => TransaksiModel.fromJson(json as Map<String, dynamic>))
             .toList();
       } else {
         _transactions = [];
       }
-      // Fallback: if empty, also load user transactions so page isn't blank
-      if (_transactions.isEmpty) {
-        await fetchTransactions();
-      }
     } on DioException catch (e) {
-      print(
-        'Dio Error fetching seller transactions: ${e.response?.data ?? e.message}',
-      );
+      print('Dio Error fetching seller transactions: ${e.response?.data ?? e.message}');
       _transactions = [];
     } catch (e) {
       print('General Error fetching seller transactions: $e');
       _transactions = [];
     }
+    _isLoading = false;
+    notifyListeners();
   }
 
   // --- FITUR PEMBELI ---
@@ -505,32 +499,7 @@ class MarketplaceProvider with ChangeNotifier {
       return false;
     }
   }
-  Future<void> fetchSellerTransactions() async {
-    _isLoading = true;
-    notifyListeners();
-    try {
-        // PERBAIKAN: CALL ENDPOINT KHUSUS UNTUK TRANSAKSI PENJUAL
-        final resp = await apiClient.get('/transaksi/masuk'); 
-        
-        if (resp is List) {
-            // UPDATE THE MAIN _transactions LIST
-            _transactions = resp
-                .map((json) => TransaksiModel.fromJson(json as Map<String, dynamic>))
-                .toList();
-        } else {
-            _transactions = []; 
-        }
-    } on DioException catch (e) {
-        print('Dio Error fetching seller transactions: ${e.response?.data ?? e.message}');
-        _transactions = []; 
-    } catch (e) {
-        print('General Error fetching seller transactions: $e');
-        _transactions = [];
-    }
-    _isLoading = false;
-    notifyListeners();
-}
-
+  
   /// PUT /transaksi/{id}/update-status (Penjual Update Status)
   Future<bool> updateOrderStatus(int id, String status) async {
     try {
