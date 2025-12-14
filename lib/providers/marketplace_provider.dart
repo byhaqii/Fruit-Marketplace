@@ -505,11 +505,41 @@ class MarketplaceProvider with ChangeNotifier {
       return false;
     }
   }
+  Future<void> fetchSellerTransactions() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+        // PERBAIKAN: CALL ENDPOINT KHUSUS UNTUK TRANSAKSI PENJUAL
+        final resp = await apiClient.get('/transaksi/masuk'); 
+        
+        if (resp is List) {
+            // UPDATE THE MAIN _transactions LIST
+            _transactions = resp
+                .map((json) => TransaksiModel.fromJson(json as Map<String, dynamic>))
+                .toList();
+        } else {
+            _transactions = []; 
+        }
+    } on DioException catch (e) {
+        print('Dio Error fetching seller transactions: ${e.response?.data ?? e.message}');
+        _transactions = []; 
+    } catch (e) {
+        print('General Error fetching seller transactions: $e');
+        _transactions = [];
+    }
+    _isLoading = false;
+    notifyListeners();
+}
 
   /// PUT /transaksi/{id}/update-status (Penjual Update Status)
   Future<bool> updateOrderStatus(int id, String status) async {
     try {
+      // Pastikan ada validasi dan kirim data kurir/resi jika statusnya Dikirim
       final options = await apiClient.optionsWithAuth();
+      
+      // Catatan: Jika status 'Dikirim', tambahkan data resi/kurir di sini. 
+      // Karena kode ini tidak disediakan, kita asumsikan data yang dikirim sudah benar.
+      
       await apiClient.dio.put(
         '/transaksi/$id/update-status',
         data: {'status': status},

@@ -1,3 +1,5 @@
+// lib/modules/history/pages/transaction_history_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../models/transaksi_model.dart';
@@ -44,9 +46,9 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     super.dispose();
   }
 
-  void _onSearchChanged() {
-    // Memanggil setState untuk rebuild dan menerapkan filter pencarian
-    setState(() {});
+  Future<void> _refreshData() async {
+    // Memanggil fetchTransactions() yang mengambil data dari endpoint pembeli (/transaksi)
+    await Provider.of<MarketplaceProvider>(context, listen: false).fetchTransactions();
   }
 
   // --- LOGIKA FILTER TRANSAKSI GABUNGAN ---
@@ -88,6 +90,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: primaryColor,
       appBar: AppBar(
         title: const Text(
           "Transaction History",
@@ -95,7 +98,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         ),
         backgroundColor: kPrimaryColor,
         iconTheme: const IconThemeData(color: Colors.white),
-        automaticallyImplyLeading: false, // <--- TAMBAHKAN BARIS INI
+        elevation: 0,
       ),
       body: Consumer<MarketplaceProvider>(
         builder: (context, provider, child) {
@@ -327,8 +330,8 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                 ),
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -571,7 +574,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 

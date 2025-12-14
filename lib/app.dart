@@ -1,8 +1,8 @@
-// lib/app.dart
+
 import 'package:flutter/material.dart';
 import 'config/routes.dart';
 import 'config/theme.dart';
-import 'modules/auth/auth_check.dart'; // Import AuthCheck
+import 'modules/auth/auth_check.dart';
 
 class App extends StatelessWidget {
   const App({super.key});

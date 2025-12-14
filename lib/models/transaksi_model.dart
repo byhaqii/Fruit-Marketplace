@@ -26,12 +26,13 @@ class TransaksiModel {
   });
 
   factory TransaksiModel.fromJson(Map<String, dynamic> json) {
-    // Dukungan agar bisa membaca key 'items' atau 'order_items' dari backend
+    
     var listItemsJson = (json['items'] ?? json['order_items']) as List?;
 
     List<ProdukModel> parsedItems = [];
     if (listItemsJson != null) {
       parsedItems = listItemsJson.map((itemJson) {
+        
         return ProdukModel.fromJson(itemJson['produk'] ?? {});
       }).toList();
     }
@@ -41,13 +42,13 @@ class TransaksiModel {
         : null;
     var produk = firstItem != null ? firstItem['produk'] : null;
 
-    // Hitung jumlah item untuk judul ringkasan
+    
     final int itemCount = listItemsJson?.length ?? 0;
 
     // LOGIKA PERBAIKAN UNTUK TITLE:
     String calculatedTitle = 'Pesanan #${json['order_id'] ?? '-'}';
     if (itemCount == 1 && produk != null) {
-      // Jika hanya 1 barang, tampilkan nama barangnya
+      
       calculatedTitle = produk['nama_produk'] ?? 'Produk';
     } else if (itemCount > 1) {
       // Jika lebih dari 1, tampilkan nama barang pertama + jumlah produk lainnya
@@ -57,7 +58,7 @@ class TransaksiModel {
       calculatedTitle = "$firstName dan ${itemCount - 1} Produk Lainnya";
     }
 
-    // Parsing aman untuk total harga
+    
     int rawHarga = 0;
     if (json['total_harga'] != null) {
       rawHarga = int.tryParse(json['total_harga'].toString()) ?? 0;
@@ -86,7 +87,7 @@ class TransaksiModel {
     );
   }
 
-  // Helper getters
+  
   bool get isWaiting => status == 'menunggu konfirmasi';
   bool get isProcessed => status == 'Diproses';
   bool get isShipped => status == 'Dikirim';
@@ -94,7 +95,7 @@ class TransaksiModel {
   // PERBAIKAN 1: Tambahkan getter untuk status yang memungkinkan penerimaan barang.
   bool get isReceivable => status == 'Dikirim' || status == 'Tiba di tujuan';
 
-  // PERBAIKAN 2: isSuccess hanya untuk status yang sudah selesai/siap diulas.
+  
   bool get isSuccess => status == 'Selesai';
 
   // PERBAIKAN 3: isCancelled hanya menggunakan status dari enum backend
