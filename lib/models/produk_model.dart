@@ -49,7 +49,20 @@ class ProdukModel {
       if (val == null) return 0;
       if (val is int) return val;
       if (val is double) return val.toInt();
-      if (val is String) return int.tryParse(val) ?? 0;
+      if (val is String) {
+        // Bersihkan format (mis. "20.000", "20000.00", "Rp 20.000")
+        final cleaned = val.replaceAll(RegExp(r'[^0-9]'), '');
+        if (cleaned.isEmpty) return 0;
+        int parsed =
+            int.tryParse(cleaned) ?? double.tryParse(val)?.toInt() ?? 0;
+        // Heuristic: if backend returns cents (e.g., 2,000,000 for 20,000), divide by 100
+        // Trigger only when original string looks like a decimal and parsed is large
+        final looksDecimal = val.contains('.') || val.contains(',');
+        if (looksDecimal && parsed >= 100000 && parsed % 100 == 0) {
+          parsed = parsed ~/ 100;
+        }
+        return parsed;
+      }
       return 0;
     }
 
@@ -62,16 +75,16 @@ class ProdukModel {
     String getValidImageUrl(dynamic val) {
       if (val == null || val.toString().isEmpty) {
         // Gambar default jika null
-        return 'https://via.placeholder.com/150'; 
+        return 'https://via.placeholder.com/150';
       }
       String imgString = val.toString();
-      
+
       // Jika sudah ada 'http', berarti itu link lengkap (misal dari internet)
       if (imgString.startsWith('http')) {
         return imgString;
-      } 
-    
-      return '${Env.apiBaseUrl}/storage/$imgString'; 
+      }
+
+      return '${Env.apiBaseUrl}/storage/$imgString';
     }
 
     return ProdukModel(
@@ -81,16 +94,17 @@ class ProdukModel {
       deskripsi: parseString(json['deskripsi'], defaultValue: '-'),
       harga: parseInt(json['harga']),
       stok: parseInt(json['stok']),
-      
+
       // Panggil fungsi gambar pintar di sini
       imageUrl: getValidImageUrl(json['gambar_url']),
-      
+
       kategori: parseString(json['kategori'], defaultValue: 'Umum'),
       statusJual: parseString(json['status_jual'], defaultValue: 'Tersedia'),
     );
   }
 
-  factory ProdukModel.fromMap(Map<String, dynamic> map) => ProdukModel.fromJson(map);
+  factory ProdukModel.fromMap(Map<String, dynamic> map) =>
+      ProdukModel.fromJson(map);
 
   Map<String, dynamic> toJson() => {
     'id': id,

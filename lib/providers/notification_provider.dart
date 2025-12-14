@@ -8,17 +8,19 @@ class NotificationProvider with ChangeNotifier {
   final ApiClient apiClient;
 
   // --- STATE ---
-  List<NotificationModel> _notifications = []; // Notifikasi Pribadi (Sisi Buyer/Seller)
-  List<NotificationModel> _activityLogs = [];  // Activity Log (Sisi Admin)
+  List<NotificationModel> _notifications =
+      []; // Notifikasi Pribadi (Sisi Buyer/Seller)
+  List<NotificationModel> _activityLogs = []; // Activity Log (Sisi Admin)
   bool _isLoading = false;
 
   // --- GETTERS ---
   List<NotificationModel> get notifications => _notifications;
   List<NotificationModel> get activityLogs => _activityLogs;
   bool get isLoading => _isLoading;
+  int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
   NotificationProvider({ApiClient? apiClient})
-      : apiClient = apiClient ?? ApiClient();
+    : apiClient = apiClient ?? ApiClient();
 
   // 1. FETCH NOTIFIKASI PRIBADI
   Future<void> fetchNotifications() async {
@@ -46,7 +48,7 @@ class NotificationProvider with ChangeNotifier {
     try {
       // Memanggil endpoint khusus Admin
       final response = await apiClient.get('/admin/activities');
-      
+
       if (response is List) {
         _activityLogs = response
             .map((json) => NotificationModel.fromJson(json))
@@ -63,7 +65,9 @@ class NotificationProvider with ChangeNotifier {
     try {
       await apiClient.post('/notifications/read-all', {});
       // Update state lokal menggunakan copyWith (yang sudah diperbaiki)
-      _notifications = _notifications.map((n) => n.copyWith(isRead: true)).toList();
+      _notifications = _notifications
+          .map((n) => n.copyWith(isRead: true))
+          .toList();
       notifyListeners();
     } catch (e) {
       print("Gagal menandai baca: $e");

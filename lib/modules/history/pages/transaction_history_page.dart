@@ -11,24 +11,27 @@ class TransactionHistoryPage extends StatefulWidget {
 }
 
 class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
-  static const Color kPrimaryColor = Color(0xFF2D7F6A); 
-  
+  static const Color kPrimaryColor = Color(0xFF2D7F6A);
+
   // --- STATE UNTUK FILTER & SEARCH ---
   String _selectedStatus = 'Semua';
   final TextEditingController _searchController = TextEditingController();
   final List<String> _filterStatuses = [
-    'Semua', 
-    'Menunggu Konfirmasi', 
-    'Aktif', // Kombinasi Diproses, Dikirim, Tiba di tujuan
-    'Selesai', 
-    'Dibatalkan'
+    'All',
+    'Pending',
+    'Active', // Kombinasi Diproses, Dikirim, Tiba di tujuan
+    'Completed',
+    'Cancelled',
   ];
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<MarketplaceProvider>(context, listen: false).fetchTransactions();
+      Provider.of<MarketplaceProvider>(
+        context,
+        listen: false,
+      ).fetchTransactions();
     });
     // Tambahkan listener untuk otomatis memfilter saat mengetik
     _searchController.addListener(_onSearchChanged);
@@ -47,31 +50,36 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   }
 
   // --- LOGIKA FILTER TRANSAKSI GABUNGAN ---
-  List<TransaksiModel> _getFilteredTransactions(List<TransaksiModel> all, String status, String query) {
+  List<TransaksiModel> _getFilteredTransactions(
+    List<TransaksiModel> all,
+    String status,
+    String query,
+  ) {
     final lowerQuery = query.toLowerCase();
 
     return all.where((data) {
       // 1. Filter Status
       bool matchesStatus;
-      if (status == 'Semua') {
+      if (status == 'All') {
         matchesStatus = true;
-      } else if (status == 'Menunggu Konfirmasi') {
+      } else if (status == 'Pending') {
         matchesStatus = data.isWaiting;
-      } else if (status == 'Aktif') {
-        // Aktif = Sedang Diproses, Dikirim, atau Tiba di tujuan (isProcessed & isReceivable)
-        matchesStatus = data.isProcessed || data.isReceivable; 
-      } else if (status == 'Selesai') {
+      } else if (status == 'Active') {
+        // Active = Sedang Diproses, Dikirim, atau Tiba di tujuan (isProcessed & isReceivable)
+        matchesStatus = data.isProcessed || data.isReceivable;
+      } else if (status == 'Completed') {
         matchesStatus = data.isSuccess;
-      } else if (status == 'Dibatalkan') {
+      } else if (status == 'Cancelled') {
         matchesStatus = data.isCancelled;
       } else {
-        matchesStatus = true; 
+        matchesStatus = true;
       }
-      
+
       // 2. Filter Pencarian (Order ID atau Judul Pesanan)
-      final matchesQuery = lowerQuery.isEmpty || 
-                           data.orderId.toLowerCase().contains(lowerQuery) || 
-                           data.title.toLowerCase().contains(lowerQuery);
+      final matchesQuery =
+          lowerQuery.isEmpty ||
+          data.orderId.toLowerCase().contains(lowerQuery) ||
+          data.title.toLowerCase().contains(lowerQuery);
 
       return matchesStatus && matchesQuery;
     }).toList();
@@ -81,29 +89,104 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Riwayat Transaksi", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Transaction History",
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: kPrimaryColor,
         iconTheme: const IconThemeData(color: Colors.white),
         automaticallyImplyLeading: false, // <--- TAMBAHKAN BARIS INI
       ),
       body: Consumer<MarketplaceProvider>(
         builder: (context, provider, child) {
-          
-          if (provider.isLoading && provider.transactions.isEmpty && _searchController.text.isEmpty) {
-            return const Center(child: CircularProgressIndicator(color: kPrimaryColor));
+          if (provider.isLoading &&
+              provider.transactions.isEmpty &&
+              _searchController.text.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(color: kPrimaryColor),
+            );
           }
 
           final filteredList = _getFilteredTransactions(
-            provider.transactions, 
-            _selectedStatus, 
-            _searchController.text
+            provider.transactions,
+            _selectedStatus,
+            _searchController.text,
           );
 
           return Column(
             children: [
+              // HEADER SUMMARY
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Pesanan',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: kPrimaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${filteredList.length} transactions',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: kPrimaryColor.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.filter_alt_outlined,
+                            color: kPrimaryColor,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _selectedStatus,
+                            style: const TextStyle(
+                              color: kPrimaryColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               // 1. SEARCH BAR
               _buildSearchBar(),
-              
+
               // 2. FILTER CHIPS
               _buildFilterChips(),
 
@@ -113,22 +196,49 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   onRefresh: () async {
                     await provider.fetchTransactions();
                   },
-                  
+
                   child: filteredList.isEmpty
-                      ? ListView( 
-                          children: [
-                            const SizedBox(height: 100),
-                            Center(child: Text('Transaksi untuk filter ini tidak ditemukan: "$_selectedStatus"')),
-                            // Tambahkan spacer agar list bisa ditarik ke bawah saat kosong
-                            const SizedBox(height: 100),
-                          ],
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.receipt_long_outlined,
+                                size: 80,
+                                color: Colors.grey[300],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No transactions',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _selectedStatus == 'All'
+                                    ? 'No transaction history yet'
+                                    : 'No transactions with status\n"$_selectedStatus"',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                            ],
+                          ),
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.all(16.0),
                           itemCount: filteredList.length,
                           itemBuilder: (context, index) {
                             return _buildTransactionCard(
-                                context, filteredList[index], provider);
+                              context,
+                              filteredList[index],
+                              provider,
+                            );
                           },
                         ),
                 ),
@@ -139,7 +249,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       ),
     );
   }
-  
+
   // --- UI HELPER: Search Bar ---
   // --- UI HELPER: Search Bar (DIPERBAIKI) ---
   Widget _buildSearchBar() {
@@ -149,19 +259,25 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         height: 48,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
-        child: TextField( 
-          controller: _searchController, 
+        child: TextField(
+          controller: _searchController,
           // 1. KUNCI: Menambahkan ini agar teks & icon sejajar di tengah (center)
-          textAlignVertical: TextAlignVertical.center, 
+          textAlignVertical: TextAlignVertical.center,
           decoration: const InputDecoration(
-            hintText: 'Cari Order ID atau Nama Produk',
+            hintText: 'Search Order ID or Product Name',
             prefixIcon: Icon(Icons.search, color: Colors.grey),
             border: InputBorder.none,
             // 2. Set padding jadi kosong agar tidak bentrok dengan textAlignVertical
-            contentPadding: EdgeInsets.zero, 
+            contentPadding: EdgeInsets.zero,
           ),
         ),
       ),
@@ -192,13 +308,23 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   status,
                   style: TextStyle(
                     color: isSelected ? Colors.white : Colors.black87,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 12
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    fontSize: 12,
                   ),
                 ),
                 backgroundColor: isSelected ? kPrimaryColor : Colors.grey[200],
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                side: isSelected ? BorderSide.none : BorderSide(color: Colors.grey[300]!),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 2,
+                ),
+                side: isSelected
+                    ? BorderSide.none
+                    : BorderSide(color: Colors.grey[300]!),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
               ),
             ),
           );
@@ -207,18 +333,26 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     );
   }
 
-
-  Widget _buildTransactionCard(BuildContext context, TransaksiModel data, MarketplaceProvider provider) {
+  Widget _buildTransactionCard(
+    BuildContext context,
+    TransaksiModel data,
+    MarketplaceProvider provider,
+  ) {
     // Tentukan warna berdasarkan status
     Color statusColor = Colors.grey;
-    if (data.isWaiting) statusColor = Colors.orange;
-    else if (data.isProcessed) statusColor = Colors.blue;
-    else if (data.isReceivable) statusColor = Colors.purple; 
-    else if (data.isSuccess) statusColor = Colors.green;
-    else if (data.isCancelled) statusColor = Colors.red;
+    if (data.isWaiting)
+      statusColor = Colors.orange;
+    else if (data.isProcessed)
+      statusColor = Colors.blue;
+    else if (data.isReceivable)
+      statusColor = Colors.purple;
+    else if (data.isSuccess)
+      statusColor = Colors.green;
+    else if (data.isCancelled)
+      statusColor = Colors.red;
 
     final int totalItems = data.items.length;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -229,7 +363,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
             color: Colors.grey.withOpacity(0.15),
             spreadRadius: 1,
             blurRadius: 5,
-            offset: const Offset(0, 3), 
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -247,12 +381,23 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Order ID: #${data.orderId}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                  Flexible(
+                    child: Text(
+                      'Order ID: #${data.orderId}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(15),
@@ -268,9 +413,9 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   ),
                 ],
               ),
-              
+
               const Divider(height: 20),
-              
+
               // 2. ITEM SUMMARY
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,37 +425,51 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
                       data.imageUrl,
-                      width: 50, 
+                      width: 50,
                       height: 50,
                       fit: BoxFit.cover,
                       errorBuilder: (e, s, t) => Container(
-                        width: 50, height: 50, color: Colors.grey[200],
-                        child: const Icon(Icons.shopping_bag_outlined, color: Colors.grey, size: 24),
+                        width: 50,
+                        height: 50,
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.shopping_bag_outlined,
+                          color: Colors.grey,
+                          size: 24,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           data.title, // Title yang sudah diperbaiki (misal: "Apel dan 2 Produk Lainnya")
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: kPrimaryColor),
-                          maxLines: 2, overflow: TextOverflow.ellipsis
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: kPrimaryColor,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '$totalItems Item | ${data.date}', // Tampilkan total item dan tanggal
-                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
-              
+
               const Divider(height: 20),
 
               // 3. FOOTER (Total Price & Buttons)
@@ -321,14 +480,21 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Total Pembayaran', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                      const Text(
+                        'Total Payment',
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
                       Text(
                         data.price,
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: kPrimaryColor),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          color: kPrimaryColor,
+                        ),
                       ),
                     ],
                   ),
-                  
+
                   // Action Buttons (Condensed)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -336,46 +502,63 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                       // 1. Tombol Cancel (Outlined)
                       if (data.isWaiting)
                         _buildActionButton(
-                          context, 
-                          'Batalkan', 
-                          Colors.red, 
+                          context,
+                          'Cancel',
+                          Colors.red,
                           () async {
-                            bool confirm = await showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text("Batalkan Pesanan?"),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Tidak")),
-                                  TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Ya", style: TextStyle(color: Colors.red))),
-                                ],
-                              )) ?? false;
-                               
-                            if(confirm) await provider.cancelOrder(data.id);
+                            bool confirm =
+                                await showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text("Cancel Order?"),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, false),
+                                        child: const Text("No"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, true),
+                                        child: const Text(
+                                          "Yes",
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ) ??
+                                false;
+
+                            if (confirm) await provider.cancelOrder(data.id);
                           },
                           isFilled: false,
                         ),
-              
+
                       // 2. Tombol Terima Barang (Filled, Primary Action)
                       if (data.isReceivable)
                         _buildActionButton(
-                          context, 
-                          'Terima Barang', 
-                          kPrimaryColor, 
-                          () async { await provider.markAsReceived(data.id); },
+                          context,
+                          'Receive',
+                          kPrimaryColor,
+                          () async {
+                            await provider.markAsReceived(data.id);
+                          },
                           isFilled: true,
                         ),
-              
+
                       // 3. Tombol Ulasan (Outlined)
                       if (data.isSuccess)
                         _buildActionButton(
-                          context, 
-                          'Beri Ulasan', 
-                          Colors.blueGrey, 
+                          context,
+                          'Review',
+                          Colors.blueGrey,
                           () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => RatingPage(transaction: data),
+                                builder: (context) =>
+                                    RatingPage(transaction: data),
                               ),
                             );
                           },
@@ -391,34 +574,53 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       ),
     );
   }
-  
+
   // Helper Widget baru untuk Tombol Aksi
-  Widget _buildActionButton(BuildContext context, String text, Color color, VoidCallback onPressed, {bool isFilled = true}) {
+  Widget _buildActionButton(
+    BuildContext context,
+    String text,
+    Color color,
+    VoidCallback onPressed, {
+    bool isFilled = true,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(left: 8.0),
-      child: isFilled 
-        ? ElevatedButton(
-            onPressed: onPressed,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: color,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              minimumSize: Size.zero, 
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              elevation: 0,
+      child: isFilled
+          ? ElevatedButton(
+              onPressed: onPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                minimumSize: Size.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                text,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            )
+          : OutlinedButton(
+              onPressed: onPressed,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: color,
+                side: BorderSide(color: color, width: 1),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                minimumSize: Size.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(text, style: TextStyle(fontSize: 12, color: color)),
             ),
-            child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 12)),
-          )
-        : OutlinedButton(
-            onPressed: onPressed,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: color, 
-              side: BorderSide(color: color, width: 1),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              minimumSize: Size.zero,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text(text, style: TextStyle(fontSize: 12, color: color)),
-          ),
     );
   }
 }
@@ -438,9 +640,9 @@ class _RatingPageState extends State<RatingPage> {
 
   @override
   Widget build(BuildContext context) {
-     return Scaffold(
-        appBar: AppBar(title: const Text("Rating")),
-        body: Center(child: Text("Rating Page for ${widget.transaction.title}")),
-     );
+    return Scaffold(
+      appBar: AppBar(title: const Text("Rating")),
+      body: Center(child: Text("Rating Page for ${widget.transaction.title}")),
+    );
   }
 }

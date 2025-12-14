@@ -2,16 +2,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:image_picker/image_picker.dart'; 
-import 'dart:io'; 
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 // Import service yang baru/diperbarui
-import '../../../core/services/ml_prediction_service.dart'; 
+import '../../../core/services/ml_prediction_service.dart';
 // Import display screen
-import '../widget/displaypicture_screen.dart'; 
+import '../widget/displaypicture_screen.dart';
 
 // Variabel global
-List<CameraDescription> cameras = []; 
+List<CameraDescription> cameras = [];
 
 class ScanPage extends StatefulWidget {
   const ScanPage({super.key});
@@ -23,13 +23,13 @@ class ScanPage extends StatefulWidget {
 class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   // --- Camera Controller & State ---
   CameraController? _controller;
-  CameraDescription? _currentDescription; 
+  CameraDescription? _currentDescription;
   late Future<void> _initializeControllerFuture;
   bool _isProcessing = false;
-  final ImagePicker _picker = ImagePicker(); 
-  
+  final ImagePicker _picker = ImagePicker();
+
   // Hanya ML Service
-  late final MlPredictionService _mlService; 
+  late final MlPredictionService _mlService;
 
   @override
   void initState() {
@@ -42,17 +42,19 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   // --- FUNGSI UTAMA INISIALISASI KAMERA ---
   Future<void> _initCamera([CameraDescription? cameraDescription]) async {
     try {
+      // 0. Safety: Jangan lanjut jika widget sudah dispose
+      if (!mounted) return;
+
       // 1. Pastikan daftar kamera terisi
       if (cameras.isEmpty) {
-          cameras = await availableCameras();
+        cameras = await availableCameras();
       }
       if (cameras.isEmpty) return;
-      
+
       // 2. Pilih kamera (Parameter -> Tersimpan -> Default)
-      final CameraDescription cameraToUse = cameraDescription ?? 
-                                            _currentDescription ?? 
-                                            cameras.first;
-      
+      final CameraDescription cameraToUse =
+          cameraDescription ?? _currentDescription ?? cameras.first;
+
       // Simpan kamera yang sedang dipakai
       _currentDescription = cameraToUse;
 
@@ -60,7 +62,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       if (_controller != null) {
         // Simpan referensi controller lama
         final CameraController oldController = _controller!;
-        
+
         // Putuskan hubungan controller dari State SEBELUM dispose
         // agar UI tidak mencoba merender kamera yang sedang dimatikan.
         _controller = null;
@@ -69,10 +71,17 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
         }
 
         // Baru lakukan dispose pada referensi lama
-        await oldController.dispose();
+        try {
+          await oldController.dispose();
+        } catch (e) {
+          print('Error saat dispose controller lama: $e');
+        }
       }
 
-      // 4. Buat controller baru
+      // 4. Cek lagi apakah masih mounted sebelum buat controller baru
+      if (!mounted) return;
+
+      // Buat controller baru
       final CameraController newController = CameraController(
         cameraToUse,
         ResolutionPreset.high,
@@ -80,17 +89,29 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       );
 
       _controller = newController;
-      
+
       // 5. Inisialisasi
       await newController.initialize();
-      
-      // 6. Update UI setelah siap
-      if (mounted) {
-        setState(() {});
+
+      // 6. Cek mounted lagi sebelum setState
+      if (!mounted) {
+        // Widget sudah dispose, dispose controller yg baru juga
+        await newController.dispose();
+        _controller = null;
+        return;
       }
-      
+
+      // Update UI setelah siap
+      setState(() {});
     } catch (e) {
       print('Error inisialisasi kamera: $e');
+      if (mounted && _controller != null) {
+        try {
+          await _controller?.dispose();
+          _controller = null;
+        } catch (_) {}
+        setState(() {});
+      }
     }
   }
 
@@ -115,7 +136,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     final CameraDescription newCamera = cameras[nextCameraIndex];
 
     setState(() {
-      _isProcessing = true; 
+      _isProcessing = true;
     });
 
     try {
@@ -123,7 +144,6 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       // Logika dispose yang aman sudah ada di dalam _initCamera
       _initializeControllerFuture = _initCamera(newCamera);
       await _initializeControllerFuture;
-
     } catch (e) {
       print("Gagal ganti kamera: $e");
     } finally {
@@ -136,12 +156,12 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   }
 
   // --- LIFECYCLE MANAGEMENT ---
-  
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
-    _mlService.dispose(); 
+    _mlService.dispose();
     super.dispose();
   }
 
@@ -156,7 +176,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
         _controller = null; // Set null agar UI aman
         if (mounted) setState(() {});
       }
-    } 
+    }
     // App Resumed -> Nyalakan Kamera Kembali
     else if (state == AppLifecycleState.resumed) {
       if (_controller == null) {
@@ -174,28 +194,30 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     });
 
     String finalDisplayResult = "Gagal mengklasifikasi buah.";
-    String searchQuery = ""; 
+    String searchQuery = "";
 
     try {
-      Map<String, dynamic> prediction = await _mlService.predictFruit(imagePath);
+      Map<String, dynamic> prediction = await _mlService.predictFruit(
+        imagePath,
+      );
       String label = prediction['label'];
       double confidence = prediction['confidence'];
 
-      searchQuery = label.toUpperCase(); 
-      finalDisplayResult = "Jenis: $label\nConfidence: ${(confidence * 100).toStringAsFixed(2)}%";
-      
+      searchQuery = label.toUpperCase();
+      finalDisplayResult =
+          "Jenis: $label\nConfidence: ${(confidence * 100).toStringAsFixed(2)}%";
+
       if (mounted) {
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => DisplayPictureScreen(
               imagePath: imagePath,
-              ocrResult: finalDisplayResult, 
-              searchQuery: searchQuery,      
+              ocrResult: finalDisplayResult,
+              searchQuery: searchQuery,
             ),
           ),
         );
       }
-
     } catch (e) {
       _showResultDialog("Error Pemrosesan", "Terjadi kesalahan: $e");
     } finally {
@@ -216,8 +238,8 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
 
     try {
       // Pastikan Future selesai sebelum ambil gambar
-      await _initializeControllerFuture; 
-      
+      await _initializeControllerFuture;
+
       final image = await _controller!.takePicture();
       if (!context.mounted) return;
       _processImageAndNavigate(image.path);
@@ -239,7 +261,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       _showResultDialog("Galeri Error", e.toString());
     }
   }
-  
+
   Future<void> _showResultDialog(String title, String content) async {
     return showDialog<void>(
       context: context,
@@ -267,10 +289,9 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
-          
           // Cek apakah controller siap. Jika null atau belum init, tampilkan loading.
-          if (snapshot.connectionState != ConnectionState.done || 
-              _controller == null || 
+          if (snapshot.connectionState != ConnectionState.done ||
+              _controller == null ||
               !_controller!.value.isInitialized) {
             return Container(
               color: Colors.black,
@@ -281,14 +302,14 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
           }
 
           if (snapshot.hasError) {
-             return Container(
+            return Container(
               color: Colors.black,
               child: Center(
                 child: Text(
-                  "Kamera tidak tersedia.\n${snapshot.error}", 
+                  "Kamera tidak tersedia.\n${snapshot.error}",
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white),
-                )
+                ),
               ),
             );
           }
@@ -297,7 +318,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
           return Stack(
             fit: StackFit.expand,
             children: [
-               SizedBox.expand(
+              SizedBox.expand(
                 child: FittedBox(
                   fit: BoxFit.cover,
                   child: SizedBox(
@@ -326,31 +347,37 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       elevation: 0,
       iconTheme: const IconThemeData(color: Colors.white),
       titleTextStyle: const TextStyle(
-          color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
       actions: [
         IconButton(
           icon: Icon(
-            _controller != null && _controller!.value.flashMode == FlashMode.off 
-              ? Icons.flash_off_outlined 
-              : Icons.flash_on_outlined,
+            _controller != null && _controller!.value.flashMode == FlashMode.off
+                ? Icons.flash_off_outlined
+                : Icons.flash_on_outlined,
             color: Colors.white,
           ),
-          onPressed: _isProcessing || _controller == null || !_controller!.value.isInitialized
-            ? null 
-            : () {
-            if (_controller != null) {
-              try {
-                _controller!.setFlashMode(
-                  _controller!.value.flashMode == FlashMode.off 
-                    ? FlashMode.torch 
-                    : FlashMode.off
-                );
-                setState(() {}); 
-              } catch(e) {
-                print("Error flash: $e");
-              }
-            }
-          },
+          onPressed:
+              _isProcessing ||
+                  _controller == null ||
+                  !_controller!.value.isInitialized
+              ? null
+              : () {
+                  if (_controller != null) {
+                    try {
+                      _controller!.setFlashMode(
+                        _controller!.value.flashMode == FlashMode.off
+                            ? FlashMode.torch
+                            : FlashMode.off,
+                      );
+                      setState(() {});
+                    } catch (e) {
+                      print("Error flash: $e");
+                    }
+                  }
+                },
         ),
       ],
     );
@@ -360,7 +387,9 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(height: kToolbarHeight + MediaQuery.of(context).padding.top + 20),
+        SizedBox(
+          height: kToolbarHeight + MediaQuery.of(context).padding.top + 20,
+        ),
         const Text(
           'Scan untuk cari Produk',
           style: TextStyle(
@@ -383,21 +412,18 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       width: scanBoxSize,
       height: scanBoxSize,
       decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.white.withOpacity(0.9),
-          width: 3.0,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.9), width: 3.0),
         borderRadius: BorderRadius.circular(24.0),
       ),
-      child: _isProcessing 
-        ? const Center(child: CircularProgressIndicator(color: Colors.white))
-        : null,
+      child: _isProcessing
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
+          : null,
     );
   }
 
   Widget _buildUploadButton(BuildContext context) {
     return IconButton(
-      onPressed: _isProcessing ? null : () => _pickImageFromGallery(context), 
+      onPressed: _isProcessing ? null : () => _pickImageFromGallery(context),
       icon: const Icon(
         Icons.file_upload_outlined,
         color: Colors.white,
@@ -409,23 +435,28 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
 
   Widget _buildBottomControls(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40.0).copyWith(bottom: 40.0),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 40.0,
+      ).copyWith(bottom: 40.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // TOMBOL UPLOAD
           _buildUploadButton(context),
-          
+
           // TOMBOL AMBIL FOTO
           GestureDetector(
-            onTap: _isProcessing ? null : () => _takePicture(context), 
+            onTap: _isProcessing ? null : () => _takePicture(context),
             child: Container(
               width: 70.0,
               height: 70.0,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: _isProcessing ? Colors.grey : Colors.white, width: 5.0),
+                border: Border.all(
+                  color: _isProcessing ? Colors.grey : Colors.white,
+                  width: 5.0,
+                ),
               ),
               child: Center(
                 child: Container(
@@ -439,10 +470,10 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               ),
             ),
           ),
-          
+
           // TOMBOL SWITCH KAMERA
           IconButton(
-            onPressed: _isProcessing ? null : _switchCamera, 
+            onPressed: _isProcessing ? null : _switchCamera,
             icon: const Icon(
               Icons.flip_camera_ios,
               color: Colors.white,

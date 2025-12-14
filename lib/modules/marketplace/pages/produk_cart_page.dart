@@ -8,7 +8,7 @@ import '../../../providers/marketplace_provider.dart';
 import '../../../providers/auth_provider.dart';
 
 // Warna utama dari gambar
-const Color kPrimaryColor = Color(0xFF1E605A);
+const Color kPrimaryColor = Color(0xFF2D7F6A);
 // Definisikan warna latar belakang body
 const Color kAppBackgroundColor = Color(0xFFF7F7F7);
 
@@ -42,18 +42,40 @@ class ProdukCartPage extends StatelessWidget {
                 const Icon(Icons.shopping_bag_outlined, color: Colors.white),
                 const SizedBox(width: 8),
                 Text(
-                  'Keranjang Saya (${provider.cartItemCount})', // Gunakan cartItemCount dari provider
+                  'My Cart (${provider.cartItemCount})', // Gunakan cartItemCount dari provider
                   style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
           ),
           body: cartItems.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Keranjang Anda masih kosong.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.shopping_cart_outlined,
+                        size: 80,
+                        color: Colors.grey[300],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Cart is Empty',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No products in your cart yet',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                      ),
+                    ],
                   ),
                 )
               : Padding(
@@ -68,9 +90,7 @@ class ProdukCartPage extends StatelessWidget {
                       itemCount: cartItems.length,
                       itemBuilder: (context, index) {
                         final item = cartItems[index];
-                        return CartItem(
-                          produk: item,
-                        );
+                        return CartItem(produk: item);
                       },
                       separatorBuilder: (context, index) {
                         return Divider(
@@ -97,10 +117,13 @@ class ProdukCartPage extends StatelessWidget {
             ),
             child: Padding(
               padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).padding.bottom),
+                bottom: MediaQuery.of(context).padding.bottom,
+              ),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 12.0,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -109,12 +132,16 @@ class ProdukCartPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Total :',
-                            style: TextStyle(fontSize: 16, color: Colors.grey)),
+                        const Text(
+                          'Total :',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
                         Text(
                           formattedTotalCost,
                           style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -135,7 +162,9 @@ class ProdukCartPage extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: kPrimaryColor,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 12),
+                          horizontal: 30,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -143,9 +172,10 @@ class ProdukCartPage extends StatelessWidget {
                       child: const Text(
                         'Pay Now',
                         style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold),
+                          fontSize: 18,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -165,10 +195,7 @@ class ProdukCartPage extends StatelessWidget {
 class CartItem extends StatelessWidget {
   final ProdukModel produk;
 
-  const CartItem({
-    required this.produk,
-    super.key,
-  });
+  const CartItem({required this.produk, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -187,10 +214,11 @@ class CartItem extends StatelessWidget {
               height: 70,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => Container(
-                  width: 70,
-                  height: 70,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.broken_image, color: Colors.grey)),
+                width: 70,
+                height: 70,
+                color: Colors.grey[200],
+                child: const Icon(Icons.broken_image, color: Colors.grey),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -206,12 +234,18 @@ class CartItem extends StatelessWidget {
                       child: Text(
                         produk.namaProduk,
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.close, size: 20, color: Colors.grey[400]),
+                      icon: Icon(
+                        Icons.close,
+                        size: 20,
+                        color: Colors.grey[400],
+                      ),
                       onPressed: () {
                         provider.removeFromCart(produk);
                       },
@@ -231,7 +265,9 @@ class CartItem extends StatelessWidget {
                     Text(
                       produk.formattedPrice,
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     _buildQuantitySelector(context, produk, quantity),
                   ],
@@ -245,28 +281,43 @@ class CartItem extends StatelessWidget {
   }
 
   Widget _buildQuantitySelector(
-      BuildContext context, ProdukModel produk, int quantity) {
+    BuildContext context,
+    ProdukModel produk,
+    int quantity,
+  ) {
     final provider = Provider.of<MarketplaceProvider>(context, listen: false);
 
     return Row(
       children: [
-        _buildQuantityButton(Icons.remove, onPressed: () {
-          provider.decrementQuantity(produk);
-        }),
+        _buildQuantityButton(
+          Icons.remove,
+          onPressed: () {
+            provider.decrementQuantity(produk);
+          },
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Text(quantity.toString(),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          child: Text(
+            quantity.toString(),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ),
-        _buildQuantityButton(Icons.add, isAdd: true, onPressed: () {
-          provider.incrementQuantity(produk);
-        }),
+        _buildQuantityButton(
+          Icons.add,
+          isAdd: true,
+          onPressed: () {
+            provider.incrementQuantity(produk);
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildQuantityButton(IconData icon,
-      {bool isAdd = false, VoidCallback? onPressed}) {
+  Widget _buildQuantityButton(
+    IconData icon, {
+    bool isAdd = false,
+    VoidCallback? onPressed,
+  }) {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(8),
@@ -309,14 +360,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String? _selectedPaymentMethod = 'QRIS'; // Default payment method
   // Controller alamat
   final _alamatController = TextEditingController();
-  
+
   @override
   void initState() {
     super.initState();
     // Pre-fill alamat dari user data jika ada
     final user = Provider.of<AuthProvider>(context, listen: false).user;
-    if(user != null) {
-        _alamatController.text = user.address;
+    if (user != null) {
+      _alamatController.text = user.address;
     }
   }
 
@@ -337,8 +388,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Checkout',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Checkout',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -361,57 +414,80 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ],
         ),
         child: Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).padding.bottom,
+          ),
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
             child: Consumer<MarketplaceProvider>(
               builder: (context, provider, child) {
                 return ElevatedButton(
-                  onPressed: provider.isLoading ? null : () async {
-                    // VALIDASI ALAMAT
-                    if (_alamatController.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Mohon isi alamat pengiriman'))
-                        );
-                        return;
-                    }
+                  onPressed: provider.isLoading
+                      ? null
+                      : () async {
+                          // VALIDASI ALAMAT
+                          if (_alamatController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Mohon isi alamat pengiriman'),
+                              ),
+                            );
+                            return;
+                          }
 
-                    // PROSES CHECKOUT KE BACKEND
-                    bool success = await provider.checkout(
-                        _alamatController.text, 
-                        _selectedPaymentMethod ?? 'Manual'
-                    );
+                          // PROSES CHECKOUT KE BACKEND
+                          bool success = await provider.checkout(
+                            _alamatController.text,
+                            _selectedPaymentMethod ?? 'Manual',
+                          );
 
-                    if (success && context.mounted) {
-                        Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const OrderAcceptedScreen()));
-                    } else if (context.mounted) {
-                         ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Checkout Gagal, coba lagi.'))
-                        );
-                    }
-                  },
+                          if (success && context.mounted) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const OrderAcceptedScreen(),
+                              ),
+                            );
+                          } else if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Checkout failed, please try again.',
+                                ),
+                              ),
+                            );
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                  child: provider.isLoading 
-                    ? const SizedBox(
-                        height: 20, width: 20, 
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Place Order',
-                      style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold)),
+                  child: provider.isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Place Order',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 );
-              }
+              },
             ),
           ),
         ),
@@ -436,12 +512,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.person_pin_circle_outlined,
-                        color: kPrimaryColor),
+                    Icon(
+                      Icons.person_pin_circle_outlined,
+                      color: kPrimaryColor,
+                    ),
                     SizedBox(width: 8),
-                    Text('Address',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Address',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 IconButton(
@@ -449,22 +531,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   onPressed: () async {
                     // Navigasi ke form edit alamat, dan tunggu hasilnya
                     final newAddress = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => AddressFormPage(initialAddress: _alamatController.text)));
-                    
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddressFormPage(
+                          initialAddress: _alamatController.text,
+                        ),
+                      ),
+                    );
+
                     if (newAddress != null && newAddress is String) {
-                        setState(() {
-                            _alamatController.text = newAddress;
-                        });
+                      setState(() {
+                        _alamatController.text = newAddress;
+                      });
                     }
                   },
-                )
+                ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              _alamatController.text.isEmpty ? 'Alamat belum diatur' : _alamatController.text,
+              _alamatController.text.isEmpty
+                  ? 'Alamat belum diatur'
+                  : _alamatController.text,
               style: const TextStyle(color: Colors.black54, height: 1.5),
             ),
           ],
@@ -492,15 +580,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   children: [
                     Icon(Icons.payment_outlined, color: kPrimaryColor),
                     SizedBox(width: 8),
-                    Text('Payment Methods',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Payment Methods',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(height: 12),
-                Text('QRIS',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                Text(
+                  'QRIS',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
               ],
             ),
             Radio<String>(
@@ -524,7 +617,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildItemsCard(BuildContext context) {
     // Ambil provider untuk mendapatkan quantity
     final provider = Provider.of<MarketplaceProvider>(context, listen: false);
-    
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
       child: Container(
@@ -535,41 +628,62 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         child: Column(
           children: [
-            ...widget.cartItems.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded( // Gunakan Expanded agar text tidak overflow
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(item.namaProduk, // Gunakan namaProduk
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis,),
-                            Text(item.kategori.isNotEmpty ? item.kategori : 'Umum',
-                                style:
-                                    const TextStyle(fontSize: 12, color: Colors.grey)),
-                          ],
-                        ),
+            ...widget.cartItems.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      // Gunakan Expanded agar text tidak overflow
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.namaProduk, // Gunakan namaProduk
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            item.kategori.isNotEmpty ? item.kategori : 'Umum',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text('${provider.getQuantity(item)}x', // Ambil quantity real
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                )),
+                    ),
+                    Text(
+                      '${provider.getQuantity(item)}x', // Ambil quantity real
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const Divider(),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Total Payment',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text(widget.totalCost,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Total Payment',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  widget.totalCost,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ],
@@ -603,13 +717,13 @@ class _AddressFormPageState extends State<AddressFormPage> {
   void initState() {
     super.initState();
     if (widget.initialAddress != null) {
-        _alamatController.text = widget.initialAddress!;
+      _alamatController.text = widget.initialAddress!;
     }
-    
+
     final user = Provider.of<AuthProvider>(context, listen: false).user;
     if (user != null) {
-       if(_alamatController.text.isEmpty) _alamatController.text = user.address;
-       _noHpController.text = user.mobileNumber;
+      if (_alamatController.text.isEmpty) _alamatController.text = user.address;
+      _noHpController.text = user.mobileNumber;
     }
   }
 
@@ -636,9 +750,10 @@ class _AddressFormPageState extends State<AddressFormPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Address',
-            style:
-                TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Address',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
       body: ListView(
         children: [
@@ -654,12 +769,18 @@ class _AddressFormPageState extends State<AddressFormPage> {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.person_pin_circle_outlined,
-                        color: kPrimaryColor),
+                    Icon(
+                      Icons.person_pin_circle_outlined,
+                      color: kPrimaryColor,
+                    ),
                     SizedBox(width: 8),
-                    Text('Address',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Address',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -673,11 +794,17 @@ class _AddressFormPageState extends State<AddressFormPage> {
                 const SizedBox(height: 16),
                 _buildTextField(_kotaController, 'Kota'),
                 const SizedBox(height: 16),
-                _buildTextField(_kodePosController, 'Kode Pos',
-                    keyboardType: TextInputType.number),
+                _buildTextField(
+                  _kodePosController,
+                  'Kode Pos',
+                  keyboardType: TextInputType.number,
+                ),
                 const SizedBox(height: 16),
-                _buildTextField(_noHpController, 'No. Handphone',
-                    keyboardType: TextInputType.phone),
+                _buildTextField(
+                  _noHpController,
+                  'No. Handphone',
+                  keyboardType: TextInputType.phone,
+                ),
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
@@ -690,13 +817,17 @@ class _AddressFormPageState extends State<AddressFormPage> {
                       backgroundColor: kPrimaryColor,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: const Text('Save',
-                        style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Save',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -707,8 +838,11 @@ class _AddressFormPageState extends State<AddressFormPage> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label,
-      {TextInputType? keyboardType}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label, {
+    TextInputType? keyboardType,
+  }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
@@ -745,10 +879,7 @@ class OrderAcceptedScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Colors.white,
-              Color(0xFFF7F7F7),
-            ],
+            colors: [Colors.white, Color(0xFFF7F7F7)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -773,8 +904,11 @@ class OrderAcceptedScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: kPrimaryColor,
                     ),
-                    child: const Icon(Icons.check,
-                        color: Colors.white, size: 90),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 90,
+                    ),
                   ),
                 ),
               ),
@@ -783,9 +917,10 @@ class OrderAcceptedScreen extends StatelessWidget {
                 'Your Order has been\naccepted',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black),
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
               const SizedBox(height: 10),
               const Padding(
@@ -803,20 +938,24 @@ class OrderAcceptedScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                       // Reset ke dashboard
-                       Navigator.of(context).popUntil((route) => route.isFirst);
+                      // Reset ke dashboard
+                      Navigator.of(context).popUntil((route) => route.isFirst);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kPrimaryColor,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: const Text('Back to Home',
-                        style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Back to Home',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),

@@ -248,7 +248,7 @@ class _KeuanganPageState extends State<KeuanganPage> {
           children: const [
             Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey),
             SizedBox(height: 10),
-            Text('Belum ada riwayat transaksi.', style: TextStyle(color: Colors.grey)),
+            Text('No transaction history yet.', style: TextStyle(color: Colors.grey)),
           ],
         ),
       ),

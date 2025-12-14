@@ -7,15 +7,13 @@ import '../../../providers/marketplace_provider.dart';
 import '../widgets/discount_card.dart';
 import '../../marketplace/widgets/produk_card.dart';
 import '../../../config/env.dart';
-import '../../marketplace/pages/produk_detail_page.dart'; 
+import '../../marketplace/pages/produk_detail_page.dart';
+import '../../../utils/responsive.dart';
 
 class BuyerHomePage extends StatefulWidget {
-  final VoidCallback? onGoToShop; 
+  final VoidCallback? onGoToShop;
 
-  const BuyerHomePage({
-    super.key, 
-    this.onGoToShop, 
-  });
+  const BuyerHomePage({super.key, this.onGoToShop});
 
   @override
   State<BuyerHomePage> createState() => _BuyerHomePageState();
@@ -23,8 +21,14 @@ class BuyerHomePage extends StatefulWidget {
 
 class _BuyerHomePageState extends State<BuyerHomePage> {
   // Pastikan nama kategori ini SAMA dengan data 'kategori' di database/seeder Anda
-  final List<String> categories = ["Semua", "Apel", "Jeruk Bali", "Peach", "Tomat"];
-  
+  final List<String> categories = [
+    "All",
+    "Apple",
+    "Bali Orange",
+    "Peach",
+    "Tomato",
+  ];
+
   int selectedCategoryIndex = 0;
   final TextEditingController _searchController = TextEditingController();
 
@@ -34,7 +38,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
   }
 
   String getAvatarUrl(String? filename) {
-    if (filename == null || filename.isEmpty) return ''; 
+    if (filename == null || filename.isEmpty) return '';
     return '${_getStorageBaseUrl()}/storage/profiles/$filename';
   }
   // -----------------------
@@ -57,18 +61,17 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
-    final String displayName = (user?.name != null && user!.name.isNotEmpty) 
-        ? user.name 
-        : "Pelanggan";
-    
+    final String displayName = (user?.name != null && user!.name.isNotEmpty)
+        ? user.name
+        : "Customer";
+
     const Color mainBackgroundColor = Color(0xFF2D7F6A);
-    
+
     final String? avatarFilename = user?.avatar;
     final bool hasAvatar = avatarFilename != null && avatarFilename.isNotEmpty;
-    final ImageProvider? avatarImage = hasAvatar 
-        ? NetworkImage(getAvatarUrl(avatarFilename!)) 
+    final ImageProvider? avatarImage = hasAvatar
+        ? NetworkImage(getAvatarUrl(avatarFilename!))
         : null;
-
 
     return Scaffold(
       backgroundColor: mainBackgroundColor,
@@ -77,7 +80,10 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
           color: mainBackgroundColor,
           backgroundColor: Colors.white,
           onRefresh: () async {
-            await Provider.of<MarketplaceProvider>(context, listen: false).fetchAllData();
+            await Provider.of<MarketplaceProvider>(
+              context,
+              listen: false,
+            ).fetchAllData();
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -86,27 +92,55 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
               children: [
                 // 1. HEADER
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                  padding: EdgeInsets.fromLTRB(
+                    rs(context, 20),
+                    rs(context, 20),
+                    rs(context, 20),
+                    rs(context, 10),
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Halo, $displayName 👋", style: const TextStyle(fontSize: 16, color: Colors.white70, fontWeight: FontWeight.w500)),
-                          const SizedBox(height: 4),
-                          const Text("Cari Kebutuhanmu?", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Hello, $displayName 👋",
+                              style: TextStyle(
+                                fontSize: rf(context, 16),
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: rs(context, 4)),
+                            Text(
+                              "What are you looking for?",
+                              style: TextStyle(
+                                fontSize: rf(context, 20),
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 12),
                       Container(
-                        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white24, width: 2)),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white24, width: 2),
+                        ),
                         child: CircleAvatar(
-                            radius: 24, 
-                            backgroundColor: Colors.white.withOpacity(0.2), 
-                            backgroundImage: avatarImage, 
-                            child: hasAvatar 
-                                ? null 
-                                : const Icon(Icons.person, color: Colors.white), 
+                          radius: 24,
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                          backgroundImage: avatarImage,
+                          child: hasAvatar
+                              ? null
+                              : const Icon(Icons.person, color: Colors.white),
                         ),
                       ),
                     ],
@@ -115,14 +149,21 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
 
                 // 2. SEARCH BAR
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 15),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(15),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 5))
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
                       ],
                     ),
                     child: TextField(
@@ -132,7 +173,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                         widget.onGoToShop?.call();
                       },
                       decoration: const InputDecoration(
-                        hintText: "Cari produk...",
+                        hintText: "Search products...",
                         hintStyle: TextStyle(color: Colors.grey),
                         border: InputBorder.none,
                         icon: Icon(Icons.search, color: Colors.grey),
@@ -145,17 +186,14 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                 const SizedBox(height: 10),
 
                 // 3. DISCOUNT CARD
-                Center(
-                  child: DiscountCard(
-                    onPressed: widget.onGoToShop,
-                  ),
-                ),
+                Center(child: DiscountCard(onPressed: widget.onGoToShop)),
 
                 // 4. ORDER AGAIN (BELI LAGI)
-                 Consumer<MarketplaceProvider>(
+                Consumer<MarketplaceProvider>(
                   builder: (context, provider, _) {
-                    if (provider.buyAgainList.isEmpty) return const SizedBox.shrink();
-                    
+                    if (provider.buyAgainList.isEmpty)
+                      return const SizedBox.shrink();
+
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -164,15 +202,26 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Row(
                             children: const [
-                              Icon(Icons.history, color: Colors.white, size: 20),
+                              Icon(
+                                Icons.history,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                               SizedBox(width: 8),
-                              Text("Beli Lagi", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                              Text(
+                                "Order Again",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 15),
                         SizedBox(
-                          height: 120, 
+                          height: 120,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -182,39 +231,66 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                               return Container(
                                 width: 100,
                                 margin: const EdgeInsets.only(right: 15),
-                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                                 child: InkWell(
                                   onTap: () {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => ProdukDetailPage(produk: produk),
+                                        builder: (context) =>
+                                            ProdukDetailPage(produk: produk),
                                       ),
                                     );
                                   },
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       ClipRRect(
-                                        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                              top: Radius.circular(12),
+                                            ),
                                         child: Image.network(
-                                          produk.imageUrl, 
-                                          height: 70, 
-                                          width: double.infinity, 
-                                          fit: BoxFit.cover, 
-                                          errorBuilder: (ctx,_,__) => Container(height: 70, color: Colors.grey[300])
+                                          produk.imageUrl,
+                                          height: 70,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (ctx, _, __) =>
+                                              Container(
+                                                height: 70,
+                                                color: Colors.grey[300],
+                                              ),
                                         ),
                                       ),
                                       Padding(
                                         padding: const EdgeInsets.all(6.0),
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Text(produk.namaProduk, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                                            Text(produk.formattedPrice, style: const TextStyle(fontSize: 9, color: Color(0xFF2D7F6A))),
+                                            Text(
+                                              produk.namaProduk,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              produk.formattedPrice,
+                                              style: const TextStyle(
+                                                fontSize: 9,
+                                                color: Color(0xFF2D7F6A),
+                                              ),
+                                            ),
                                           ],
                                         ),
-                                      )
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -235,18 +311,28 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Kategori", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                      const Text(
+                        "Category",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                       // Tombol Lihat Semua dipindah ke sini
                       TextButton(
                         onPressed: widget.onGoToShop,
-                        child: const Text("Lihat Semua", style: TextStyle(color: Colors.white70)),
-                      )
+                        child: const Text(
+                          "View All",
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 15),
-                
+
                 // FILTER CHIPS KATEGORI
                 SizedBox(
                   height: 40,
@@ -257,19 +343,33 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                     itemBuilder: (context, index) {
                       final bool isSelected = selectedCategoryIndex == index;
                       return GestureDetector(
-                        onTap: () => setState(() => selectedCategoryIndex = index), // Update state saat diklik
+                        onTap: () => setState(
+                          () => selectedCategoryIndex = index,
+                        ), // Update state saat diklik
                         child: Container(
                           margin: const EdgeInsets.only(right: 10),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.white : Colors.transparent,
+                            color: isSelected
+                                ? Colors.white
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(20),
-                            border: isSelected ? null : Border.all(color: Colors.white38),
+                            border: isSelected
+                                ? null
+                                : Border.all(color: Colors.white38),
                           ),
                           child: Center(
                             child: Text(
                               categories[index],
-                              style: TextStyle(color: isSelected ? mainBackgroundColor : Colors.white, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                color: isSelected
+                                    ? mainBackgroundColor
+                                    : Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
@@ -286,42 +386,43 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                     if (provider.isLoading) {
                       return const Center(
                         child: Padding(
-                          padding: EdgeInsets.all(50.0), 
-                          child: CircularProgressIndicator(color: Colors.white)
-                        )
+                          padding: EdgeInsets.all(50.0),
+                          child: CircularProgressIndicator(color: Colors.white),
+                        ),
                       );
                     }
-                    
+
                     // --- PERBAIKAN LOGIKA FILTER ---
                     final allProducts = provider.products;
                     final selectedCategory = categories[selectedCategoryIndex];
-                    
-                    final filteredProducts = selectedCategory == "Semua"
+
+                    final filteredProducts = selectedCategory == "All"
                         ? allProducts
                         : allProducts.where((p) {
-                            final filterKeyword = selectedCategory.toLowerCase();
+                            final filterKeyword = selectedCategory
+                                .toLowerCase();
                             final productCategory = p.kategori.toLowerCase();
                             final productName = p.namaProduk.toLowerCase();
-                            
+
                             // Cek: Apakah Kategori ATAU Nama Produk mengandung kata kunci?
                             // Contoh: Jika klik "Apel", maka produk dengan nama "Apel Malang" akan muncul
-                            return productCategory.contains(filterKeyword) || 
-                                   productName.contains(filterKeyword);
+                            return productCategory.contains(filterKeyword) ||
+                                productName.contains(filterKeyword);
                           }).toList();
                     // -------------------------------------
 
                     if (filteredProducts.isEmpty) {
                       return Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(30.0), 
+                          padding: const EdgeInsets.all(30.0),
                           child: Text(
-                            "Produk '$selectedCategory' tidak ditemukan.", 
-                            style: const TextStyle(color: Colors.white)
-                          )
-                        )
+                            "Product '$selectedCategory' not found.",
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
                       );
                     }
-                    
+
                     // Batasi tampilan hanya 4 item di Home
                     final displayProducts = filteredProducts.take(4).toList();
 
@@ -331,24 +432,26 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: displayProducts.length,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.70,
-                          crossAxisSpacing: 15,
-                          mainAxisSpacing: 15,
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.70,
+                              crossAxisSpacing: 15,
+                              mainAxisSpacing: 15,
+                            ),
                         itemBuilder: (context, index) {
                           final produk = displayProducts[index];
                           return ProdukCard(
-                            produk: produk, 
+                            produk: produk,
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ProdukDetailPage(produk: produk),
+                                  builder: (context) =>
+                                      ProdukDetailPage(produk: produk),
                                 ),
                               );
-                            }
+                            },
                           );
                         },
                       ),

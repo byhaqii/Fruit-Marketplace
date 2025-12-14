@@ -12,11 +12,13 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'PBL Semester5',
       theme: AppTheme.light(),
+      debugShowCheckedModeBanner: false,
       // Gunakan AuthCheck sebagai home, atau sebagai initialRoute (kita gunakan route map)
       initialRoute: Routes.initial,
       routes: Routes.routes,
       // Fallback jika rute tidak ditemukan:
-      onUnknownRoute: (settings) => MaterialPageRoute(builder: (context) => const AuthCheck()),
+      onUnknownRoute: (settings) =>
+          MaterialPageRoute(builder: (context) => const AuthCheck()),
     );
   }
 }

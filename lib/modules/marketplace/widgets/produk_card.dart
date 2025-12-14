@@ -8,20 +8,19 @@ class ProdukCard extends StatelessWidget {
   final ProdukModel produk;
   final VoidCallback? onTap;
 
-  const ProdukCard({
-    super.key,
-    required this.produk,
-    this.onTap,
-  });
+  const ProdukCard({super.key, required this.produk, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    // Format harga ke Rupiah sederhana
-    // Jika Anda punya helper formatter, bisa dipakai di sini
-    final String hargaFormatted = "Rp ${produk.harga}"; 
+    // Tampilkan harga dengan format ribuan: Rp 20.000
+    final String hargaFormatted = produk.formattedPrice;
+    // Safely parse stock in case the model uses String/nullable
+    final int stokSafe = int.tryParse('${produk.stok}') ?? 0;
+    final bool isOutOfStock = stokSafe <= 0;
+    final bool isLowStock = !isOutOfStock && stokSafe <= 5;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: isOutOfStock ? null : onTap,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -43,7 +42,9 @@ class ProdukCard extends StatelessWidget {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   image: DecorationImage(
                     image: NetworkImage(produk.imageUrl),
                     fit: BoxFit.cover,
@@ -54,20 +55,63 @@ class ProdukCard extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    // Badge Stok (Opsional)
-                    if (produk.stok < 5)
+                    // Dim overlay when out of stock
+                    if (isOutOfStock)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.25),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // Stock Badges
+                    if (isOutOfStock)
                       Positioned(
                         top: 8,
                         left: 8,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.75),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'Out of Stock',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (isLowStock)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.red.withOpacity(0.9),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
-                            'Stok Menipis',
-                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            'Low Stock',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -93,16 +137,13 @@ class ProdukCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  
+
                   const SizedBox(height: 4),
-                  
+
                   // Kategori (Opsional)
                   Text(
                     produk.kategori,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -125,7 +166,9 @@ class ProdukCard extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E605A),
+                          color: isOutOfStock
+                              ? Colors.grey[400]
+                              : const Color(0xFF1E605A),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(

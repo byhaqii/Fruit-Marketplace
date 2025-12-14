@@ -42,6 +42,8 @@ $router->group(['middleware' => ['auth', 'role:admin']], function () use ($route
     
     // Manajemen User
     $router->get('/users', 'UserController@index');
+    $router->get('/users/stats/dashboard', 'UserController@getStats');
+    $router->get('/users/growth', 'UserController@getUserGrowth');
     $router->get('/users/{id}', 'UserController@show');
     $router->post('/users', 'UserController@store');
     $router->put('/users/{id}', 'UserController@update');
