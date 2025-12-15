@@ -8,6 +8,7 @@ class CustomTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final bool obscureText;
   final Widget? prefixIcon; // Tambahkan parameter untuk icon
+  final Widget? suffixIcon;
 
   const CustomTextField({
     super.key,
@@ -17,6 +18,7 @@ class CustomTextField extends StatelessWidget {
     this.keyboardType,
     this.obscureText = false,
     this.prefixIcon, // Daftarkan parameter icon
+    this.suffixIcon,
   });
 
   @override
@@ -34,6 +36,12 @@ class CustomTextField extends StatelessWidget {
             ? Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: prefixIcon,
+              )
+            : null,
+        suffixIcon: suffixIcon != null
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: suffixIcon,
               )
             : null,
         // Styling Border yang Bersih (seperti di mockup)

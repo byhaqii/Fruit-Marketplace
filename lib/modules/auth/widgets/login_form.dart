@@ -18,6 +18,7 @@ class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _passwordObscured = true;
 
   Future<void> _submitLogin() async {
     if (_formKey.currentState?.validate() ?? false) {
@@ -67,8 +68,18 @@ class _LoginFormState extends State<LoginForm> {
             hint: 'Password',
             controller: _passwordController,
             validator: Validator.notEmpty,
-            obscureText: true,
+            obscureText: _passwordObscured,
             prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _passwordObscured
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: Colors.grey,
+              ),
+              onPressed: () =>
+                  setState(() => _passwordObscured = !_passwordObscured),
+            ),
           ),
 
           const SizedBox(height: 24),
