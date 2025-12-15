@@ -139,7 +139,18 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
 
   // Mapping ML labels ke nama produk yang mungkin ada di database
   final Map<String, List<String>> labelMappings = {
-    'bali orange': ['bali orange', 'jeruk bali', 'orange', 'jeruk', 'orange bali', 'pomelo'],
+    'bali orange': [
+      'bali orange',
+      'jeruk bali',
+      'orange',
+      'jeruk',
+      'orange bali',
+      'pomelo',
+      'grapefruit',
+      'shaddock',
+      'citrus maxima',
+      'citrus grandis',
+    ],
     'apple': ['apple', 'apel', 'appel'],
     'peach': ['peach', 'persik', 'buah persik'],
     'tomato': ['tomato', 'tomat', 'tmt'],
